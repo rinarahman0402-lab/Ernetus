@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Path of Good Deeds</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8cc9e8;font-family:system-ui,sans-serif;touch-action:none}
+canvas{width:100%;height:100%;display:block}
+#hud{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;color:#fff;font-weight:800;pointer-events:none}
+.pill{background:#0009;padding:9px 13px;border-radius:15px}
+#quest{position:fixed;top:58px;left:10px;color:#fff;background:#0009;border-radius:15px;padding:10px 12px;font-size:13px;line-height:1.55;pointer-events:none}
+#joy{position:fixed;left:18px;bottom:20px;width:138px;height:138px;border-radius:50%;background:#ffffff35;border:2px solid #ffffffaa}
+#knob{position:absolute;width:58px;height:58px;left:38px;top:38px;border-radius:50%;background:#fff;box-shadow:0 3px 10px #0005}
+#look{position:fixed;right:0;top:0;width:55%;height:72%;z-index:2}
+#actions{position:fixed;right:16px;bottom:20px;z-index:3;display:flex;flex-direction:column;gap:8px}
+button{border:0;border-radius:17px;padding:13px 16px;background:#fffffff0;font-weight:800;font-size:14px;box-shadow:0 4px 12px #0004}
+#toast{position:fixed;left:50%;bottom:175px;transform:translateX(-50%);background:#000c;color:#fff;padding:12px 18px;border-radius:15px;opacity:0;transition:.25s;z-index:5;white-space:nowrap}
+#start,#finish{position:fixed;inset:0;display:grid;place-items:center;background:#10231d;color:white;z-index:10;text-align:center}
+#finish{display:none;background:#163524}
+.card{max-width:510px;padding:28px}
+.small{opacity:.8;font-size:13px}
+</style>
+</head>
+<body>
+<div id="start"><div class="card">
+<h1>🌿 Path of Good Deeds</h1>
+<p>Explore a peaceful neighborhood, help people, care for the community, and make time for salat.</p>
+<p class="small">Left joystick = movement • Drag the right side = look around</p>
+<button onclick="startGame()">▶ Start the day</button>
+</div></div>
+
+<canvas id="game"></canvas>
+<div id="hud"><div class="pill">⭐ <span id="score">0</span></div><div class="pill">☀️ <span id="time">Morning</span></div></div>
+<div id="quest"><b>Today's good deeds</b><div id="quests"></div></div>
+<div id="joy"><div id="knob"></div></div>
+<div id="look"></div>
+<div id="actions">
+<button onclick="helpNearby()">🤝 Help nearby</button>
+<button onclick="pray()">🕌 Salat</button>
+</div>
+<div id="toast"></div>
+
+<div id="finish"><div class="card">
+<h1>🌅 Day Complete!</h1>
+<p id="finishText"></p>
+<p>Tomorrow, the neighborhood will have new opportunities to help.</p>
+<button onclick="location.reload()">🔄 Play again</button>
+</div></div>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
+let engine,scene,player,camera,score=0,dayStage=0,nearTask=null;
+let moveX=0,moveY=0,looking=false,lastX=0,lastY=0,yaw=0,pitch=.38;
+const tasks=[
+ {name:"Give food",done:false,x:-11,z:-4,icon:"🍞"},
+ {name:"Give water",done:false,x:11,z:-4,icon:"💧"},
+ {name:"Clean the park",done:false,x:-11,z:9,icon:"🧹"},
+ {name:"Perform salat",done:false,x:18,z:16,icon:"🕌"}
+];
+
+function material(n,c){let m=new BABYLON.StandardMaterial(n,scene);m.diffuseColor=BABYLON.Color3.FromHexString(c);return m}
+function makeBox(n,x,z,w,d,h,c){let m=BABYLON.MeshBuilder.CreateBox(n,{width:w,depth:d,height:h},scene);m.position.set(x,h/2,z);m.material=material(n,c);return m}
+function toast(t){let e=document.getElementById("toast");e.textContent=t;e.style.opacity=1;clearTimeout(window.tt);window.tt=setTimeout(()=>e.style.opacity=0,1900)}
+function renderTasks(){document.getElementById("quests").innerHTML=tasks.map(t=>`<div>${t.done?"✅":"⬜"} ${t.icon} ${t.name}</div>`).join("")}
+function addScore(n){score+=n;document.getElementById("score").textContent=score}
+function completeTask(i){
+ if(tasks[i].done)return;
+ tasks[i].done=true;addScore(25);renderTasks();
+ if(i===0)toast("The family received their food. ❤️");
+ if(i===1)toast("The water was delivered. 💧");
+ if(i===2)toast("The park is clean again! 🌳");
+ if(i===3)toast("You completed salat. 🕌");
+ if(tasks.every(t=>t.done))setTimeout(finishDay,1200);
+}
+function helpNearby(){
+ if(nearTask===null){toast("Move closer to a golden marker.");return}
+ if(nearTask===3){toast("Use the Salat button here.");return}
+ completeTask(nearTask);
+}
+function pray(){
+ if(nearTask===3)completeTask(3);
+ else toast("Go to the mosque first. 🕌");
+}
+function finishDay(){
+ document.getElementById("time").textContent="Evening";
+ document.getElementById("finishText").textContent=`You completed every good deed and earned ${score} Good Deed Points! The neighborhood is better because of your actions.`;
+ document.getElementById("finish").style.display="grid";
+ // visual change: brighten the community markers
+ scene.meshes.forEach(m=>{if(m.metadata?.task!==undefined)m.material=material("completed","#65c77a")});
+}
+
+function startGame(){
+ document.getElementById("start").remove();renderTasks();
+ const canvas=document.getElementById("game");
+ engine=new BABYLON.Engine(canvas,true);
+ scene=new BABYLON.Scene(engine);
+ scene.clearColor=new BABYLON.Color4(.54,.78,.91,1);
+ let light=new BABYLON.HemisphericLight("sun",new BABYLON.Vector3(0,1,0),scene);light.intensity=1.05;
+
+ let ground=BABYLON.MeshBuilder.CreateGround("ground",{width:82,height:82},scene);ground.material=material("grass","#69aa5e");
+ makeBox("road",0,0,82,9,.08,"#555555");makeBox("road2",0,0,9,82,.08,"#555555");
+
+ // buildings
+ makeBox("houseA",-18,-14,13,10,7,"#e8c39e");
+ makeBox("houseB",18,-14,13,10,8,"#dce9f1");
+ makeBox("shop",-18,17,13,10,6,"#efd56b");
+ makeBox("mosque",18,17,14,11,6,"#e8eee8");
+ let dome=BABYLON.MeshBuilder.CreateSphere("dome",{diameter:6,segments:20,slice:.5},scene);
+ dome.position.set(18,7,17);dome.material=material("dome","#3e8a68");
+ makeBox("minaret",26,13,1.2,1.2,11,"#eeeeee");
+
+ // park
+ makeBox("park", -13, 13, 17, 13, .15, "#78b967");
+ for(let i=0;i<15;i++){
+   let x=Math.random()*70-35,z=Math.random()*70-35;
+   if(Math.abs(x)<7||Math.abs(z)<7)continue;
+   makeBox("trunk",x,z,.5,.5,2,"#78502d");
+   let crown=BABYLON.MeshBuilder.CreateSphere("tree",{diameter:3.4,segments:12},scene);
+   crown.position.set(x,3,z);crown.material=material("leaves","#2d833e");
+ }
+
+ // Player: stylized friendly character
+ player=new BABYLON.TransformNode("player",scene);player.position.set(0,0,0);
+ let body=BABYLON.MeshBuilder.CreateCapsule("body",{height:1.45,radius:.38},scene);body.position.y=1.25;body.parent=player;body.material=material("shirt","#3678d4");
+ let head=BABYLON.MeshBuilder.CreateSphere("head",{diameter:1.05,segments:20},scene);head.position.y=2.4;head.parent=player;head.material=material("skin","#b97850");
+ let hair=BABYLON.MeshBuilder.CreateSphere("hair",{diameter:1.08,segments:20,slice:.47},scene);hair.position.y=2.68;hair.parent=player;hair.material=material("hair","#382318");
+ for(let x of [-.18,.18]){
+   let eye=BABYLON.MeshBuilder.CreateSphere("eye",{diameter:.10},scene);eye.position.set(x,2.48,-.47);eye.parent=player;eye.material=material("eye","#111");
+ }
+ for(let x of [-.2,.2]){let leg=makeBox("leg",x,0,.25,.35,.75,"#293b62");leg.parent=player;leg.position.set(x,.42,0)}
+
+ // task markers
+ tasks.forEach((t,i)=>{
+   let o=BABYLON.MeshBuilder.CreateCylinder("marker",{diameter:1.8,height:.3},scene);
+   o.position.set(t.x,.18,t.z);o.material=material("marker","#f4b62b");o.metadata={task:i};
+   let bob=BABYLON.MeshBuilder.CreateSphere("icon",{diameter:.75},scene);bob.position.y=1.05;bob.parent=o;bob.material=material("markerGlow","#fff0a0");
+ });
+
+ // Camera: fixed behind player, separate right-side look controls
+ camera=new BABYLON.FreeCamera("camera",new BABYLON.Vector3(0,5,-8),scene);
+ camera.fov=.9;camera.minZ=.1;
+ function updateCamera(){
+   let distance=8,height=4.6;
+   let target=new BABYLON.Vector3(player.position.x,1.3,player.position.z);
+   let dir=new BABYLON.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
+   camera.position=target.subtract(dir.scale(distance));
+   camera.setTarget(target);
+ }
+ updateCamera();
+
+ // Movement joystick
+ const joy=document.getElementById("joy"),knob=document.getElementById("knob");
+ function joyMove(e){
+   let q=e.touches?e.touches[0]:e;
+   let r=joy.getBoundingClientRect(),x=q.clientX-r.left-r.width/2,y=q.clientY-r.top-r.height/2,max=47;
+   let len=Math.hypot(x,y);if(len>max){x=x*max/len;y=y*max/len}
+   knob.style.transform=`translate(${x}px,${y}px)`;
+   moveX=x/max;moveY=-y/max;
+ }
+ function joyEnd(){moveX=moveY=0;knob.style.transform="translate(0,0)"}
+ joy.addEventListener("touchstart",e=>{e.preventDefault();joyMove(e)},{passive:false});
+ joy.addEventListener("touchmove",e=>{e.preventDefault();joyMove(e)},{passive:false});
+ joy.addEventListener("touchend",joyEnd);
+
+ // Look area
+ const look=document.getElementById("look");
+ look.addEventListener("touchstart",e=>{let q=e.touches[0];looking=true;lastX=q.clientX;lastY=q.clientY},{passive:false});
+ look.addEventListener("touchmove",e=>{
+   if(!looking)return;e.preventDefault();let q=e.touches[0];
+   yaw+=(q.clientX-lastX)*.008;pitch-= (q.clientY-lastY)*.005;
+   pitch=Math.max(.12,Math.min(.75,pitch));lastX=q.clientX;lastY=q.clientY;
+ },{passive:false});
+ look.addEventListener("touchend",()=>looking=false);
+
+ scene.onBeforeRenderObservable.add(()=>{
+   // Movement is relative to camera yaw. Up is always forward on screen.
+   let forward=new BABYLON.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+   let right=new BABYLON.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+   let v=forward.scale(moveY).add(right.scale(moveX));
+   if(v.lengthSquared()>.001){
+     v.normalize();
+     player.position.addInPlace(v.scale(.16));
+     player.rotation.y=Math.atan2(v.x,v.z);
+   }
+   player.position.x=Math.max(-39,Math.min(39,player.position.x));
+   player.position.z=Math.max(-39,Math.min(39,player.position.z));
+   updateCamera();
+
+   nearTask=null;let best=2.4;
+   tasks.forEach((t,i)=>{
+     if(t.done)return;
+     let d=Math.hypot(player.position.x-t.x,player.position.z-t.z);
+     if(d<best){best=d;nearTask=i}
+   });
+   document.getElementById("time").textContent=score<50?"Morning":score<100?"Afternoon":"Evening";
+ });
+ engine.runRenderLoop(()=>scene.render());
+ addEventListener("resize",()=>engine.resize());
+}
+</script>
+</body>
+</html>
