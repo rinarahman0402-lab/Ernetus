@@ -2,757 +2,1104 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Mantis Adventure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mantis Adventure 3D</title>
 
 <style>
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#75b9d8;
-  touch-action:none;
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#87c9ef;
+    font-family:Arial,sans-serif;
+    touch-action:none;
 }
 
-canvas{
-  display:block;
-  width:100vw;
-  height:100vh;
-  touch-action:none;
+#game{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
 }
 
-.control{
-  position:fixed;
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  border:3px solid rgba(255,255,255,.9);
-  background:rgba(20,55,35,.72);
-  touch-action:none;
-  user-select:none;
-  -webkit-user-select:none;
+#loading{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#183b2a;
+    color:white;
+    font-size:22px;
+    z-index:20;
 }
 
-.control:active{
-  transform:scale(.92);
-  background:rgba(45,110,60,.9);
+#message{
+    position:fixed;
+    top:15px;
+    left:50%;
+    transform:translateX(-50%);
+    color:white;
+    font-weight:bold;
+    font-size:18px;
+    text-shadow:0 2px 4px #000;
+    z-index:10;
+    pointer-events:none;
+    text-align:center;
 }
 
-#left{
-  left:20px;
-  bottom:24px;
+#healthBox{
+    position:fixed;
+    top:15px;
+    left:15px;
+    width:170px;
+    height:22px;
+    border:2px solid white;
+    background:rgba(0,0,0,.4);
+    z-index:10;
+    border-radius:8px;
+    overflow:hidden;
 }
 
-#right{
-  left:96px;
-  bottom:24px;
+#health{
+    height:100%;
+    width:100%;
+    background:#42b94d;
 }
 
-#up{
-  right:96px;
-  bottom:100px;
+#joystick{
+    position:fixed;
+    left:22px;
+    bottom:25px;
+    width:125px;
+    height:125px;
+    border-radius:50%;
+    background:rgba(20,50,35,.38);
+    border:2px solid rgba(255,255,255,.65);
+    z-index:12;
+    touch-action:none;
 }
 
-#down{
-  right:96px;
-  bottom:24px;
+#stick{
+    position:absolute;
+    left:37px;
+    top:37px;
+    width:51px;
+    height:51px;
+    border-radius:50%;
+    background:rgba(255,255,255,.75);
+    border:2px solid white;
 }
 
-.triangle{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:0;
-  height:0;
-  border-left:13px solid transparent;
-  border-right:13px solid transparent;
+#lookHint{
+    position:fixed;
+    right:20px;
+    bottom:28px;
+    width:135px;
+    height:105px;
+    border-radius:18px;
+    background:rgba(20,50,35,.28);
+    border:2px solid rgba(255,255,255,.45);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:14px;
+    z-index:10;
+    pointer-events:none;
 }
 
-.leftShape{
-  border-top:13px solid transparent;
-  border-bottom:13px solid transparent;
-  border-right:20px solid white;
-  border-left:0;
-}
-
-.rightShape{
-  border-top:13px solid transparent;
-  border-bottom:13px solid transparent;
-  border-left:20px solid white;
-  border-right:0;
-}
-
-.upShape{
-  border-left:13px solid transparent;
-  border-right:13px solid transparent;
-  border-bottom:20px solid white;
-}
-
-.downShape{
-  border-left:13px solid transparent;
-  border-right:13px solid transparent;
-  border-top:20px solid white;
+#restart{
+    position:fixed;
+    display:none;
+    left:50%;
+    top:58%;
+    transform:translate(-50%,-50%);
+    padding:15px 25px;
+    border:0;
+    border-radius:12px;
+    background:#49a957;
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    z-index:30;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="game"></canvas>
+<div id="loading">Loading Mantis Adventure 3D...</div>
 
-<div id="left" class="control">
-  <div class="triangle leftShape"></div>
+<div id="game"></div>
+
+<div id="healthBox">
+    <div id="health"></div>
 </div>
 
-<div id="right" class="control">
-  <div class="triangle rightShape"></div>
+<div id="message">🦗 Mantis Adventure 3D</div>
+
+<div id="joystick">
+    <div id="stick"></div>
 </div>
 
-<div id="up" class="control">
-  <div class="triangle upShape"></div>
+<div id="lookHint">
+    Swipe here<br>to look around
 </div>
 
-<div id="down" class="control">
-  <div class="triangle downShape"></div>
-</div>
+<button id="restart">Play Again</button>
 
-<script>
-"use strict";
+<script type="importmap">
+{
+    "imports":{
+        "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+    }
+}
+</script>
 
-/* =========================
-   CANVAS
-========================= */
+<script type="module">
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+import * as THREE from "three";
 
-let W=window.innerWidth;
-let H=window.innerHeight;
+/* =====================================================
+   BASIC SETUP
+===================================================== */
 
-function resize(){
-  W=window.innerWidth;
-  H=window.innerHeight;
+const game=document.getElementById("game");
+const loading=document.getElementById("loading");
+const healthBar=document.getElementById("health");
+const message=document.getElementById("message");
+const restart=document.getElementById("restart");
 
-  canvas.width=Math.floor(W*devicePixelRatio);
-  canvas.height=Math.floor(H*devicePixelRatio);
+let scene;
+let camera;
+let renderer;
+let clock;
 
-  ctx.setTransform(
-    devicePixelRatio,0,0,devicePixelRatio,0,0
-  );
+try{
+
+    scene=new THREE.Scene();
+
+    scene.background=new THREE.Color(0x86c9ed);
+
+    scene.fog=new THREE.Fog(0x86c9ed,45,240);
+
+    camera=new THREE.PerspectiveCamera(
+        65,
+        window.innerWidth/window.innerHeight,
+        0.1,
+        500
+    );
+
+    renderer=new THREE.WebGLRenderer({
+        antialias:true,
+        powerPreference:"high-performance"
+    });
+
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio,1.5)
+    );
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+
+    renderer.shadowMap.enabled=true;
+    renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+    game.appendChild(renderer.domElement);
+
+    clock=new THREE.Clock();
+
+}catch(error){
+
+    loading.textContent=
+        "3D could not start on this device/browser.";
+
+    throw error;
 }
 
-window.addEventListener("resize",resize);
-resize();
+/* =====================================================
+   LIGHTING
+===================================================== */
 
-/* =========================
+const hemi=new THREE.HemisphereLight(
+    0xbfe9ff,
+    0x41613a,
+    2.1
+);
+
+scene.add(hemi);
+
+const sun=new THREE.DirectionalLight(
+    0xfff4d2,
+    3
+);
+
+sun.position.set(60,100,40);
+
+sun.castShadow=true;
+
+sun.shadow.mapSize.width=1024;
+sun.shadow.mapSize.height=1024;
+
+sun.shadow.camera.near=1;
+sun.shadow.camera.far=220;
+
+sun.shadow.camera.left=-90;
+sun.shadow.camera.right=90;
+sun.shadow.camera.top=90;
+sun.shadow.camera.bottom=-90;
+
+scene.add(sun);
+
+/* =====================================================
+   GROUND
+===================================================== */
+
+const groundMaterial=new THREE.MeshStandardMaterial({
+    color:0x579947,
+    roughness:1
+});
+
+const ground=new THREE.Mesh(
+    new THREE.PlaneGeometry(1000,1000),
+    groundMaterial
+);
+
+ground.rotation.x=-Math.PI/2;
+
+ground.receiveShadow=true;
+
+scene.add(ground);
+
+/* =====================================================
+   RANDOM HELPER
+===================================================== */
+
+function randomRange(a,b){
+    return a+Math.random()*(b-a);
+}
+
+/* =====================================================
+   TREES
+===================================================== */
+
+function makeTree(x,z,scale=1){
+
+    const tree=new THREE.Group();
+
+    const trunk=new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            0.35*scale,
+            0.55*scale,
+            4*scale,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x704629
+        })
+    );
+
+    trunk.position.y=2*scale;
+
+    trunk.castShadow=true;
+    trunk.receiveShadow=true;
+
+    tree.add(trunk);
+
+    const leavesMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x27783b,
+            roughness:.9
+        });
+
+    for(let i=0;i<4;i++){
+
+        const leaves=new THREE.Mesh(
+            new THREE.IcosahedronGeometry(
+                2.2*scale,
+                1
+            ),
+            leavesMaterial
+        );
+
+        leaves.position.set(
+            randomRange(-1,1)*scale,
+            randomRange(4,7)*scale,
+            randomRange(-1,1)*scale
+        );
+
+        leaves.castShadow=true;
+        leaves.receiveShadow=true;
+
+        tree.add(leaves);
+    }
+
+    tree.position.set(x,0,z);
+
+    scene.add(tree);
+}
+
+/* create surrounding forest */
+
+for(let i=0;i<90;i++){
+
+    const x=randomRange(-220,220);
+    const z=randomRange(-220,220);
+
+    if(Math.abs(x)<15 && Math.abs(z)<15)continue;
+
+    makeTree(
+        x,
+        z,
+        randomRange(.7,1.35)
+    );
+}
+
+/* =====================================================
+   ROCKS
+===================================================== */
+
+for(let i=0;i<65;i++){
+
+    const rock=new THREE.Mesh(
+        new THREE.DodecahedronGeometry(
+            randomRange(.5,1.5),
+            0
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x69756a,
+            roughness:1
+        })
+    );
+
+    rock.position.set(
+        randomRange(-220,220),
+        .5,
+        randomRange(-220,220)
+    );
+
+    rock.scale.y=randomRange(.5,1);
+
+    rock.castShadow=true;
+    rock.receiveShadow=true;
+
+    scene.add(rock);
+}
+
+/* =====================================================
+   FLOWERS
+===================================================== */
+
+for(let i=0;i<180;i++){
+
+    const flower=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .12,
+            6,
+            6
+        ),
+        new THREE.MeshStandardMaterial({
+            color:
+                Math.random()<.5
+                ?0xffd94a
+                :0xff8fb3
+        })
+    );
+
+    flower.position.set(
+        randomRange(-200,200),
+        .12,
+        randomRange(-200,200)
+    );
+
+    scene.add(flower);
+}
+
+/* =====================================================
+   MANTIS
+===================================================== */
+
+function createMantis(){
+
+    const mantis=new THREE.Group();
+
+    /* abdomen */
+
+    const abdomen=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            0.75,
+            16,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x3c913e,
+            roughness:.8
+        })
+    );
+
+    abdomen.scale.set(
+        .75,
+        1.45,
+        .75
+    );
+
+    abdomen.position.y=1.15;
+
+    abdomen.castShadow=true;
+
+    mantis.add(abdomen);
+
+    /* thorax */
+
+    const thorax=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .72,
+            16,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x4ca947
+        })
+    );
+
+    thorax.position.y=2.1;
+
+    thorax.castShadow=true;
+
+    mantis.add(thorax);
+
+    /* head */
+
+    const head=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .65,
+            16,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x69b94f
+        })
+    );
+
+    head.position.y=3;
+
+    head.castShadow=true;
+
+    mantis.add(head);
+
+    /* eyes */
+
+    const eyeMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x101710,
+            roughness:.2
+        });
+
+    const eye1=new THREE.Mesh(
+        new THREE.SphereGeometry(.18,12,8),
+        eyeMaterial
+    );
+
+    const eye2=eye1.clone();
+
+    eye1.position.set(-.27,3.12,.55);
+    eye2.position.set(.27,3.12,.55);
+
+    mantis.add(eye1);
+    mantis.add(eye2);
+
+    /* antennae */
+
+    const antennaMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x316e31
+        });
+
+    for(const side of [-1,1]){
+
+        const antenna=new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .035,
+                .035,
+                1.4,
+                6
+            ),
+            antennaMaterial
+        );
+
+        antenna.position.set(
+            side*.22,
+            3.65,
+            .15
+        );
+
+        antenna.rotation.z=side*.35;
+        antenna.rotation.x=-.25;
+
+        antenna.castShadow=true;
+
+        mantis.add(antenna);
+    }
+
+    /* legs */
+
+    const legMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x337f37
+        });
+
+    const legPositions=[
+        [-.42,1.6,.1],
+        [.42,1.6,.1],
+        [-.45,1.05,.05],
+        [.45,1.05,.05],
+        [-.4,.55,0],
+        [.4,.55,0]
+    ];
+
+    for(const p of legPositions){
+
+        const leg=new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .09,
+                .07,
+                1.6,
+                6
+            ),
+            legMaterial
+        );
+
+        leg.position.set(
+            p[0],
+            p[1],
+            p[2]
+        );
+
+        leg.rotation.z=
+            p[0]<0
+            ?-.65
+            :.65;
+
+        leg.castShadow=true;
+
+        mantis.add(leg);
+    }
+
+    /* large folded front arms */
+
+    for(const side of [-1,1]){
+
+        const arm=new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .11,
+                .08,
+                1.9,
+                7
+            ),
+            legMaterial
+        );
+
+        arm.position.set(
+            side*.65,
+            2.15,
+            .25
+        );
+
+        arm.rotation.z=side*-.8;
+        arm.rotation.x=-.35;
+
+        arm.castShadow=true;
+
+        mantis.add(arm);
+    }
+
+    return mantis;
+}
+
+const player=createMantis();
+
+player.position.set(0,0,0);
+
+scene.add(player);
+
+/* =====================================================
+   ANTS
+===================================================== */
+
+const ants=[];
+
+function createAnt(x,z){
+
+    const ant=new THREE.Group();
+
+    const bodyMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x292019
+        });
+
+    for(let i=0;i<3;i++){
+
+        const part=new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .17,
+                8,
+                6
+            ),
+            bodyMaterial
+        );
+
+        part.position.set(
+            0,
+            .25,
+            (i-1)*.3
+        );
+
+        part.scale.z=1.2;
+
+        part.castShadow=true;
+
+        ant.add(part);
+    }
+
+    /* legs */
+
+    for(let side of [-1,1]){
+
+        for(let i=0;i<3;i++){
+
+            const leg=new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .025,
+                    .025,
+                    .55,
+                    5
+                ),
+                bodyMaterial
+            );
+
+            leg.position.set(
+                side*.22,
+                .22,
+                (i-1)*.25
+            );
+
+            leg.rotation.z=side*.9;
+
+            ant.add(leg);
+        }
+    }
+
+    ant.position.set(x,0,z);
+
+    scene.add(ant);
+
+    ants.push({
+        object:ant,
+        baseX:x,
+        baseZ:z,
+        phase:Math.random()*Math.PI*2
+    });
+}
+
+/* ants stay in fixed areas */
+
+for(let i=0;i<35;i++){
+
+    createAnt(
+        randomRange(-150,150),
+        randomRange(-150,150)
+    );
+}
+
+/* =====================================================
+   ANIMALS
+===================================================== */
+
+const animals=[];
+
+function createAnimal(type,x,z){
+
+    const animal=new THREE.Group();
+
+    let bodyColor=
+        type==="wolf"
+        ?0x656a70
+        :0xd18a32;
+
+    const material=
+        new THREE.MeshStandardMaterial({
+            color:bodyColor,
+            roughness:.9
+        });
+
+    const body=new THREE.Mesh(
+        new THREE.SphereGeometry(1,12,8),
+        material
+    );
+
+    body.scale.set(
+        1.5,
+        .8,
+        2
+    );
+
+    body.position.y=1;
+
+    body.castShadow=true;
+
+    animal.add(body);
+
+    const head=new THREE.Mesh(
+        new THREE.SphereGeometry(.7,12,8),
+        material
+    );
+
+    head.position.set(
+        0,
+        1.25,
+        1.7
+    );
+
+    head.castShadow=true;
+
+    animal.add(head);
+
+    /* ears */
+
+    for(const side of [-1,1]){
+
+        const ear=new THREE.Mesh(
+            new THREE.ConeGeometry(
+                .28,
+                .7,
+                4
+            ),
+            material
+        );
+
+        ear.position.set(
+            side*.38,
+            1.8,
+            1.7
+        );
+
+        ear.rotation.x=.2;
+
+        animal.add(ear);
+    }
+
+    /* legs */
+
+    for(const side of [-1,1]){
+
+        for(const front of [-1,1]){
+
+            const leg=new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .16,
+                    .12,
+                    1,
+                    8
+                ),
+                material
+            );
+
+            leg.position.set(
+                side*.65,
+                .5,
+                front*.85
+            );
+
+            leg.castShadow=true;
+
+            animal.add(leg);
+        }
+    }
+
+    /* eyes */
+
+    const eyeMaterial=
+        new THREE.MeshStandardMaterial({
+            color:0x111111
+        });
+
+    for(const side of [-1,1]){
+
+        const eye=new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .09,
+                8,
+                8
+            ),
+            eyeMaterial
+        );
+
+        eye.position.set(
+            side*.25,
+            1.45,
+            2.28
+        );
+
+        animal.add(eye);
+    }
+
+    animal.position.set(x,0,z);
+
+    scene.add(animal);
+
+    animals.push({
+        object:animal,
+        type:type,
+        speed:type==="wolf"?.035:.025,
+        active:false
+    });
+}
+
+createAnimal("wolf",35,-35);
+createAnimal("wolf",-45,-55);
+createAnimal("tiger",60,55);
+createAnimal("tiger",-70,60);
+
+/* =====================================================
    CONTROLS
-========================= */
+===================================================== */
 
-const input={
-  left:false,
-  right:false,
-  up:false,
-  down:false
+const movement={
+    x:0,
+    y:0
 };
 
-function hold(id,key){
-  const el=document.getElementById(id);
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
 
-  const start=e=>{
-    e.preventDefault();
-    input[key]=true;
-    if(e.pointerId!==undefined){
-      try{el.setPointerCapture(e.pointerId);}catch(_){}
+let joystickPointer=null;
+
+function updateJoystick(e){
+
+    const r=joystick.getBoundingClientRect();
+
+    const centerX=r.left+r.width/2;
+    const centerY=r.top+r.height/2;
+
+    let dx=e.clientX-centerX;
+    let dy=e.clientY-centerY;
+
+    const max=45;
+
+    const length=Math.hypot(dx,dy);
+
+    if(length>max){
+
+        dx=dx/length*max;
+        dy=dy/length*max;
     }
-  };
 
-  const stop=e=>{
-    e.preventDefault();
-    input[key]=false;
-  };
+    movement.x=dx/max;
+    movement.y=dy/max;
 
-  el.addEventListener("pointerdown",start);
-  el.addEventListener("pointerup",stop);
-  el.addEventListener("pointercancel",stop);
-  el.addEventListener("lostpointercapture",stop);
+    stick.style.transform=
+        `translate(${dx}px,${dy}px)`;
 }
 
-hold("left","left");
-hold("right","right");
-hold("up","up");
-hold("down","down");
+joystick.addEventListener("pointerdown",e=>{
 
-/* =========================
-   KEYBOARD SUPPORT
-   ========================= */
+    e.preventDefault();
+
+    joystickPointer=e.pointerId;
+
+    try{
+        joystick.setPointerCapture(e.pointerId);
+    }catch(_){}
+
+    updateJoystick(e);
+});
+
+joystick.addEventListener("pointermove",e=>{
+
+    if(e.pointerId!==joystickPointer)return;
+
+    e.preventDefault();
+
+    updateJoystick(e);
+});
+
+function stopJoystick(e){
+
+    if(e.pointerId!==joystickPointer)return;
+
+    joystickPointer=null;
+
+    movement.x=0;
+    movement.y=0;
+
+    stick.style.transform="translate(0,0)";
+}
+
+joystick.addEventListener("pointerup",stopJoystick);
+joystick.addEventListener("pointercancel",stopJoystick);
+
+/* =====================================================
+   CAMERA LOOK
+===================================================== */
+
+let yaw=0;
+let pitch=.35;
+
+let lookPointer=null;
+let lastLookX=0;
+let lastLookY=0;
+
+renderer.domElement.addEventListener(
+    "pointerdown",
+    e=>{
+
+        if(
+            e.clientX<
+            window.innerWidth*.35
+        )return;
+
+        lookPointer=e.pointerId;
+
+        lastLookX=e.clientX;
+        lastLookY=e.clientY;
+    }
+);
+
+renderer.domElement.addEventListener(
+    "pointermove",
+    e=>{
+
+        if(e.pointerId!==lookPointer)return;
+
+        const dx=e.clientX-lastLookX;
+        const dy=e.clientY-lastLookY;
+
+        lastLookX=e.clientX;
+        lastLookY=e.clientY;
+
+        yaw-=dx*.008;
+        pitch-=dy*.006;
+
+        pitch=Math.max(
+            -.25,
+            Math.min(.8,pitch)
+        );
+    }
+);
+
+function stopLook(e){
+
+    if(e.pointerId===lookPointer){
+        lookPointer=null;
+    }
+}
+
+renderer.domElement.addEventListener(
+    "pointerup",
+    stopLook
+);
+
+renderer.domElement.addEventListener(
+    "pointercancel",
+    stopLook
+);
+
+/* =====================================================
+   KEYBOARD
+===================================================== */
+
+const keys={
+    w:false,
+    a:false,
+    s:false,
+    d:false
+};
 
 window.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft")input.left=true;
-  if(e.key==="ArrowRight")input.right=true;
-  if(e.key==="ArrowUp")input.up=true;
-  if(e.key==="ArrowDown")input.down=true;
+
+    if(e.key==="w"||e.key==="ArrowUp")keys.w=true;
+    if(e.key==="a"||e.key==="ArrowLeft")keys.a=true;
+    if(e.key==="s"||e.key==="ArrowDown")keys.s=true;
+    if(e.key==="d"||e.key==="ArrowRight")keys.d=true;
 });
 
 window.addEventListener("keyup",e=>{
-  if(e.key==="ArrowLeft")input.left=false;
-  if(e.key==="ArrowRight")input.right=false;
-  if(e.key==="ArrowUp")input.up=false;
-  if(e.key==="ArrowDown")input.down=false;
+
+    if(e.key==="w"||e.key==="ArrowUp")keys.w=false;
+    if(e.key==="a"||e.key==="ArrowLeft")keys.a=false;
+    if(e.key==="s"||e.key==="ArrowDown")keys.s=false;
+    if(e.key==="d"||e.key==="ArrowRight")keys.d=false;
 });
 
-/* =========================
-   WORLD
-========================= */
+/* =====================================================
+   PLAYER MOVEMENT
+===================================================== */
 
-/*
-  The world is mathematically infinite.
-  Objects are generated from their world coordinates,
-  so there is no giant map to run out of.
-*/
+let health=100;
+let gameOver=false;
 
-const CELL=420;
+function movePlayer(){
 
-function hash(x,y){
-  let n=x*374761393+y*668265263;
-  n=(n^(n>>>13))*1274126177;
-  n=n^(n>>>16);
-  return (n>>>0)/4294967295;
-}
+    if(gameOver)return;
 
-function wrap(v){
-  const SIZE=1000000000;
+    let forward=-movement.y;
+    let sideways=movement.x;
 
-  if(v>SIZE)v-=SIZE;
-  if(v<-SIZE)v+=SIZE;
+    if(keys.w)forward=1;
+    if(keys.s)forward=-1;
+    if(keys.a)sideways=-1;
+    if(keys.d)sideways=1;
 
-  return v;
-}
+    const length=Math.hypot(
+        forward,
+        sideways
+    );
 
-/* =========================
-   PLAYER
-========================= */
+    if(length>1){
 
-const player={
-  x:0,
-  y:0,
-  speed:4.2,
-  radius:20,
-  health:100,
-  invincible:0
-};
-
-/* =========================
-   PREDATORS
-========================= */
-
-const predators=[];
-
-function createPredator(x,y,type){
-  predators.push({
-    x:x,
-    y:y,
-    type:type,
-    radius:type==="tiger"?25:20,
-    speed:type==="tiger"?0.75:0.55,
-    angle:Math.random()*Math.PI*2,
-    wander:0
-  });
-}
-
-/* A few predators start near the player. */
-
-createPredator(700,220,"tiger");
-createPredator(-700,-350,"wolf");
-createPredator(900,-650,"tiger");
-
-/* =========================
-   FIXED ANTS
-========================= */
-
-/*
-  Ants are anchored to world cells.
-  They do NOT wander around.
-  They only make a tiny slow animation.
-*/
-
-function antAt(cx,cy){
-  const r=hash(cx*3+17,cy*5+31);
-
-  if(r<0.43)return null;
-
-  return {
-    x:cx*CELL+90+hash(cx+4,cy+9)*240,
-    y:cy*CELL+90+hash(cx+12,cy+15)*240,
-    phase:hash(cx+30,cy+50)*6.28
-  };
-}
-
-/* =========================
-   DRAW WORLD
-========================= */
-
-function drawGround(){
-  ctx.fillStyle="#8fcf70";
-  ctx.fillRect(0,0,W,H);
-
-  const startX=Math.floor((player.x-W/2)/CELL)-2;
-  const endX=Math.floor((player.x+W/2)/CELL)+2;
-
-  const startY=Math.floor((player.y-H/2)/CELL)-2;
-  const endY=Math.floor((player.y+H/2)/CELL)+2;
-
-  for(let cy=startY;cy<=endY;cy++){
-    for(let cx=startX;cx<=endX;cx++){
-
-      const sx=cx*CELL-player.x+W/2;
-      const sy=cy*CELL-player.y+H/2;
-
-      const r=hash(cx,cy);
-
-      if(r<0.25){
-        ctx.fillStyle="#76bd5d";
-        ctx.fillRect(sx,sy,CELL,CELL);
-      }else if(r<0.5){
-        ctx.fillStyle="#84c968";
-        ctx.fillRect(sx,sy,CELL,CELL);
-      }
-
-      drawPlants(cx,cy,sx,sy);
+        forward/=length;
+        sideways/=length;
     }
-  }
-}
 
-/* =========================
-   PLANTS
-========================= */
-
-function drawPlants(cx,cy,sx,sy){
-
-  const amount=2+Math.floor(hash(cx+71,cy+93)*4);
-
-  for(let i=0;i<amount;i++){
-
-    const px=sx+hash(cx*7+i+1,cy*11+i+4)*CELL;
-    const py=sy+hash(cx*13+i+8,cy*17+i+9)*CELL;
-
-    if(px<-50||px>W+50||py<-50||py>H+50)continue;
-
-    const size=12+hash(cx+i,cy-i)*18;
-
-    ctx.fillStyle="#4d9c43";
-
-    ctx.beginPath();
-    ctx.arc(px,py,size,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle="#2e7938";
-
-    ctx.beginPath();
-    ctx.arc(px-size*.45,py+size*.2,size*.55,0,Math.PI*2);
-    ctx.arc(px+size*.45,py+size*.2,size*.55,0,Math.PI*2);
-    ctx.fill();
-  }
-}
-
-/* =========================
-   ANTS
-========================= */
-
-function drawAnts(time){
-
-  const startX=Math.floor((player.x-W/2)/CELL)-2;
-  const endX=Math.floor((player.x+W/2)/CELL)+2;
-
-  const startY=Math.floor((player.y-H/2)/CELL)-2;
-  const endY=Math.floor((player.y+H/2)/CELL)+2;
-
-  for(let cy=startY;cy<=endY;cy++){
-    for(let cx=startX;cx<=endX;cx++){
-
-      const ant=antAt(cx,cy);
-
-      if(!ant)continue;
-
-      const sx=ant.x-player.x+W/2;
-      const sy=ant.y-player.y+H/2;
-
-      if(sx<-60||sx>W+60||sy<-60||sy>H+60)continue;
-
-      /*
-        Very small movement only.
-        The ant remains in its own spot.
-      */
-
-      const tiny=Math.sin(time*.00035+ant.phase)*2;
-
-      const x=sx;
-      const y=sy+tiny;
-
-      /* shadow */
-
-      ctx.fillStyle="rgba(0,0,0,.18)";
-      ctx.beginPath();
-      ctx.ellipse(x,y+7,13,5,0,0,Math.PI*2);
-      ctx.fill();
-
-      /* body */
-
-      ctx.fillStyle="#34251d";
-
-      ctx.beginPath();
-      ctx.ellipse(x,y,10,7,0,0,Math.PI*2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(x-9,y,5,0,Math.PI*2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(x+8,y,5,0,Math.PI*2);
-      ctx.fill();
-
-      /* legs */
-
-      ctx.strokeStyle="#34251d";
-      ctx.lineWidth=2;
-
-      for(let l=-1;l<=1;l++){
-
-        ctx.beginPath();
-        ctx.moveTo(x-5,y+l*3);
-        ctx.lineTo(x-15,y+l*7);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(x+5,y+l*3);
-        ctx.lineTo(x+15,y+l*7);
-        ctx.stroke();
-      }
-    }
-  }
-}
-
-/* =========================
-   ANIMAL SHADOWS
-========================= */
-
-function drawAnimalShadow(x,y,size){
-
-  ctx.fillStyle="rgba(0,0,0,.28)";
-
-  ctx.beginPath();
-  ctx.ellipse(
-    x,
-    y+size*.45,
-    size*1.15,
-    size*.38,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-}
-
-/* =========================
-   ANIMALS
-========================= */
-
-function drawTiger(x,y){
-
-  drawAnimalShadow(x,y,25);
-
-  ctx.fillStyle="#d88b32";
-
-  ctx.beginPath();
-  ctx.ellipse(x,y,26,17,0,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="#222";
-
-  for(let i=-2;i<=2;i++){
-    ctx.fillRect(x+i*9-2,y-13,4,26);
-  }
-
-  ctx.fillStyle="#d88b32";
-
-  ctx.beginPath();
-  ctx.arc(x+25,y-5,12,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="#111";
-
-  ctx.beginPath();
-  ctx.arc(x+29,y-7,2.5,0,Math.PI*2);
-  ctx.fill();
-}
-
-function drawWolf(x,y){
-
-  drawAnimalShadow(x,y,20);
-
-  ctx.fillStyle="#656b72";
-
-  ctx.beginPath();
-  ctx.ellipse(x,y,23,15,0,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(x+22,y-5,12,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="#333";
-
-  ctx.beginPath();
-  ctx.moveTo(x+14,y-14);
-  ctx.lineTo(x+18,y-30);
-  ctx.lineTo(x+25,y-16);
-  ctx.fill();
-
-  ctx.fillStyle="#111";
-
-  ctx.beginPath();
-  ctx.arc(x+26,y-7,2.5,0,Math.PI*2);
-  ctx.fill();
-}
-
-/* =========================
-   PREDATOR UPDATE
-========================= */
-
-function updatePredators(){
-
-  for(const a of predators){
-
-    const dx=player.x-a.x;
-    const dy=player.y-a.y;
-
-    const distance=Math.hypot(dx,dy);
+    const speed=.14;
 
     /*
-      Animals chase the player only when reasonably close.
+      NORMAL CONTROLS:
+      joystick up = forward
+      joystick down = backward
+      joystick left = left
+      joystick right = right
     */
 
-    if(distance<700){
+    const forwardX=Math.sin(yaw);
+    const forwardZ=Math.cos(yaw);
 
-      a.x+=dx/distance*a.speed;
-      a.y+=dy/distance*a.speed;
+    const rightX=Math.cos(yaw);
+    const rightZ=-Math.sin(yaw);
 
-    }else{
+    player.position.x+=
+        (forwardX*forward+
+         rightX*sideways)*speed;
 
-      a.wander+=0.01;
+    player.position.z+=
+        (forwardZ*forward+
+         rightZ*sideways)*speed;
 
-      a.x+=Math.cos(a.wander+a.angle)*.12;
-      a.y+=Math.sin(a.wander+a.angle)*.12;
-    }
+    /* keep the world playable */
 
-    const hitDistance=a.radius+player.radius;
+    player.position.x=
+        THREE.MathUtils.clamp(
+            player.position.x,
+            -470,
+            470
+        );
 
-    if(
-      distance<hitDistance &&
-      player.invincible<=0
-    ){
-
-      player.health-=8;
-      player.invincible=50;
-
-      a.x-=dx/distance*80;
-      a.y-=dy/distance*80;
-    }
-
-    /*
-      Keep the world effectively endless by wrapping predators.
-    */
-
-    a.x=wrap(a.x);
-    a.y=wrap(a.y);
-  }
-}
-
-/* =========================
-   DRAW PREDATORS
-========================= */
-
-function drawPredators(){
-
-  for(const a of predators){
-
-    const x=a.x-player.x+W/2;
-    const y=a.y-player.y+H/2;
-
-    if(x<-100||x>W+100||y<-100||y>H+100)continue;
-
-    if(a.type==="tiger"){
-      drawTiger(x,y);
-    }else{
-      drawWolf(x,y);
-    }
-  }
-}
-
-/* =========================
-   PLAYER MANTIS
-========================= */
-
-function drawPlayer(){
-
-  const x=W/2;
-  const y=H/2;
-
-  ctx.save();
-
-  if(player.invincible>0){
-    ctx.globalAlpha=
-      Math.floor(player.invincible/5)%2===0
-      ? .35
-      : 1;
-  }
-
-  /* shadow */
-
-  ctx.fillStyle="rgba(0,0,0,.25)";
-  ctx.beginPath();
-  ctx.ellipse(x,y+24,25,9,0,0,Math.PI*2);
-  ctx.fill();
-
-  /* body */
-
-  ctx.fillStyle="#3e8f39";
-
-  ctx.beginPath();
-  ctx.ellipse(x,y+10,18,28,0,0,Math.PI*2);
-  ctx.fill();
-
-  /* head */
-
-  ctx.fillStyle="#63ae43";
-
-  ctx.beginPath();
-  ctx.arc(x,y-19,18,0,Math.PI*2);
-  ctx.fill();
-
-  /* eyes */
-
-  ctx.fillStyle="#172016";
-
-  ctx.beginPath();
-  ctx.arc(x-7,y-22,4,0,Math.PI*2);
-  ctx.arc(x+7,y-22,4,0,Math.PI*2);
-  ctx.fill();
-
-  /* arms */
-
-  ctx.strokeStyle="#367633";
-  ctx.lineWidth=6;
-  ctx.lineCap="round";
-
-  ctx.beginPath();
-
-  ctx.moveTo(x-12,y-1);
-  ctx.lineTo(x-35,y-17);
-  ctx.lineTo(x-43,y-5);
-
-  ctx.moveTo(x+12,y-1);
-  ctx.lineTo(x+35,y-17);
-  ctx.lineTo(x+43,y-5);
-
-  ctx.stroke();
-
-  /* legs */
-
-  ctx.lineWidth=5;
-
-  ctx.beginPath();
-
-  ctx.moveTo(x-9,y+30);
-  ctx.lineTo(x-25,y+45);
-
-  ctx.moveTo(x+9,y+30);
-  ctx.lineTo(x+25,y+45);
-
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-/* =========================
-   HEALTH BAR
-========================= */
-
-function drawHealth(){
-
-  const width=150;
-  const height=12;
-
-  const x=18;
-  const y=18;
-
-  ctx.fillStyle="rgba(0,0,0,.35)";
-  ctx.fillRect(x,y,width,height);
-
-  ctx.fillStyle="#59b94a";
-  ctx.fillRect(
-    x,
-    y,
-    width*Math.max(0,player.health/100),
-    height
-  );
-}
-
-/* =========================
-   MAIN LOOP
-========================= */
-
-let previous=performance.now();
-
-function loop(now){
-
-  const dt=Math.min(
-    (now-previous)/16.666,
-    2
-  );
-
-  previous=now;
-
-  /*
-    NORMAL CONTROLS:
-    left  = x decreases
-    right = x increases
-    up    = y decreases
-    down  = y increases
-
-    Nothing is inverted.
-  */
-
-  const speed=player.speed*dt;
-
-  if(input.left)player.x-=speed;
-  if(input.right)player.x+=speed;
-  if(input.up)player.y-=speed;
-  if(input.down)player.y+=speed;
-
-  player.x=wrap(player.x);
-  player.y=wrap(player.y);
-
-  if(player.invincible>0){
-    player.invincible-=dt;
-  }
-
-  updatePredators();
-
-  drawGround();
-  drawAnts(now);
-  drawPredators();
-  drawPlayer();
-  drawHealth();
-
-  requestAnimationFrame(loop);
-}
-
-requestAnimationFrame(loop);
-
-</script>
-</body>
-</html>
+    pla
