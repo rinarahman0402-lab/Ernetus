@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ernetus - Games</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: white;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      background: linear-gradient(135deg, #123c2c, #1c6547);
+    }
+
+    header h1 {
+      font-size: 48px;
+      margin: 0 0 15px;
+    }
+
+    header p {
+      font-size: 20px;
+      margin: 0;
+      color: #d8f3e5;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 25px;
+    }
+
+    .game {
+      background: #1b2730;
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .game .emoji {
+      font-size: 55px;
+    }
+
+    .game h3 {
+      font-size: 26px;
+      margin: 15px 0 10px;
+    }
+
+    .game p {
+      color: #c8d1d6;
+      line-height: 1.5;
+    }
+
+    .play {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 14px 25px;
+      border-radius: 12px;
+      background: #42b883;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .play:hover {
+      background: #35a372;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #9da8ae;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🎮 Ernetus</h1>
+    <p>A collection of games made with imagination ✨</p>
+  </header>
+
+  <main class="container">
+
+    <h2>Our Games</h2>
+
+    <div class="games">
+
+      <div class="game">
+        <div class="emoji">🌿</div>
+
+        <h3>Path of Good Deeds</h3>
+
+        <p>
+          Explore a peaceful neighborhood, help people,
+          care for the community, and make time for salat.
+        </p>
+
+        <a class="play" href="path-of-good-deeds.html">
+          ▶ Play Game
+        </a>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer>
+    © 2026 Ernetus · More games coming soon 🎮
+  </footer>
+
+</body>
+</html>
