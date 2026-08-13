@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Mantis Adventure</title>
 
 <style>
@@ -11,54 +11,47 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#78bce0;
+  background:#79bce0;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
 }
 
 canvas{
+  display:block;
   width:100%;
   height:100%;
-  display:block;
-  touch-action:none;
+}
+
+#game{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
 }
 
 #controls{
   position:fixed;
-  left:0;
-  right:0;
-  bottom:15px;
-  height:150px;
+  inset:0;
   pointer-events:none;
 }
 
 .control{
   position:absolute;
-  width:75px;
-  height:55px;
-  border-radius:18px;
-  border:2px solid rgba(255,255,255,.5);
-  background:rgba(20,50,30,.7);
+  width:74px;
+  height:74px;
+  border:0;
+  padding:0;
+  background:rgba(255,255,255,.18);
+  border-radius:22px;
   pointer-events:auto;
   touch-action:none;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
 }
 
-#forward{
-  left:calc(50% - 37px);
-  top:0;
-}
-
-#back{
-  left:calc(50% - 37px);
-  bottom:0;
-}
-
-#left{
-  left:12px;
-  top:45px;
-}
-
-#right{
-  right:12px;
-  top:45px;
+.control:active{
+  background:rgba(255,255,255,.35);
+  transform:scale(.94);
 }
 
 .triangle{
@@ -67,875 +60,998 @@ canvas{
   margin:auto;
 }
 
-.up{
-  border-left:14px solid transparent;
-  border-right:14px solid transparent;
-  border-bottom:22px solid white;
+.up .triangle{
+  border-left:17px solid transparent;
+  border-right:17px solid transparent;
+  border-bottom:28px solid white;
 }
 
-.down{
-  border-left:14px solid transparent;
-  border-right:14px solid transparent;
-  border-top:22px solid white;
+.down .triangle{
+  border-left:17px solid transparent;
+  border-right:17px solid transparent;
+  border-top:28px solid white;
 }
 
-.leftShape{
-  border-top:14px solid transparent;
-  border-bottom:14px solid transparent;
-  border-right:22px solid white;
+.left .triangle{
+  border-top:17px solid transparent;
+  border-bottom:17px solid transparent;
+  border-right:28px solid white;
 }
 
-.rightShape{
-  border-top:14px solid transparent;
-  border-bottom:14px solid transparent;
-  border-left:22px solid white;
+.right .triangle{
+  border-top:17px solid transparent;
+  border-bottom:17px solid transparent;
+  border-left:28px solid white;
 }
 
-#startScreen{
+#forward{
+  left:calc(50% - 37px);
+  bottom:118px;
+}
+
+#back{
+  left:calc(50% - 37px);
+  bottom:22px;
+}
+
+#left{
+  left:18px;
+  bottom:70px;
+}
+
+#right{
+  right:18px;
+  bottom:70px;
+}
+
+#message{
   position:fixed;
-  inset:0;
-  background:#102718;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  z-index:20;
-}
-
-.startBox{
-  max-width:420px;
-  padding:30px;
-}
-
-#start{
-  padding:16px 30px;
-  border:0;
-  border-radius:15px;
-  font-size:20px;
-  font-weight:bold;
-}
-
-#hud{
-  position:fixed;
-  top:10px;
-  left:10px;
-  right:10px;
-  color:white;
-  font-family:Arial,sans-serif;
-  font-weight:bold;
-  text-shadow:0 2px 4px black;
-  display:flex;
-  justify-content:space-between;
-  pointer-events:none;
-}
-
-#warning{
-  position:fixed;
-  top:18%;
   left:50%;
+  top:12%;
   transform:translateX(-50%);
-  padding:12px 20px;
-  border-radius:15px;
-  background:rgba(150,0,0,.8);
+  width:80%;
+  max-width:520px;
+  text-align:center;
+  font-family:Arial,sans-serif;
+  font-size:25px;
+  font-weight:bold;
   color:white;
-  font:bold 20px Arial;
-  display:none;
+  text-shadow:0 3px 8px #000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s;
+}
+
+#message.show{
+  opacity:1;
+}
+
+#dot{
+  position:fixed;
+  left:50%;
+  top:50%;
+  width:7px;
+  height:7px;
+  margin:-3px;
+  border-radius:50%;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 0 4px #000;
+  pointer-events:none;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="game"></canvas>
+<div id="game"></div>
 
-<div id="hud">
-  <div>ANTS: <span id="score">0</span>/10</div>
-  <div>LIVES: <span id="lives">3</span></div>
-</div>
+<div id="dot"></div>
 
-<div id="warning">RUN!</div>
+<div id="message"></div>
 
 <div id="controls">
 
-  <button class="control" id="forward">
-    <div class="triangle up"></div>
+  <button class="control up" id="forward">
+    <div class="triangle"></div>
   </button>
 
-  <button class="control" id="back">
-    <div class="triangle down"></div>
+  <button class="control down" id="back">
+    <div class="triangle"></div>
   </button>
 
-  <button class="control" id="left">
-    <div class="triangle leftShape"></div>
+  <button class="control left" id="left">
+    <div class="triangle"></div>
   </button>
 
-  <button class="control" id="right">
-    <div class="triangle rightShape"></div>
+  <button class="control right" id="right">
+    <div class="triangle"></div>
   </button>
 
 </div>
 
-<div id="startScreen">
-  <div class="startBox">
-    <h1>Mantis Adventure</h1>
-    <p>You are a tiny mantis exploring an enormous world.</p>
-    <p>Find tiny ants, avoid giant animals, and run when a giant shadow appears.</p>
-    <button id="start">START</button>
-  </div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
 <script>
+/* =========================================================
+   MANTIS ADVENTURE
+   First-person 3D exploration
+   ========================================================= */
 
-const canvas=document.getElementById("game");
-const gl=canvas.getContext("webgl");
+const scene = new THREE.Scene();
 
-if(!gl){
-  alert("This browser does not support 3D WebGL.");
-}
+scene.background = new THREE.Color(0x78bce0);
 
-const vertexShaderSource=`
-
-attribute vec3 position;
-attribute vec3 normal;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-varying vec3 vNormal;
-
-void main(){
-
-  vNormal=normal;
-
-  gl_Position=
-    projection*
-    view*
-    model*
-    vec4(position,1.0);
-
-}
-`;
-
-const fragmentShaderSource=`
-
-precision mediump float;
-
-uniform vec3 color;
-
-varying vec3 vNormal;
-
-void main(){
-
-  vec3 light=normalize(vec3(3.0,8.0,4.0));
-
-  float brightness=
-    max(dot(normalize(vNormal),light),0.0);
-
-  brightness=.35+brightness*.65;
-
-  gl_FragColor=
-    vec4(color*brightness,1.0);
-
-}
-`;
-
-function shader(type,source){
-
-  const s=gl.createShader(type);
-
-  gl.shaderSource(s,source);
-
-  gl.compileShader(s);
-
-  return s;
-
-}
-
-const program=gl.createProgram();
-
-gl.attachShader(
-  program,
-  shader(gl.VERTEX_SHADER,vertexShaderSource)
+scene.fog = new THREE.Fog(
+  0x78bce0,
+  70,
+  430
 );
 
-gl.attachShader(
-  program,
-  shader(gl.FRAGMENT_SHADER,fragmentShaderSource)
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
+const camera = new THREE.PerspectiveCamera(
+  72,
+  innerWidth / innerHeight,
+  0.05,
+  900
 );
 
-gl.linkProgram(program);
-
-gl.useProgram(program);
-
-const positionLocation=
-  gl.getAttribLocation(program,"position");
-
-const normalLocation=
-  gl.getAttribLocation(program,"normal");
-
-const modelLocation=
-  gl.getUniformLocation(program,"model");
-
-const viewLocation=
-  gl.getUniformLocation(program,"view");
-
-const projectionLocation=
-  gl.getUniformLocation(program,"projection");
-
-const colorLocation=
-  gl.getUniformLocation(program,"color");
+camera.position.set(0,2.4,0);
 
 
-function cube(){
+/* =========================================================
+   RENDERER
+   ========================================================= */
 
-  const data=[];
+const renderer = new THREE.WebGLRenderer({
+  antialias:true,
+  powerPreference:"high-performance"
+});
 
-  function face(a,b,c,d,n){
+renderer.setPixelRatio(
+  Math.min(devicePixelRatio,1.7)
+);
 
-    const vertices=[
+renderer.setSize(
+  innerWidth,
+  innerHeight
+);
 
-      [-.5,-.5,-.5],
-      [.5,-.5,-.5],
-      [.5,.5,-.5],
-      [-.5,.5,-.5],
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-      [-.5,-.5,.5],
-      [.5,-.5,.5],
-      [.5,.5,.5],
-      [-.5,.5,.5]
+document.getElementById("game").appendChild(
+  renderer.domElement
+);
 
-    ];
 
-    const ids=[
-      a,b,c,
-      a,c,d
-    ];
+/* =========================================================
+   LIGHT
+   ========================================================= */
 
-    for(let id of ids){
+const skyLight = new THREE.HemisphereLight(
+  0xcceeff,
+  0x315225,
+  1.25
+);
 
-      data.push(
-        vertices[id][0],
-        vertices[id][1],
-        vertices[id][2],
+scene.add(skyLight);
 
-        n[0],n[1],n[2]
+
+const sun = new THREE.DirectionalLight(
+  0xffffff,
+  1.45
+);
+
+sun.position.set(
+  80,
+  140,
+  70
+);
+
+sun.castShadow = true;
+
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
+
+sun.shadow.camera.left = -180;
+sun.shadow.camera.right = 180;
+sun.shadow.camera.top = 180;
+sun.shadow.camera.bottom = -180;
+
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 500;
+
+scene.add(sun);
+
+
+/* =========================================================
+   GROUND
+   ========================================================= */
+
+const groundMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x4e8d3b,
+    roughness:1
+  });
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(2200,2200),
+  groundMaterial
+);
+
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+
+scene.add(ground);
+
+
+/* =========================================================
+   PATH
+   ========================================================= */
+
+const pathMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x9c774c,
+    roughness:1
+  });
+
+const path = new THREE.Mesh(
+  new THREE.PlaneGeometry(2200,170),
+  pathMaterial
+);
+
+path.rotation.x = -Math.PI/2;
+path.position.y = 0.012;
+
+scene.add(path);
+
+
+/* =========================================================
+   RANDOM
+   ========================================================= */
+
+function random(min,max){
+  return min + Math.random()*(max-min);
+}
+
+function randomSign(){
+  return Math.random()<.5 ? -1 : 1;
+}
+
+
+/* =========================================================
+   TREES
+   ========================================================= */
+
+const trees = [];
+
+function makeTree(x,z,scale=1){
+
+  const tree = new THREE.Group();
+
+  const trunkMaterial =
+    new THREE.MeshStandardMaterial({
+      color:0x654126,
+      roughness:1
+    });
+
+  const leafMaterial =
+    new THREE.MeshStandardMaterial({
+      color:0x236b2d,
+      roughness:1
+    });
+
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      0.75*scale,
+      1.05*scale,
+      9*scale,
+      8
+    ),
+    trunkMaterial
+  );
+
+  trunk.position.y = 4.5*scale;
+  trunk.castShadow = true;
+  trunk.receiveShadow = true;
+
+  tree.add(trunk);
+
+
+  const crown1 = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      4.8*scale,
+      10,
+      8
+    ),
+    leafMaterial
+  );
+
+  crown1.position.y = 9*scale;
+  crown1.castShadow = true;
+
+  tree.add(crown1);
+
+
+  const crown2 = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      3.7*scale,
+      10,
+      8
+    ),
+    leafMaterial
+  );
+
+  crown2.position.set(
+    -2*scale,
+    11*scale,
+    1*scale
+  );
+
+  crown2.castShadow = true;
+
+  tree.add(crown2);
+
+
+  const crown3 = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      3.4*scale,
+      10,
+      8
+    ),
+    leafMaterial
+  );
+
+  crown3.position.set(
+    2*scale,
+    11*scale,
+    -1*scale
+  );
+
+  crown3.castShadow = true;
+
+  tree.add(crown3);
+
+
+  tree.position.set(x,0,z);
+
+  scene.add(tree);
+
+  trees.push(tree);
+
+  return tree;
+}
+
+
+/* =========================================================
+   CREATE FOREST
+   ========================================================= */
+
+for(let i=0;i<220;i++){
+
+  let x = random(-500,500);
+  let z = random(-500,500);
+
+  if(Math.abs(x)<25) continue;
+
+  if(Math.abs(z)<25) continue;
+
+  makeTree(
+    x,
+    z,
+    random(.75,1.45)
+  );
+}
+
+
+/* =========================================================
+   ROCKS
+   ========================================================= */
+
+const rocks = [];
+
+function makeRock(x,z,s){
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color:0x697269,
+      roughness:1
+    });
+
+  const rock = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+      s,
+      0
+    ),
+    material
+  );
+
+  rock.position.set(
+    x,
+    s*.5,
+    z
+  );
+
+  rock.rotation.set(
+    random(0,Math.PI),
+    random(0,Math.PI),
+    random(0,Math.PI)
+  );
+
+  rock.scale.y = random(.5,1);
+
+  rock.castShadow = true;
+  rock.receiveShadow = true;
+
+  scene.add(rock);
+
+  rocks.push(rock);
+}
+
+for(let i=0;i<160;i++){
+
+  makeRock(
+    random(-500,500),
+    random(-500,500),
+    random(.4,1.5)
+  );
+}
+
+
+/* =========================================================
+   ANT MATERIALS
+   ========================================================= */
+
+const antBodyMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x321b0b,
+    roughness:.9
+  });
+
+const antHeadMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x47220c,
+    roughness:.9
+  });
+
+
+/* =========================================================
+   ANT CREATION
+   ========================================================= */
+
+const ants = [];
+
+function makeAnt(x,z){
+
+  const ant = new THREE.Group();
+
+  const abdomen = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      1.15,
+      10,
+      8
+    ),
+    antBodyMaterial
+  );
+
+  abdomen.scale.set(
+    1.35,
+    .8,
+    1.65
+  );
+
+  abdomen.position.z = .95;
+
+  ant.add(abdomen);
+
+
+  const thorax = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .85,
+      10,
+      8
+    ),
+    antBodyMaterial
+  );
+
+  ant.add(thorax);
+
+
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .72,
+      10,
+      8
+    ),
+    antHeadMaterial
+  );
+
+  head.position.z = -.95;
+
+  ant.add(head);
+
+
+  /* legs */
+
+  for(let side=-1;side<=1;side+=2){
+
+    for(let j=0;j<3;j++){
+
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          .11,
+          .16,
+          2.2,
+          6
+        ),
+        antBodyMaterial
       );
 
+      leg.position.set(
+        side*.9,
+        .1,
+        (j-1)*.65
+      );
+
+      leg.rotation.z =
+        side * Math.PI/3;
+
+      leg.rotation.x =
+        random(-.2,.2);
+
+      ant.add(leg);
     }
-
   }
 
-  face(0,1,2,3,[0,0,-1]);
-  face(5,4,7,6,[0,0,1]);
-  face(4,0,3,7,[-1,0,0]);
-  face(1,5,6,2,[1,0,0]);
-  face(3,2,6,7,[0,1,0]);
-  face(4,5,1,0,[0,-1,0]);
 
-  return makeMesh(data);
-
-}
-
-
-function cylinder(segments=12){
-
-  const data=[];
-
-  for(let i=0;i<segments;i++){
-
-    const a=i*Math.PI*2/segments;
-    const b=(i+1)*Math.PI*2/segments;
-
-    const x1=Math.cos(a);
-    const z1=Math.sin(a);
-
-    const x2=Math.cos(b);
-    const z2=Math.sin(b);
-
-    data.push(
-      x1,0,z1,x1,0,z1,
-      x2,0,z2,x2,0,z2,
-      x2,1,z2,x2,0,z2,
-
-      x1,0,z1,x1,0,z1,
-      x2,1,z2,x2,0,z2,
-      x1,1,z1,x1,0,z1
-    );
-
-  }
-
-  return makeMesh(data);
-
-}
-
-
-function makeMesh(data){
-
-  const buffer=gl.createBuffer();
-
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    buffer
+  ant.position.set(
+    x,
+    1.15,
+    z
   );
 
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(data),
-    gl.STATIC_DRAW
-  );
+  ant.scale.setScalar(1.45);
 
-  return {
-    buffer:buffer,
-    count:data.length/6
+  ant.castShadow = true;
+
+  ant.userData = {
+
+    homeX:x,
+    homeZ:z,
+
+    targetX:x,
+    targetZ:z,
+
+    alive:true,
+
+    nextMove:0,
+
+    speed:random(.08,.22)
+
   };
 
+  scene.add(ant);
+
+  ants.push(ant);
+
+  return ant;
 }
 
 
-const CUBE=cube();
-const CYLINDER=cylinder();
+/* =========================================================
+   ANT AREAS
+   ========================================================= */
 
+for(let i=0;i<14;i++){
 
-function identity(){
+  const x =
+    random(-300,300);
 
-  return [
+  const z =
+    random(-300,300);
 
-    1,0,0,0,
-    0,1,0,0,
-    0,0,1,0,
-    0,0,0,1
-
-  ];
+  makeAnt(x,z);
 
 }
 
 
-function multiply(a,b){
+/* =========================================================
+   ANIMAL MATERIALS
+   ========================================================= */
 
-  const out=new Array(16);
+const deerBodyMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x8b5a32,
+    roughness:1
+  });
 
-  for(let c=0;c<4;c++){
+const deerDarkMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x5d371c,
+    roughness:1
+  });
 
-    for(let r=0;r<4;r++){
+const elephantMaterial =
+  new THREE.MeshStandardMaterial({
+    color:0x777b78,
+    roughness:1
+  });
 
-      out[c*4+r]=
 
-        a[r]*b[c*4]+
-        a[4+r]*b[c*4+1]+
-        a[8+r]*b[c*4+2]+
-        a[12+r]*b[c*4+3];
+/* =========================================================
+   DEER
+   ========================================================= */
 
-    }
+const deer = [];
 
+function makeDeer(x,z){
+
+  const animal = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      4.2,
+      2.4,
+      7
+    ),
+    deerBodyMaterial
+  );
+
+  body.position.y = 5;
+
+  body.castShadow = true;
+
+  animal.add(body);
+
+
+  const neck = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      2,
+      5,
+      2
+    ),
+    deerBodyMaterial
+  );
+
+  neck.position.set(
+    0,
+    7.1,
+    -2.3
+  );
+
+  neck.rotation.x = -.25;
+
+  neck.castShadow = true;
+
+  animal.add(neck);
+
+
+  const head = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      2.1,
+      2.1,
+      3.2
+    ),
+    deerBodyMaterial
+  );
+
+  head.position.set(
+    0,
+    9.3,
+    -3.5
+  );
+
+  head.castShadow = true;
+
+  animal.add(head);
+
+
+  for(let side=-1;side<=1;side+=2){
+
+    const antler = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .15,
+        .2,
+        2.5,
+        6
+      ),
+      deerDarkMaterial
+    );
+
+    antler.position.set(
+      side*.75,
+      10.6,
+      -3.4
+    );
+
+    antler.rotation.z =
+      side*.35;
+
+    antler.castShadow = true;
+
+    animal.add(antler);
   }
 
-  return out;
 
-}
+  for(let side=-1;side<=1;side+=2){
 
+    for(let j=0;j<2;j++){
 
-function translation(x,y,z){
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          .35,
+          .42,
+          5
+        ),
+        deerDarkMaterial
+      );
 
-  const m=identity();
+      leg.position.set(
+        side*1.3,
+        2.5,
+        j===0 ? -1.8 : 1.8
+      );
 
-  m[12]=x;
-  m[13]=y;
-  m[14]=z;
+      leg.castShadow = true;
 
-  return m;
-
-}
-
-
-function scaling(x,y,z){
-
-  const m=identity();
-
-  m[0]=x;
-  m[5]=y;
-  m[10]=z;
-
-  return m;
-
-}
+      animal.add(leg);
+    }
+  }
 
 
-function rotationY(a){
-
-  const m=identity();
-
-  const c=Math.cos(a);
-  const s=Math.sin(a);
-
-  m[0]=c;
-  m[2]=-s;
-
-  m[8]=s;
-  m[10]=c;
-
-  return m;
-
-}
-
-
-function perspective(fov,aspect,near,far){
-
-  const f=1/Math.tan(fov/2);
-
-  const m=new Array(16).fill(0);
-
-  m[0]=f/aspect;
-  m[5]=f;
-
-  m[10]=(far+near)/(near-far);
-  m[11]=-1;
-
-  m[14]=
-    (2*far*near)/
-    (near-far);
-
-  return m;
-
-}
-
-
-/*
-IMPORTANT CONTROL FIX
-
-The camera always looks in the direction:
-
-X = sin(angle)
-Z = cos(angle)
-
-FORWARD uses that exact same direction.
-
-BACK uses the opposite direction.
-
-LEFT decreases the angle.
-
-RIGHT increases the angle.
-
-Therefore the movement cannot be opposite to the camera.
-*/
-
-function camera(x,y,z,angle){
-
-  const c=Math.cos(angle);
-  const s=Math.sin(angle);
-
-  const m=identity();
-
-  m[0]=c;
-  m[2]=-s;
-
-  m[8]=-s;
-  m[10]=-c;
-
-  m[12]=-c*x+s*z;
-  m[13]=-y;
-  m[14]=s*x+c*z;
-
-  return m;
-
-}
-
-
-function drawMesh(
-  mesh,
-  x,y,z,
-  sx,sy,sz,
-  rotation,
-  color
-){
-
-  const model=
-
-    multiply(
-      translation(x,y,z),
-      multiply(
-        rotationY(rotation),
-        scaling(sx,sy,sz)
-      )
-    );
-
-  const mv=
-    multiply(view,model);
-
-  const mvp=
-    multiply(projection,mv);
-
-  gl.uniformMatrix4fv(
-    modelLocation,
-    false,
-    new Float32Array(model)
-  );
-
-  gl.uniformMatrix4fv(
-    viewLocation,
-    false,
-    new Float32Array(view)
-  );
-
-  gl.uniformMatrix4fv(
-    projectionLocation,
-    false,
-    new Float32Array(projection)
-  );
-
-  gl.uniform3fv(
-    colorLocation,
-    color
-  );
-
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    mesh.buffer
-  );
-
-  gl.enableVertexAttribArray(
-    positionLocation
-  );
-
-  gl.vertexAttribPointer(
-    positionLocation,
-    3,
-    gl.FLOAT,
-    false,
-    24,
-    0
-  );
-
-  gl.enableVertexAttribArray(
-    normalLocation
-  );
-
-  gl.vertexAttribPointer(
-    normalLocation,
-    3,
-    gl.FLOAT,
-    false,
-    24,
-    12
-  );
-
-  gl.drawArrays(
-    gl.TRIANGLES,
+  animal.position.set(
+    x,
     0,
-    mesh.count
+    z
+  );
+
+  animal.userData = {
+
+    type:"deer",
+
+    targetX:x,
+    targetZ:z,
+
+    speed:random(1.1,2.2),
+
+    dangerTimer:random(2,8),
+
+    direction:random(0,Math.PI*2)
+
+  };
+
+  scene.add(animal);
+
+  deer.push(animal);
+
+  return animal;
+}
+
+
+for(let i=0;i<4;i++){
+
+  makeDeer(
+    random(-250,250),
+    random(-250,250)
   );
 
 }
 
 
-let W=innerWidth;
-let H=innerHeight;
+/* =========================================================
+   ELEPHANTS
+   ========================================================= */
 
-function resize(){
+const elephants = [];
 
-  const d=
-    Math.min(
-      window.devicePixelRatio||1,
-      2
-    );
+function makeElephant(x,z){
 
-  W=innerWidth;
-  H=innerHeight;
+  const animal = new THREE.Group();
 
-  canvas.width=W*d;
-  canvas.height=H*d;
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      5.5,
+      14,
+      10
+    ),
+    elephantMaterial
+  );
+
+  body.scale.set(
+    1.35,
+    1,
+    1.5
+  );
+
+  body.position.y = 8;
+
+  body.castShadow = true;
+
+  animal.add(body);
+
+
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      4,
+      12,
+      9
+    ),
+    elephantMaterial
+  );
+
+  head.position.set(
+    0,
+    8.7,
+    -5
+  );
+
+  head.castShadow = true;
+
+  animal.add(head);
+
+
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      .75,
+      1.05,
+      6,
+      10
+    ),
+    elephantMaterial
+  );
+
+  trunk.position.set(
+    0,
+    5.7,
+    -8
+  );
+
+  trunk.rotation.x =
+    -.45;
+
+  trunk.castShadow = true;
+
+  animal.add(trunk);
+
+
+  for(let side=-1;side<=1;side+=2){
+
+    for(let j=0;j<2;j++){
+
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          1,
+          1.3,
+          7
+        ),
+        elephantMaterial
+      );
+
+      leg.position.set(
+        side*3.4,
+        3.5,
+        j===0 ? -2.6 : 2.6
+      );
+
+      leg.castShadow = true;
+
+      animal.add(leg);
+    }
+  }
+
+
+  animal.position.set(
+    x,
+    0,
+    z
+  );
+
+  animal.userData = {
+
+    type:"elephant",
+
+    targetX:x,
+    targetZ:z,
+
+    speed:random(.7,1.25),
+
+    dangerTimer:random(4,10),
+
+    direction:random(0,Math.PI*2)
+
+  };
+
+  scene.add(animal);
+
+  elephants.push(animal);
+
+  return animal;
+}
+
+
+for(let i=0;i<3;i++){
+
+  makeElephant(
+    random(-300,300),
+    random(-300,300)
+  );
 
 }
 
-resize();
 
-addEventListener(
-  "resize",
-  resize
-);
+/* =========================================================
+   PLAYER
+   ========================================================= */
 
-
-const player={
+const player = {
 
   x:0,
+
   z:0,
 
   angle:0,
 
-  height:.45
+  speed:8,
+
+  turnSpeed:1.8,
+
+  alive:true,
+
+  caught:0,
+
+  goal:8
 
 };
 
 
-let trees=[];
-let ants=[];
-let animals=[];
+/* =========================================================
+   CONTROLS
+   ========================================================= */
 
-let score=0;
-let lives=3;
+const keys = {
 
-let running=false;
+  forward:false,
 
-let lastTime=0;
+  back:false,
 
-const keys={};
+  left:false,
 
+  right:false
+};
 
-function random(a,b){
 
-  return a+
-    Math.random()*
-    (b-a);
+function touchButton(id,key){
 
-}
-
-
-function distance(a,b,c,d){
-
-  return Math.hypot(
-    a-c,
-    b-d
-  );
-
-}
-
-
-function createWorld(){
-
-  trees=[];
-  ants=[];
-
-  /*
-  The ground is enormous and follows the player,
-  so there is no giant empty void.
-  */
-
-  for(let i=0;i<180;i++){
-
-    const angle=
-      Math.random()*
-      Math.PI*2;
-
-    const distanceFromPlayer=
-      5+
-      Math.random()*75;
-
-    trees.push({
-
-      x:
-        player.x+
-        Math.cos(angle)*
-        distanceFromPlayer,
-
-      z:
-        player.z+
-        Math.sin(angle)*
-        distanceFromPlayer,
-
-      height:
-        3+
-        Math.random()*4,
-
-      radius:
-        .4+
-        Math.random()*.5
-
-    });
-
-  }
-
-
-  /*
-  Ants are small and stay approximately where
-  they spawned.
-  */
-
-  for(let i=0;i<15;i++){
-
-    const angle=
-      Math.random()*
-      Math.PI*2;
-
-    const d=
-      5+
-      Math.random()*40;
-
-    ants.push({
-
-      x:
-        player.x+
-        Math.cos(angle)*d,
-
-      z:
-        player.z+
-        Math.sin(angle)*d,
-
-      alive:true,
-
-      speed:
-        .03+
-        Math.random()*.05
-
-    });
-
-  }
-
-
-  animals=[
-
-    {
-      type:"deer",
-      x:player.x+18,
-      z:player.z+25,
-      active:false,
-      timer:0
-    },
-
-    {
-      type:"elephant",
-      x:player.x-20,
-      z:player.z+32,
-      active:false,
-      timer:0
-    }
-
-  ];
-
-}
-
-
-function updateWorld(){
-
-  /*
-  Move the world with the player by creating more
-  objects around the new location.
-  */
-
-  while(trees.length<180){
-
-    const angle=
-      Math.random()*
-      Math.PI*2;
-
-    const d=
-      40+
-      Math.random()*60;
-
-    trees.push({
-
-      x:
-        player.x+
-        Math.cos(angle)*d,
-
-      z:
-        player.z+
-        Math.sin(angle)*d,
-
-      height:
-        3+
-        Math.random()*4,
-
-      radius:
-        .4+
-        Math.random()*.5
-
-    });
-
-  }
-
-}
-
-
-function resetGame(){
-
-  player.x=0;
-  player.z=0;
-  player.angle=0;
-
-  score=0;
-  lives=3;
-
-  document.getElementById(
-    "score"
-  ).textContent=score;
-
-  document.getElementById(
-    "lives"
-  ).textContent=lives;
-
-  createWorld();
-
-}
-
-
-function startGame(){
-
-  resetGame();
-
-  running=true;
-
-  document.getElementById(
-    "startScreen"
-  ).style.display="none";
-
-  lastTime=
-    performance.now();
-
-  requestAnimationFrame(loop);
-
-}
-
-
-document.getElementById(
-  "start"
-).onclick=startGame;
-
-
-/*
-Keyboard controls are optional.
-
-The phone buttons do NOT contain keyboard symbols.
-*/
-
-addEventListener(
-  "keydown",
-  e=>{
-    keys[e.key.toLowerCase()]=true;
-  }
-);
-
-addEventListener(
-  "keyup",
-  e=>{
-    keys[e.key.toLowerCase()]=false;
-  }
-);
-
-
-function touchButton(
-  id,
-  key
-){
-
-  const button=
+  const button =
     document.getElementById(id);
+
 
   function down(e){
 
     e.preventDefault();
 
-    keys[key]=true;
+    keys[key] = true;
 
+    if(button.setPointerCapture){
+
+      try{
+        button.setPointerCapture(e.pointerId);
+      }catch(_){}
+    }
   }
+
 
   function up(e){
 
     e.preventDefault();
 
-    keys[key]=false;
-
+    keys[key] = false;
   }
+
 
   button.addEventListener(
     "pointerdown",
@@ -955,677 +1071,295 @@ function touchButton(
     {passive:false}
   );
 
+  button.addEventListener(
+    "pointerleave",
+    up,
+    {passive:false}
+  );
 }
 
 
-touchButton(
-  "forward",
-  "forwardButton"
+touchButton("forward","forward");
+touchButton("back","back");
+touchButton("left","left");
+touchButton("right","right");
+
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+addEventListener(
+  "keydown",
+  e=>{
+
+    const k =
+      e.key.toLowerCase();
+
+    if(k==="w" || k==="arrowup")
+      keys.forward=true;
+
+    if(k==="s" || k==="arrowdown")
+      keys.back=true;
+
+    if(k==="a" || k==="arrowleft")
+      keys.left=true;
+
+    if(k==="d" || k==="arrowright")
+      keys.right=true;
+  }
 );
 
-touchButton(
-  "back",
-  "backButton"
+
+addEventListener(
+  "keyup",
+  e=>{
+
+    const k =
+      e.key.toLowerCase();
+
+    if(k==="w" || k==="arrowup")
+      keys.forward=false;
+
+    if(k==="s" || k==="arrowdown")
+      keys.back=false;
+
+    if(k==="a" || k==="arrowleft")
+      keys.left=false;
+
+    if(k==="d" || k==="arrowright")
+      keys.right=false;
+  }
 );
 
-touchButton(
-  "left",
-  "leftButton"
-);
 
-touchButton(
-  "right",
-  "rightButton"
-);
+/* =========================================================
+   NATURAL MOVEMENT
+   ========================================================= */
 
+function updatePlayer(dt){
 
-let view;
-let projection;
+  if(!player.alive)
+    return;
 
 
-function update(dt){
+  let forward = 0;
+
+  if(keys.forward)
+    forward += 1;
+
+  if(keys.back)
+    forward -= 1;
+
+
+  let turning = 0;
+
+  if(keys.right)
+    turning += 1;
+
+  if(keys.left)
+    turning -= 1;
+
 
   /*
-  NATURAL CONTROLS
-
-  Forward:
-  exactly where the camera is looking.
-
-  Back:
-  exactly opposite.
-
-  Left:
-  turn left.
-
-  Right:
-  turn right.
+    RIGHT turns right.
+    LEFT turns left.
+    No inversion.
   */
 
-  const forward=
-
-    keys.forwardButton||
-    keys.w||
-    keys.arrowup
-      ?1:0;
-
-  const backward=
-
-    keys.backButton||
-    keys.s||
-    keys.arrowdown
-      ?1:0;
-
-  const left=
-
-    keys.leftButton||
-    keys.a||
-    keys.arrowleft
-      ?1:0;
-
-  const right=
-
-    keys.rightButton||
-    keys.d||
-    keys.arrowright
-      ?1:0;
-
-
-  const movement=
-    forward-backward;
-
-  const turning=
-    right-left;
-
-
-  /*
-  Turning right increases the angle.
-  */
-
-  player.angle+=
-    turning*
-    2.0*
+  player.angle +=
+    turning *
+    player.turnSpeed *
     dt;
 
 
   /*
-  EXACT SAME VECTOR USED BY THE CAMERA.
+    The camera looks in the direction
+    of the same vector used for movement.
   */
 
-  const forwardX=
+  const forwardX =
     Math.sin(player.angle);
 
-  const forwardZ=
+  const forwardZ =
     Math.cos(player.angle);
 
 
-  player.x+=
-    forwardX*
-    movement*
-    3.0*
+  player.x +=
+    forwardX *
+    forward *
+    player.speed *
     dt;
 
-  player.z+=
-    forwardZ*
-    movement*
-    3.0*
+  player.z +=
+    forwardZ *
+    forward *
+    player.speed *
     dt;
-
-
-  updateWorld();
 
 
   /*
-  Ants move extremely slowly and do not flee.
+    Keep the world effectively endless.
+    The player never reaches an edge.
   */
+
+  const wrap = 900;
+
+  if(player.x > wrap)
+    player.x = -wrap;
+
+  if(player.x < -wrap)
+    player.x = wrap;
+
+  if(player.z > wrap)
+    player.z = -wrap;
+
+  if(player.z < -wrap)
+    player.z = wrap;
+}
+
+
+/* =========================================================
+   ANT AI
+   ========================================================= */
+
+function updateAnts(dt){
 
   for(const ant of ants){
 
-    if(!ant.alive)
+    if(!ant.userData.alive)
       continue;
 
-    ant.x+=
-      Math.sin(
-        ant.z*.1
-      )*
-      ant.speed*
-      dt;
 
-    ant.z+=
-      Math.cos(
-        ant.x*.1
-      )*
-      ant.speed*
-      dt;
+    ant.userData.nextMove -= dt;
 
 
-    if(
-      distance(
-        player.x,
-        player.z,
-        ant.x,
-        ant.z
-      )<.45
-    ){
+    if(ant.userData.nextMove <= 0){
 
-      ant.alive=false;
-
-      score++;
-
-      document.getElementById(
-        "score"
-      ).textContent=score;
-
-      if(score>=10){
-
-        running=false;
-
-        alert(
-          "You caught 10 ants!"
-        );
-
-      }
-
-    }
-
-  }
-
-
-  /*
-  GIANT ANIMALS
-  */
-
-  let danger=false;
-
-  for(const animal of animals){
-
-    let d=
-      distance(
-        player.x,
-        player.z,
-        animal.x,
-        animal.z
-      );
-
-
-    /*
-    If an animal is too far away,
-    move it somewhere else in the world.
-    */
-
-    if(d>70){
-
-      const a=
-        Math.random()*
-        Math.PI*2;
-
-      const far=
-        25+
-        Math.random()*20;
-
-      animal.x=
-        player.x+
-        Math.cos(a)*far;
-
-      animal.z=
-        player.z+
-        Math.sin(a)*far;
-
-      animal.active=false;
-
-    }
-
-
-    /*
-    Animals sometimes decide to step toward you.
-    */
-
-    if(
-      !animal.active &&
-      d<35 &&
-      Math.random()<dt*.08
-    ){
-
-      animal.active=true;
-
-      animal.timer=3;
-
-    }
-
-
-    if(animal.active){
-
-      danger=true;
-
-      animal.timer-=dt;
-
-      if(animal.timer<=0){
-
-        const dx=
-          player.x-
-          animal.x;
-
-        const dz=
-          player.z-
-          animal.z;
-
-        const length=
-          Math.hypot(dx,dz)||1;
-
-        animal.x+=
-          dx/length*
-          dt*
-          4;
-
-        animal.z+=
-          dz/length*
-          dt*
-          4;
-
-      }
+      ant.userData.nextMove =
+        random(3,8);
 
 
       /*
-      The animal is close enough to step on you.
+        Ants choose another point
+        close to their original home.
+        They do NOT wander everywhere.
       */
 
-      if(d<2.2){
+      ant.userData.targetX =
+        ant.userData.homeX +
+        random(-8,8);
 
-        lives--;
-
-        document.getElementById(
-          "lives"
-        ).textContent=lives;
-
-        animal.active=false;
-
-        /*
-        Push the mantis away.
-        */
-
-        player.x-=
-          Math.sin(player.angle)*4;
-
-        player.z-=
-          Math.cos(player.angle)*4;
-
-
-        if(lives<=0){
-
-          running=false;
-
-          alert(
-            "The giant stepped on you!"
-          );
-
-        }
-
-      }
-
-
-      if(d>20){
-
-        animal.active=false;
-
-      }
-
+      ant.userData.targetZ =
+        ant.userData.homeZ +
+        random(-8,8);
     }
 
-  }
+
+    const dx =
+      ant.userData.targetX -
+      ant.position.x;
+
+    const dz =
+      ant.userData.targetZ -
+      ant.position.z;
+
+    const distance =
+      Math.hypot(dx,dz);
 
 
-  document.getElementById(
-    "warning"
-  ).style.display=
-    danger
-      ?"block"
-      :"none";
+    if(distance > .5){
 
-}
+      ant.position.x +=
+        dx/distance *
+        ant.userData.speed *
+        dt;
 
+      ant.position.z +=
+        dz/distance *
+        ant.userData.speed *
+        dt;
 
-function render(){
-
-  gl.viewport(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  gl.enable(
-    gl.DEPTH_TEST
-  );
-
-  gl.clearColor(
-    .35,
-    .68,
-    .86,
-    1
-  );
-
-  gl.clear(
-    gl.COLOR_BUFFER_BIT|
-    gl.DEPTH_BUFFER_BIT
-  );
-
-
-  projection=
-    perspective(
-      1.05,
-      canvas.width/
-      canvas.height,
-      .05,
-      150
-    );
-
-
-  /*
-  Camera and movement use exactly
-  the same angle.
-  */
-
-  view=
-    camera(
-      player.x,
-      player.height,
-      player.z,
-      player.angle
-    );
-
-
-  /*
-  HUGE ground.
-  */
-
-  drawMesh(
-    CUBE,
-    player.x,
-    -.15,
-    player.z,
-    120,
-    .2,
-    120,
-    0,
-    [.18,.48,.16]
-  );
-
-
-  /*
-  TREES
-  */
-
-  for(const tree of trees){
-
-    const d=
-      distance(
-        player.x,
-        player.z,
-        tree.x,
-        tree.z
-      );
-
-    if(d>90)
-      continue;
-
-
-    /*
-    Trunk
-    */
-
-    drawMesh(
-      CYLINDER,
-      tree.x,
-      0,
-      tree.z,
-      tree.radius,
-      tree.height,
-      tree.radius,
-      0,
-      [.28,.14,.05]
-    );
-
-
-    /*
-    Lower foliage
-    */
-
-    drawMesh(
-      CYLINDER,
-      tree.x,
-      tree.height*.65,
-      tree.z,
-      tree.radius*3,
-      tree.height*.5,
-      tree.radius*3,
-      0,
-      [.08,.38,.10]
-    );
-
-
-    /*
-    Upper foliage
-    */
-
-    drawMesh(
-      CYLINDER,
-      tree.x,
-      tree.height*1.0,
-      tree.z,
-      tree.radius*2.3,
-      tree.height*.4,
-      tree.radius*2.3,
-      0,
-      [.12,.48,.13]
-    );
-
-  }
-
-
-  /*
-  TINY ANTS
-  */
-
-  for(const ant of ants){
-
-    if(!ant.alive)
-      continue;
-
-    const d=
-      distance(
-        player.x,
-        player.z,
-        ant.x,
-        ant.z
-      );
-
-    if(d>50)
-      continue;
-
-
-    drawMesh(
-      CYLINDER,
-      ant.x,
-      .08,
-      ant.z,
-      .06,
-      .08,
-      .06,
-      0,
-      [.06,.035,.015]
-    );
-
-  }
-
-
-  /*
-  GIANT ANIMALS
-  */
-
-  for(const animal of animals){
-
-    const elephant=
-      animal.type==="elephant";
-
-    const bodyWidth=
-      elephant
-        ?4.0
-        :2.2;
-
-    const bodyLength=
-      elephant
-        ?5.0
-        :3.4;
-
-    const legHeight=
-      elephant
-        ?4.5
-        :3.2;
-
-    const legWidth=
-      elephant
-        ?.7
-        :.42;
-
-
-    /*
-    Giant shadow.
-    */
-
-    if(animal.active){
-
-      drawMesh(
-        CUBE,
-        animal.x,
-        .025,
-        animal.z,
-        bodyWidth*1.8,
-        .03,
-        bodyLength*1.8,
-        0,
-        [.015,.015,.015]
-      );
-
+      ant.rotation.y =
+        Math.atan2(dx,dz);
     }
 
 
     /*
-    Four enormous legs.
+      Ant catching.
+      Several ants must be caught.
+      One ant does NOT win the game.
     */
 
-    for(
-      const side of [-1,1]
-    ){
+    const px =
+      player.x -
+      ant.position.x;
 
-      for(
-        const front of [-1,1]
-      ){
+    const pz =
+      player.z -
+      ant.position.z;
 
-        drawMesh(
-          CYLINDER,
+    const d =
+      Math.hypot(px,pz);
 
-          animal.x+
-            side*
-            bodyWidth*.35,
 
-          0,
+    if(d < 3.2){
 
-          animal.z+
-            front*
-            bodyLength*.32,
+      ant.userData.alive=false;
 
-          legWidth,
-          legHeight,
-          legWidth,
+      ant.visible=false;
 
-          0,
+      player.caught++;
 
-          elephant
-            ?[.35,.35,.30]
-            :[.42,.27,.18]
-        );
+      if(player.caught >= player.goal){
 
+        winGame();
       }
-
     }
+  }
+}
+
+
+/* =========================================================
+   ANIMAL AI
+   ========================================================= */
+
+function updateAnimals(list,dt){
+
+  for(const animal of list){
+
+    const data =
+      animal.userData;
+
+    data.dangerTimer -= dt;
 
 
     /*
-    Huge body.
+      Animals normally wander.
     */
 
-    drawMesh(
-      CUBE,
-      animal.x,
-      legHeight,
-      animal.z,
-      bodyWidth,
-      legHeight*.65,
-      bodyLength,
-      0,
-      elephant
-        ?[.38,.39,.32]
-        :[.48,.31,.20]
-    );
+    if(data.dangerTimer <= 0){
 
-  }
+      data.dangerTimer =
+        random(3,8);
 
 
-  /*
-  Mantis arms at the bottom of the screen.
-  */
+      const dx =
+        player.x -
+        animal.position.x;
 
-  drawMesh(
-    CYLINDER,
-    player.x-0.25,
-    -.1,
-    player.z+0.35,
-    .06,
-    .7,
-    .06,
-    player.angle-.5,
-    [.25,.55,.08]
-  );
+      const dz =
+        player.z -
+        animal.position.z;
 
-  drawMesh(
-    CYLINDER,
-    player.x+0.25,
-    -.1,
-    player.z+0.35,
-    .06,
-    .7,
-    .06,
-    player.angle+.5,
-    [.25,.55,.08]
-  );
-
-}
+      const distance =
+        Math.hypot(dx,dz);
 
 
-function loop(time){
+      /*
+        Sometimes an animal decides
+        to move toward the player.
+      */
 
-  if(!running)
-    return;
-
-  const dt=
-    Math.min(
-      .04,
-      (time-lastTime)/1000
-    );
-
-  lastTime=time;
-
-  update(dt);
-
-  render();
-
-  requestAnimationFrame(
-    loop
-  );
-
-}
-
-
-</script>
-
-</body>
-  </html>
+      if(distance < 70 &&
+         Math.random() < .55)      
