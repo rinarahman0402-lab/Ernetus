@@ -1,3 +1,5 @@
+    
+  ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,88 +14,111 @@
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #101820;
+      background: #0d151d;
       color: white;
     }
 
     header {
       text-align: center;
-      padding: 60px 20px 40px;
-      background: linear-gradient(135deg, #123c2c, #1c6547);
+      padding: 60px 20px 35px;
+      background: #145b42;
     }
 
     header h1 {
+      margin: 0 0 12px;
       font-size: 48px;
-      margin: 0 0 15px;
     }
 
     header p {
-      font-size: 20px;
       margin: 0;
-      color: #d8f3e5;
+      font-size: 20px;
+      color: #d7eee4;
     }
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 40px 20px;
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 55px 20px;
     }
 
-    h2 {
+    main > h2 {
       text-align: center;
-      font-size: 32px;
-      margin-bottom: 30px;
+      font-size: 42px;
+      margin: 0 0 40px;
     }
 
     .games {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 25px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
     }
 
-    .game {
-      background: #1b2730;
-      border-radius: 20px;
-      padding: 30px;
+    .game-card {
+      background: #1a2832;
+      border-radius: 28px;
+      padding: 40px 30px;
       text-align: center;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
     }
 
-    .game .emoji {
-      font-size: 55px;
+    .game-icon {
+      font-size: 70px;
+      margin-bottom: 20px;
     }
 
-    .game h3 {
-      font-size: 26px;
-      margin: 15px 0 10px;
+    .game-card h3 {
+      font-size: 32px;
+      margin: 10px 0 20px;
     }
 
-    .game p {
-      color: #c8d1d6;
-      line-height: 1.5;
+    .game-card p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #cbd5dc;
+      min-height: 90px;
     }
 
     .play {
       display: inline-block;
-      margin-top: 15px;
-      padding: 14px 25px;
-      border-radius: 12px;
-      background: #42b883;
+      margin-top: 20px;
+      padding: 18px 30px;
+      background: #43c18a;
       color: white;
       text-decoration: none;
+      border-radius: 14px;
+      font-size: 20px;
       font-weight: bold;
-      font-size: 18px;
     }
 
     .play:hover {
-      background: #35a372;
+      background: #35ad79;
     }
 
     footer {
       text-align: center;
-      padding: 30px;
-      color: #9da8ae;
+      padding: 40px 20px;
+      color: #9daab3;
+      font-size: 17px;
+    }
+
+    @media (max-width: 700px) {
+      header h1 {
+        font-size: 38px;
+      }
+
+      main > h2 {
+        font-size: 34px;
+      }
+
+      .games {
+        grid-template-columns: 1fr;
+      }
+
+      .game-card h3 {
+        font-size: 28px;
+      }
     }
   </style>
 </head>
@@ -101,18 +126,19 @@
 <body>
 
   <header>
-    <h1>🎮 Ernetus</h1>
-    <p>A collection of games made with imagination ✨</p>
+    <h1>Ernetus ✨</h1>
+    <p>A collection of games made with imagination 🎮</p>
   </header>
 
-  <main class="container">
+  <main>
 
     <h2>Our Games</h2>
 
     <div class="games">
 
-      <div class="game">
-        <div class="emoji">🌿</div>
+      <!-- PATH OF GOOD DEEDS -->
+      <div class="game-card">
+        <div class="game-icon">🌿</div>
 
         <h3>Path of Good Deeds</h3>
 
@@ -124,20 +150,25 @@
         <a class="play" href="path-of-good-deeds.html">
           ▶ Play Game
         </a>
-      /di<v>
-<div class="game-card">
-  <h3>Mantis Adventure</h3>
-
-  <p>
-    Explore a mag<ical world, discover amazing creatures,
-    and go on an exciting mantis adventure.
-  </p>
-
-  <a class="play" href="mantis-adventure.html">
-    ▶ Play Game
-  </a>
-      
       </div>
+
+
+      <!-- MANTIS ADVENTURE -->
+      <div class="game-card">
+        <div class="game-icon">🦗</div>
+
+        <h3>Mantis Adventure</h3>
+
+        <p>
+          Enter a mysterious world and begin an exciting
+          adventure as a powerful mantis.
+        </p>
+
+        <a class="play" href="mantis-adventure.html">
+          ▶ Play Game
+        </a>
+      </div>
+
     </div>
 
   </main>
@@ -148,3 +179,4 @@
 
 </body>
 </html>
+```
