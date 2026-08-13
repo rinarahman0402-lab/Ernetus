@@ -13,948 +13,1454 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#101522;
   font-family:Arial,sans-serif;
+  background:#101827;
+  color:white;
   touch-action:none;
 }
 
-canvas{
-  display:block;
+#game{
   width:100%;
   height:100%;
-  touch-action:none;
+  position:relative;
+  background:linear-gradient(#243b59,#111827);
 }
 
 #top{
-  position:fixed;
+  position:absolute;
   top:0;
   left:0;
   width:100%;
   padding:14px;
   display:flex;
   justify-content:space-between;
-  color:white;
-  z-index:5;
-  pointer-events:none;
+  z-index:10;
+  font-weight:bold;
   text-shadow:0 2px 4px #000;
 }
 
-#level{
+#room{
+  position:absolute;
+  left:0;
+  right:0;
+  top:55px;
+  bottom:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+
+#title{
+  font-size:26px;
+  font-weight:bold;
+  margin-bottom:12px;
+  text-align:center;
+}
+
+#clue{
+  width:min(92%,520px);
+  background:rgba(0,0,0,.35);
+  padding:12px 16px;
+  border-radius:15px;
+  text-align:center;
+  margin-bottom:18px;
+  line-height:1.4;
+}
+
+#objects{
+  width:min(94%,600px);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+}
+
+.choice{
+  min-width:75px;
+  min-height:65px;
+  padding:14px;
+  border:0;
+  border-radius:15px;
+  background:#344762;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  box-shadow:0 4px 0 rgba(0,0,0,.25);
+}
+
+.choice:active{
+  transform:translateY(3px);
+}
+
+.big{
+  min-width:150px;
+  min-height:75px;
+}
+
+.red{background:#d94b4b}
+.blue{background:#4b83d9}
+.green{background:#43a65d}
+.yellow{background:#d5a936;color:#211b0b}
+.purple{background:#8c58c7}
+.orange{background:#d47736}
+
+.number{
+  width:65px;
+  height:65px;
+  border-radius:50%;
+  border:0;
+  background:#455b78;
+  color:white;
   font-size:21px;
   font-weight:bold;
 }
 
-#progress{
-  font-size:20px;
-}
-
-#hint{
-  position:fixed;
-  left:50%;
-  bottom:22px;
-  transform:translateX(-50%);
-  width:min(90%,430px);
-  padding:13px 18px;
-  border-radius:15px;
-  background:rgba(0,0,0,.65);
-  color:white;
-  text-align:center;
-  font-size:16px;
-  z-index:6;
-  pointer-events:none;
-}
-
-#message{
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(88%,430px);
-  padding:25px;
-  border-radius:20px;
-  background:rgba(12,18,30,.97);
-  color:white;
-  text-align:center;
-  z-index:20;
-  display:none;
-  box-shadow:0 10px 40px rgba(0,0,0,.5);
-}
-
-#message h2{
-  margin-top:0;
-}
-
-button{
+.light{
+  width:65px;
+  height:65px;
   border:0;
-  border-radius:12px;
-  padding:13px 22px;
-  margin:6px;
-  background:#4c9cff;
+  border-radius:50%;
+  background:#252f3d;
+  box-shadow:0 0 0 3px #101827;
   color:white;
-  font-size:16px;
+  font-size:22px;
+}
+
+.light.on{
+  background:#ffd84d;
+  color:#332900;
+  box-shadow:0 0 25px #ffd84d;
+}
+
+.lock{
+  width:170px;
+  height:190px;
+  border-radius:18px;
+  background:#74502f;
+  border:8px solid #432e1e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:50px;
+}
+
+.star{
+  font-size:45px;
+  background:none;
+  border:0;
+}
+
+#feedback{
+  min-height:30px;
+  margin-top:15px;
+  font-weight:bold;
+  text-align:center;
+}
+
+#continue{
+  display:none;
+  margin-top:15px;
+  padding:14px 28px;
+  border:0;
+  border-radius:14px;
+  background:#4da1ff;
+  color:white;
+  font-size:18px;
   font-weight:bold;
 }
 
-button:active{
-  transform:scale(.95);
+#menu{
+  position:absolute;
+  inset:0;
+  z-index:50;
+  background:linear-gradient(145deg,#16263c,#0d1420);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:25px;
 }
 
-#menu{
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(90%,450px);
+#menuBox{
+  width:min(92%,460px);
+  background:rgba(0,0,0,.35);
+  border-radius:25px;
   padding:30px;
-  border-radius:24px;
-  background:rgba(13,20,34,.97);
-  color:white;
-  text-align:center;
-  z-index:30;
 }
 
 #menu h1{
-  font-size:38px;
+  font-size:42px;
   margin:0 0 10px;
 }
 
 #menu p{
-  line-height:1.5;
-  color:#d9e3ef;
+  line-height:1.6;
+  color:#d8e2ef;
+}
+
+#start{
+  border:0;
+  border-radius:15px;
+  padding:15px 35px;
+  background:#4da1ff;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
 }
 
 .hidden{
   display:none!important;
+}
+
+input{
+  width:160px;
+  padding:14px;
+  border-radius:12px;
+  border:2px solid #5e7695;
+  background:#172235;
+  color:white;
+  font-size:20px;
+  text-align:center;
+}
+
+select{
+  padding:13px;
+  border-radius:12px;
+  font-size:17px;
+}
+
+.bar{
+  width:250px;
+  height:28px;
+  background:#27374d;
+  border-radius:20px;
+  overflow:hidden;
+}
+
+.bar button{
+  height:100%;
+  width:50%;
+  border:0;
+  background:#4da1ff;
+}
+
+.pattern{
+  font-size:30px;
+  letter-spacing:8px;
+  padding:15px;
+}
+
+.small{
+  font-size:15px;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="canvas"></canvas>
+<div id="game">
 
 <div id="top">
-  <div id="level">Door 1 / 100</div>
-  <div id="progress">⭐ 0</div>
+  <div id="doorNumber">Door 1 / 100</div>
+  <div id="stars">⭐ 0</div>
 </div>
 
-<div id="hint">Find the clue and open the door.</div>
+<div id="room">
 
-<div id="message">
-  <h2 id="messageTitle"></h2>
-  <p id="messageText"></p>
-  <button id="messageButton">Continue</button>
+  <div id="title"></div>
+  <div id="clue"></div>
+  <div id="objects"></div>
+  <div id="feedback"></div>
+  <button id="continue">Next Door →</button>
+
 </div>
 
 <div id="menu">
-  <h1>🚪 100 Doors</h1>
-  <p>
-    Can you escape all 100 rooms?<br><br>
-    Every room has a clue.<br>
-    Don't worry — the puzzles are designed to be fun,
-    not frustrating.
-  </p>
-  <button id="startButton">Start Game</button>
+  <div id="menuBox">
+    <h1>🚪 100 Doors</h1>
+    <p>
+      100 rooms.<br>
+      100 different puzzles.<br><br>
+      Solve them all and escape!
+      Don't worry — there are no lives to lose.
+    </p>
+    <button id="start">▶ Start Game</button>
+  </div>
+</div>
+
 </div>
 
 <script>
 
-"use strict";
-
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-
-let W=window.innerWidth;
-let H=window.innerHeight;
-
-function resize(){
-
-  W=window.innerWidth;
-  H=window.innerHeight;
-
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-
-  canvas.width=Math.floor(W*dpr);
-  canvas.height=Math.floor(H*dpr);
-
-  canvas.style.width=W+"px";
-  canvas.style.height=H+"px";
-
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-
-window.addEventListener("resize",resize);
-resize();
+const objects=document.getElementById("objects");
+const title=document.getElementById("title");
+const clue=document.getElementById("clue");
+const feedback=document.getElementById("feedback");
+const continueBtn=document.getElementById("continue");
+const doorNumber=document.getElementById("doorNumber");
+const starsEl=document.getElementById("stars");
+const menu=document.getElementById("menu");
 
 let door=1;
 let stars=0;
-let playing=false;
-let puzzle=null;
+let solved=false;
+let state={};
 
-const levelEl=document.getElementById("level");
-const progressEl=document.getElementById("progress");
-const hintEl=document.getElementById("hint");
+/* =====================================================
+   100 DIFFERENT PUZZLES
+===================================================== */
 
-const menu=document.getElementById("menu");
-const message=document.getElementById("message");
-const messageTitle=document.getElementById("messageTitle");
-const messageText=document.getElementById("messageText");
-const messageButton=document.getElementById("messageButton");
+const puzzles=[
 
-function clear(){
+/* 1 */
+{
+title:"The Obvious Door",
+clue:"Sometimes the answer really is simple.",
+type:"buttons",
+items:[["🚪 Open Door","open"]]
+},
 
-  const gradient=ctx.createLinearGradient(0,0,0,H);
+/* 2 */
+{
+title:"Find Blue",
+clue:"Tap the blue button.",
+type:"buttons",
+items:[
+["Red","wrong","red"],
+["Blue","correct","blue"],
+["Green","wrong","green"]
+]
+},
 
-  gradient.addColorStop(0,"#27344d");
-  gradient.addColorStop(1,"#0e1420");
+/* 3 */
+{
+title:"The Golden Key",
+clue:"Which key looks like gold?",
+type:"buttons",
+items:[
+["🔑","wrong"],
+["🔑","correct","yellow"],
+["🔑","wrong"]
+]
+},
 
-  ctx.fillStyle=gradient;
-  ctx.fillRect(0,0,W,H);
+/* 4 */
+{
+title:"Count the Stars",
+clue:"How many stars are shown?",
+type:"number",
+answer:"4",
+display:"⭐ ⭐ ⭐ ⭐"
+},
+
+/* 5 */
+{
+title:"Odd One Out",
+clue:"Three shapes match. One is different.",
+type:"buttons",
+items:[
+["🔵","wrong"],
+["🔵","wrong"],
+["🔺","correct"],
+["🔵","wrong"]
+]
+},
+
+/* 6 */
+{
+title:"The Green Light",
+clue:"Traffic lights: which color means GO?",
+type:"buttons",
+items:[
+["🔴 Red","wrong","red"],
+["🟡 Yellow","wrong","yellow"],
+["🟢 Green","correct","green"]
+]
+},
+
+/* 7 */
+{
+title:"Two Plus Three",
+clue:"Solve the tiny math puzzle.",
+type:"number",
+answer:"5",
+display:"2 + 3 = ?"
+},
+
+/* 8 */
+{
+title:"Warm or Cold",
+clue:"Which one represents fire?",
+type:"buttons",
+items:[
+["❄️","wrong","blue"],
+["🔥","correct","orange"],
+["💧","wrong","blue"]
+]
+},
+
+/* 9 */
+{
+title:"Smallest Number",
+clue:"Tap the smallest number.",
+type:"buttons",
+items:[
+["8","wrong"],
+["3","correct"],
+["6","wrong"],
+["9","wrong"]
+]
+},
+
+/* 10 */
+{
+title:"First Letter",
+clue:"What letter comes first in the word DOOR?",
+type:"buttons",
+items:[
+["D","correct"],
+["O","wrong"],
+["R","wrong"]
+]
+},
+
+/* 11 */
+{
+title:"Light Switches",
+clue:"Turn ON all three lights.",
+type:"lights",
+count:3
+},
+
+/* 12 */
+{
+title:"Which Arrow?",
+clue:"The clue says: go RIGHT.",
+type:"buttons",
+items:[
+["← Left","wrong"],
+["→ Right","correct"]
+]
+},
+
+/* 13 */
+{
+title:"Count the Apples",
+clue:"How many apples?",
+type:"number",
+answer:"3",
+display:"🍎 🍎 🍎"
+},
+
+/* 14 */
+{
+title:"Moon or Sun",
+clue:"Which one belongs in the daytime?",
+type:"buttons",
+items:[
+["🌙","wrong"],
+["☀️","correct"],
+["⭐","wrong"]
+]
+},
+
+/* 15 */
+{
+title:"Odd Shape",
+clue:"Find the triangle.",
+type:"buttons",
+items:[
+["⬜","wrong"],
+["⬜","wrong"],
+["🔺","correct"],
+["⬜","wrong"]
+]
+},
+
+/* 16 */
+{
+title:"Count the Doors",
+clue:"How many doors are shown?",
+type:"number",
+answer:"2",
+display:"🚪 🚪"
+},
+
+/* 17 */
+{
+title:"Higher Number",
+clue:"Tap the larger number.",
+type:"buttons",
+items:[
+["7","wrong"],
+["12","correct"]
+]
+},
+
+/* 18 */
+{
+title:"Lower Number",
+clue:"Tap the smaller number.",
+type:"buttons",
+items:[
+["14","wrong"],
+["5","correct"]
+]
+},
+
+/* 19 */
+{
+title:"Fruit Puzzle",
+clue:"Which one is NOT a fruit?",
+type:"buttons",
+items:[
+["🍎","wrong"],
+["🍌","wrong"],
+["🥕","correct"],
+["🍓","wrong"]
+]
+},
+
+/* 20 */
+{
+title:"Animal Puzzle",
+clue:"Which animal can fly?",
+type:"buttons",
+items:[
+["🐘","wrong"],
+["🐧","wrong"],
+["🦅","correct"],
+["🐢","wrong"]
+]
+},
+
+/* 21 */
+{
+title:"The Pattern",
+clue:"What comes next? 🔴 🔵 🔴 🔵 ?",
+type:"buttons",
+items:[
+["🔴","correct"],
+["🟢","wrong"],
+["🟡","wrong"]
+]
+},
+
+/* 22 */
+{
+title:"Morning",
+clue:"What comes after night?",
+type:"buttons",
+items:[
+["Morning","correct"],
+["Evening","wrong"],
+["Night","wrong"]
+]
+},
+
+/* 23 */
+{
+title:"Count the Fish",
+clue:"How many fish?",
+type:"number",
+answer:"5",
+display:"🐟 🐟 🐟 🐟 🐟"
+},
+
+/* 24 */
+{
+title:"The Red Door",
+clue:"Tap the red door.",
+type:"buttons",
+items:[
+["🚪","wrong","blue"],
+["🚪","correct","red"],
+["🚪","wrong","green"]
+]
+},
+
+/* 25 */
+{
+title:"Which Is Round?",
+clue:"Find the round object.",
+type:"buttons",
+items:[
+["⚪","correct"],
+["🔺","wrong"],
+["⬛","wrong"]
+]
+},
+
+/* 26 */
+{
+title:"Five Minus Two",
+clue:"5 − 2 = ?",
+type:"number",
+answer:"3",
+display:"5 − 2 = ?"
+},
+
+/* 27 */
+{
+title:"The Safe Button",
+clue:"Tap the green button.",
+type:"buttons",
+items:[
+["STOP","wrong","red"],
+["GO","correct","green"],
+["WAIT","wrong","yellow"]
+]
+},
+
+/* 28 */
+{
+title:"Count the Hearts",
+clue:"How many hearts?",
+type:"number",
+answer:"4",
+display:"❤️ ❤️ ❤️ ❤️"
+},
+
+/* 29 */
+{
+title:"The Heavy Animal",
+clue:"Which is usually the heaviest?",
+type:"buttons",
+items:[
+["🐘","correct"],
+["🐭","wrong"],
+["🐦","wrong"]
+]
+},
+
+/* 30 */
+{
+title:"The Tiny Animal",
+clue:"Which is the smallest?",
+type:"buttons",
+items:[
+["🐘","wrong"],
+["🐜","correct"],
+["🐄","wrong"]
+]
+},
+
+/* 31 */
+{
+title:"Light Sequence",
+clue:"Tap the lights in order: red, blue, green.",
+type:"sequence",
+colors:["red","blue","green"]
+},
+
+/* 32 */
+{
+title:"Number Order",
+clue:"Tap 1, then 2, then 3.",
+type:"sequence",
+numbers:["1","2","3"]
+},
+
+/* 33 */
+{
+title:"Alphabet",
+clue:"Which letter comes after A?",
+type:"buttons",
+items:[
+["C","wrong"],
+["B","correct"],
+["D","wrong"]
+]
+},
+
+/* 34 */
+{
+title:"Count the Moons",
+clue:"How many moons?",
+type:"number",
+answer:"2",
+display:"🌙 🌙"
+},
+
+/* 35 */
+{
+title:"Food Puzzle",
+clue:"Which one is a drink?",
+type:"buttons",
+items:[
+["🍞","wrong"],
+["🥤","correct"],
+["🍕","wrong"]
+]
+},
+
+/* 36 */
+{
+title:"Cold Object",
+clue:"Which object is cold?",
+type:"buttons",
+items:[
+["🔥","wrong"],
+["🧊","correct"],
+["☀️","wrong"]
+]
+},
+
+/* 37 */
+{
+title:"The Direction",
+clue:"Tap UP.",
+type:"buttons",
+items:[
+["⬅️","wrong"],
+["⬆️","correct"],
+["➡️","wrong"],
+["⬇️","wrong"]
+]
+},
+
+/* 38 */
+{
+title:"The Other Direction",
+clue:"Tap DOWN.",
+type:"buttons",
+items:[
+["⬆️","wrong"],
+["➡️","wrong"],
+["⬇️","correct"]
+]
+},
+
+/* 39 */
+{
+title:"Count the Keys",
+clue:"How many keys?",
+type:"number",
+answer:"3",
+display:"🔑 🔑 🔑"
+},
+
+/* 40 */
+{
+title:"The Number Seven",
+clue:"Find 7.",
+type:"buttons",
+items:[
+["4","wrong"],
+["9","wrong"],
+["7","correct"],
+["2","wrong"]
+]
+},
+
+/* 41 */
+{
+title:"Memory Test",
+clue:"Remember this number: 27. Then tap READY.",
+type:"memory",
+answer:"27"
+},
+
+/* 42 */
+{
+title:"Memory Color",
+clue:"Remember the color shown. Then choose it.",
+type:"memorycolor",
+answer:"purple"
+},
+
+/* 43 */
+{
+title:"Count the Bananas",
+clue:"How many bananas?",
+type:"number",
+answer:"6",
+display:"🍌 🍌 🍌 🍌 🍌 🍌"
+},
+
+/* 44 */
+{
+title:"The Odd Fruit",
+clue:"Which one is NOT yellow?",
+type:"buttons",
+items:[
+["🍌","wrong"],
+["🍋","wrong"],
+["🍎","correct"],
+["🌽","wrong"]
+]
+},
+
+/* 45 */
+{
+title:"The Big Button",
+clue:"Tap the biggest button.",
+type:"sizes"
+},
+
+/* 46 */
+{
+title:"The Tiny Button",
+clue:"Tap the smallest button.",
+type:"sizesmall"
+},
+
+/* 47 */
+{
+title:"Even Number",
+clue:"Which number is even?",
+type:"buttons",
+items:[
+["7","wrong"],
+["9","wrong"],
+["8","correct"],
+["5","wrong"]
+]
+},
+
+/* 48 */
+{
+title:"Odd Number",
+clue:"Which number is odd?",
+type:"buttons",
+items:[
+["2","wrong"],
+["4","wrong"],
+["7","correct"],
+["8","wrong"]
+]
+},
+
+/* 49 */
+{
+title:"Count the Trees",
+clue:"How many trees?",
+type:"number",
+answer:"3",
+display:"🌳 🌳 🌳"
+},
+
+/* 50 */
+{
+title:"Halfway!",
+clue:"You have reached Door 50. Tap the golden door.",
+type:"buttons",
+items:[
+["🚪","correct","yellow"],
+["🚪","wrong","blue"],
+["🚪","wrong","green"]
+]
+},
+
+/* 51 */
+{
+title:"The Pattern 2",
+clue:"Complete: ⭐ ⭐ 🌙 ⭐ ⭐ ?",
+type:"buttons",
+items:[
+["🌙","correct"],
+["⭐","wrong"],
+["☀️","wrong"]
+]
+},
+
+/* 52 */
+{
+title:"Three Plus Four",
+clue:"3 + 4 = ?",
+type:"number",
+answer:"7",
+display:"3 + 4 = ?"
+},
+
+/* 53 */
+{
+title:"Which Is Blue?",
+clue:"Find the blue object.",
+type:"buttons",
+items:[
+["🟢","wrong","green"],
+["🔵","correct","blue"],
+["🔴","wrong","red"]
+]
+},
+
+/* 54 */
+{
+title:"Which Is Purple?",
+clue:"Find purple.",
+type:"buttons",
+items:[
+["🟣","correct"],
+["🟢","wrong"],
+["🟡","wrong"]
+]
+},
+
+/* 55 */
+{
+title:"Count the Stars 2",
+clue:"Count carefully.",
+type:"number",
+answer:"7",
+display:"⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐"
+},
+
+/* 56 */
+{
+title:"The Fast Animal",
+clue:"Which animal is famous for running fast?",
+type:"buttons",
+items:[
+["🐌","wrong"],
+["🐆","correct"],
+["🐢","wrong"]
+]
+},
+
+/* 57 */
+{
+title:"The Water Animal",
+clue:"Which animal lives in water?",
+type:"buttons",
+items:[
+["🐟","correct"],
+["🐔","wrong"],
+["🐈","wrong"]
+]
+},
+
+/* 58 */
+{
+title:"The Night Animal",
+clue:"Which animal is commonly associated with night?",
+type:"buttons",
+items:[
+["🦉","correct"],
+["🐝","wrong"],
+["🐄","wrong"]
+]
+},
+
+/* 59 */
+{
+title:"Count the Flowers",
+clue:"How many flowers?",
+type:"number",
+answer:"5",
+display:"🌸 🌸 🌸 🌸 🌸"
+},
+
+/* 60 */
+{
+title:"Find the Letter",
+clue:"Tap the letter R.",
+type:"buttons",
+items:[
+["A","wrong"],
+["R","correct"],
+["B","wrong"],
+["T","wrong"]
+]
+},
+
+/* 61 */
+{
+title:"Sequence of Shapes",
+clue:"Tap circle, square, triangle.",
+type:"sequence",
+colors:["circle","square","triangle"]
+},
+
+/* 62 */
+{
+title:"Count the Clouds",
+clue:"How many clouds?",
+type:"number",
+answer:"4",
+display:"☁️ ☁️ ☁️ ☁️"
+},
+
+/* 63 */
+{
+title:"The Door Number",
+clue:"Tap the number matching this door: 63.",
+type:"buttons",
+items:[
+["36","wrong"],
+["63","correct"],
+["66","wrong"]
+]
+},
+
+/* 64 */
+{
+title:"The Correct Symbol",
+clue:"Which symbol means YES?",
+type:"buttons",
+items:[
+["❌","wrong"],
+["✓","correct"],
+["?","wrong"]
+]
+},
+
+/* 65 */
+{
+title:"Count the Keys 2",
+clue:"How many keys?",
+type:"number",
+answer:"5",
+display:"🔑 🔑 🔑 🔑 🔑"
+},
+
+/* 66 */
+{
+title:"The Tall One",
+clue:"Which is tallest?",
+type:"buttons",
+items:[
+["🌱","wrong"],
+["🌳","correct"],
+["🌿","wrong"]
+]
+},
+
+/* 67 */
+{
+title:"The Hot One",
+clue:"Which is hottest?",
+type:"buttons",
+items:[
+["❄️","wrong"],
+["🔥","correct"],
+["💧","wrong"]
+]
+},
+
+/* 68 */
+{
+title:"The Correct Month",
+clue:"Which comes after January?",
+type:"buttons",
+items:[
+["March","wrong"],
+["February","correct"],
+["December","wrong"]
+]
+},
+
+/* 69 */
+{
+title:"Count the Ducks",
+clue:"How many ducks?",
+type:"number",
+answer:"4",
+display:"🦆 🦆 🦆 🦆"
+},
+
+/* 70 */
+{
+title:"The Happy Face",
+clue:"Find the happy face.",
+type:"buttons",
+items:[
+["😡","wrong"],
+["😴","wrong"],
+["😀","correct"],
+["😢","wrong"]
+]
+},
+
+/* 71 */
+{
+title:"The Sad Face",
+clue:"Find the sad face.",
+type:"buttons",
+items:[
+["😀","wrong"],
+["😢","correct"],
+["😎","wrong"]
+]
+},
+
+/* 72 */
+{
+title:"Count the Balloons",
+clue:"How many balloons?",
+type:"number",
+answer:"6",
+display:"🎈 🎈 🎈 🎈 🎈 🎈"
+},
+
+/* 73 */
+{
+title:"The Pattern 3",
+clue:"🔺 🔵 🔺 🔵 ?",
+type:"buttons",
+items:[
+["🔺","correct"],
+["🔵","wrong"],
+["🟢","wrong"]
+]
+},
+
+/* 74 */
+{
+title:"The Pattern 4",
+clue:"🍎 🍌 🍎 🍌 ?",
+type:"buttons",
+items:[
+["🍎","correct"],
+["🍌","wrong"],
+["🍊","wrong"]
+]
+},
+
+/* 75 */
+{
+title:"Three Keys",
+clue:"Only one key has a star.",
+type:"buttons",
+items:[
+["🔑","wrong"],
+["🔑⭐","correct"],
+["🔑","wrong"]
+]
+},
+
+/* 76 */
+{
+title:"The Hidden Number",
+clue:"Which number is hidden in the word ONE? None! Choose ZERO.",
+type:"buttons",
+items:[
+["0","correct"],
+["1","wrong"],
+["2","wrong"]
+]
+},
+
+/* 77 */
+{
+title:"Count the Bees",
+clue:"How many bees?",
+type:"number",
+answer:"3",
+display:"🐝 🐝 🐝"
+},
+
+/* 78 */
+{
+title:"The Safe Color",
+clue:"Which color is traditionally associated with safety/go?",
+type:"buttons",
+items:[
+["🔴","wrong"],
+["🟢","correct"],
+["⚫","wrong"]
+]
+},
+
+/* 79 */
+{
+title:"The First Number",
+clue:"Which number starts counting?",
+type:"buttons",
+items:[
+["3","wrong"],
+["1","correct"],
+["5","wrong"]
+]
+},
+
+/* 80 */
+{
+title:"The Last Choice",
+clue:"Which number is largest?",
+type:"buttons",
+items:[
+["18","wrong"],
+["25","correct"],
+["21","wrong"]
+]
+},
+
+/* 81 */
+{
+title:"Memory Shapes",
+clue:"Remember: 🔵 🔴 🟢. Tap READY, then repeat them.",
+type:"memorysequence",
+sequence:["blue","red","green"]
+},
+
+/* 82 */
+{
+title:"Count the Presents",
+clue:"How many presents?",
+type:"number",
+answer:"4",
+display:"🎁 🎁 🎁 🎁"
+},
+
+/* 83 */
+{
+title:"The Animal With Wings",
+clue:"Which one has wings?",
+type:"buttons",
+items:[
+["🐘","wrong"],
+["🦋","correct"],
+["🐢","wrong"]
+]
+},
+
+/* 84 */
+{
+title:"The Ocean",
+clue:"Which belongs in the ocean?",
+type:"buttons",
+items:[
+["🐟","correct"],
+["🐄","wrong"],
+["🐔","wrong"]
+]
+},
+
+/* 85 */
+{
+title:"The Sky",
+clue:"Which belongs in the sky?",
+type:"buttons",
+items:[
+["☁️","correct"],
+["🪨","wrong"],
+["🥔","wrong"]
+]
+},
+
+/* 86 */
+{
+title:"Count the Cars",
+clue:"How many cars?",
+type:"number",
+answer:"3",
+display:"🚗 🚗 🚗"
+},
+
+/* 87 */
+{
+title:"The Correct Direction",
+clue:"The clue says LEFT.",
+type:"buttons",
+items:[
+["➡️","wrong"],
+["⬅️","correct"],
+["⬆️","wrong"]
+]
+},
+
+/* 88 */
+{
+title:"The Correct Shape",
+clue:"Which shape has four equal sides?",
+type:"buttons",
+items:[
+["🔺","wrong"],
+["⬜","correct"],
+["⚪","wrong"]
+]
+},
+
+/* 89 */
+{
+title:"The Correct Shape 2",
+clue:"Which shape has no corners?",
+type:"buttons",
+items:[
+["⬜","wrong"],
+["🔺","wrong"],
+["⚪","correct"]
+]
+},
+
+/* 90 */
+{
+title:"Ten More!",
+clue:"10 + 5 = ?",
+type:"number",
+answer:"15",
+display:"10 + 5 = ?"
+},
+
+/* 91 */
+{
+title:"Count the Butterflies",
+clue:"How many butterflies?",
+type:"number",
+answer:"4",
+display:"🦋 🦋 🦋 🦋"
+},
+
+/* 92 */
+{
+title:"The Door With A Star",
+clue:"Open the door with the star.",
+type:"buttons",
+items:[
+["🚪","wrong"],
+["🚪⭐","correct"],
+["🚪","wrong"]
+]
+},
+
+/* 93 */
+{
+title:"The Color Order",
+clue:"Tap blue, then yellow.",
+type:"sequence",
+colors:["blue","yellow"]
+},
+
+/* 94 */
+{
+title:"The Final Numbers",
+clue:"Tap 2, then 4, then 6.",
+type:"sequence",
+numbers:["2","4","6"]
+},
+
+/* 95 */
+{
+title:"Count the Hearts 2",
+clue:"How many hearts?",
+type:"number",
+answer:"6",
+display:"❤️ ❤️ ❤️ ❤️ ❤️ ❤️"
+},
+
+/* 96 */
+{
+title:"Almost There",
+clue:"Which button says ALMOST?",
+type:"buttons",
+items:[
+["READY","wrong"],
+["ALMOST","correct"],
+["FINISHED","wrong"]
+]
+},
+
+/* 97 */
+{
+title:"Three Minus One",
+clue:"3 − 1 = ?",
+type:"number",
+answer:"2",
+display:"3 − 1 = ?"
+},
+
+/* 98 */
+{
+title:"The Golden Star",
+clue:"Tap the golden star.",
+type:"buttons",
+items:[
+["⭐","wrong","blue"],
+["⭐","correct","yellow"],
+["⭐","wrong","purple"]
+]
+},
+
+/* 99 */
+{
+title:"One Door Left",
+clue:"Which number comes immediately before 100?",
+type:"buttons",
+items:[
+["98","wrong"],
+["99","correct"],
+["101","wrong"]
+]
+},
+
+/* 100 */
+{
+title:"THE FINAL DOOR",
+clue:"You made it! Tap the FINAL DOOR to escape!",
+type:"buttons",
+items:[
+["🚪 FINAL DOOR","correct","yellow"]
+]
 }
 
-function text(txt,x,y,size,color="#fff",align="center"){
+];
 
-  ctx.fillStyle=color;
-  ctx.font=`bold ${size}px Arial`;
-  ctx.textAlign=align;
-  ctx.textBaseline="middle";
-  ctx.fillText(txt,x,y);
-}
+/* =====================================================
+   START
+===================================================== */
 
-function roundRect(x,y,w,h,r,fill,stroke){
-
-  ctx.beginPath();
-  ctx.roundRect(x,y,w,h,r);
-
-  if(fill){
-    ctx.fillStyle=fill;
-    ctx.fill();
-  }
-
-  if(stroke){
-    ctx.strokeStyle=stroke;
-    ctx.lineWidth=3;
-    ctx.stroke();
-  }
-}
-
-function circle(x,y,r,fill){
-
-  ctx.beginPath();
-  ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.fillStyle=fill;
-  ctx.fill();
-}
-
-function drawDoor(){
-
-  ctx.fillStyle="#343d4d";
-  ctx.fillRect(0,80,W,H-80);
-
-  ctx.strokeStyle="rgba(255,255,255,.06)";
-  ctx.lineWidth=1;
-
-  for(let y=90;y<H;y+=42){
-
-    ctx.beginPath();
-    ctx.moveTo(0,y);
-    ctx.lineTo(W,y);
-    ctx.stroke();
-  }
-
-  const dw=Math.min(270,W*.65);
-  const dh=Math.min(430,H*.58);
-
-  const dx=W/2-dw/2;
-  const dy=H/2-dh/2+10;
-
-  roundRect(
-    dx-14,
-    dy-14,
-    dw+28,
-    dh+28,
-    10,
-    "#1a1e26"
-  );
-
-  roundRect(
-    dx,
-    dy,
-    dw,
-    dh,
-    8,
-    "#68472f",
-    "#9b704f"
-  );
-
-  ctx.strokeStyle="#4b3022";
-  ctx.lineWidth=7;
-
-  ctx.strokeRect(
-    dx+30,
-    dy+35,
-    dw-60,
-    130
-  );
-
-  ctx.strokeRect(
-    dx+30,
-    dy+195,
-    dw-60,
-    150
-  );
-
-  circle(
-    dx+dw-38,
-    dy+dh/2,
-    9,
-    "#d6b85b"
-  );
-
-  circle(
-    dx+dw-38,
-    dy+dh/2,
-    4,
-    "#8a6a28"
-  );
-
-  text(
-    String(door),
-    W/2,
-    dy+dh/2,
-    45,
-    "#ead7bd"
-  );
-}
-
-function makePuzzle(number){
-
-  const type=(number-1)%10;
-
-  if(type===0){
-
-    return {
-      type:"tap",
-      title:"The Simple Door",
-      clue:"The door is locked. Try the obvious thing.",
-      answer:"open"
-    };
-  }
-
-  if(type===1){
-
-    return {
-      type:"sequence",
-      title:"Remember the Lights",
-      clue:"Tap the lights in the order they appear.",
-      sequence:[0,1,2],
-      step:0
-    };
-  }
-
-  if(type===2){
-
-    return {
-      type:"button",
-      title:"The Big Red Button",
-      clue:"Sometimes the answer really is that simple.",
-      answer:"red"
-    };
-  }
-
-  if(type===3){
-
-    return {
-      type:"number",
-      title:"Count the Stars",
-      clue:"How many stars are above the door?",
-      answer:5+Math.floor(number/20)
-    };
-  }
-
-  if(type===4){
-
-    return {
-      type:"choice",
-      title:"Choose the Key",
-      clue:"The golden key opens the door.",
-      answer:1
-    };
-  }
-
-  if(type===5){
-
-    return {
-      type:"tapall",
-      title:"Light the Room",
-      clue:"Turn on all three lights.",
-      lit:[false,false,false]
-    };
-  }
-
-  if(type===6){
-
-    return {
-      type:"direction",
-      title:"Which Way?",
-      clue:"The arrow points toward the correct door.",
-      answer:"right"
-    };
-  }
-
-  if(type===7){
-
-    return {
-      type:"number",
-      title:"The Easy Math Door",
-      clue:"What is 2 + 3?",
-      answer:5
-    };
-  }
-
-  if(type===8){
-
-    return {
-      type:"button",
-      title:"One Button",
-      clue:"Only the green button is safe.",
-      answer:"green"
-    };
-  }
-
-  return {
-    type:"tap",
-    title:"Trust the Door",
-    clue:"There is no trick. Tap the door.",
-    answer:"open"
-  };
-}
-
-function getTapTarget(x,y){
-
-  if(!puzzle)return null;
-
-  if(puzzle.type==="tap"){
-
-    const dw=Math.min(270,W*.65);
-    const dh=Math.min(430,H*.58);
-
-    const dx=W/2-dw/2;
-    const dy=H/2-dh/2+10;
-
-    if(
-      x>=dx &&
-      x<=dx+dw &&
-      y>=dy &&
-      y<=dy+dh
-    ){
-      return "open";
-    }
-  }
-
-  if(puzzle.type==="button"){
-
-    if(
-      x>W/2-90 &&
-      x<W/2+90 &&
-      y>H/2-40 &&
-      y<H/2+40
-    ){
-      return puzzle.answer;
-    }
-  }
-
-  if(puzzle.type==="number"){
-
-    if(
-      x>W/2-100 &&
-      x<W/2+100 &&
-      y>H/2+70 &&
-      y<H/2+135
-    ){
-
-      const value=prompt(
-        puzzle.clue+"\n\nEnter your answer:"
-      );
-
-      if(value!==null){
-
-        const n=Number(value);
-
-        if(n===puzzle.answer){
-          solve();
-        }else{
-          gentleWrong();
-        }
-      }
-
-      return null;
-    }
-  }
-
-  if(puzzle.type==="choice"){
-
-    const positions=[
-      W/2-130,
-      W/2,
-      W/2+130
-    ];
-
-    for(let i=0;i<3;i++){
-
-      if(
-        Math.abs(x-positions[i])<50 &&
-        Math.abs(y-H/2)<50
-      ){
-        return i;
-      }
-    }
-  }
-
-  if(puzzle.type==="sequence"){
-
-    const positions=[
-      W/2-110,
-      W/2,
-      W/2+110
-    ];
-
-    for(let i=0;i<3;i++){
-
-      if(
-        Math.abs(x-positions[i])<45 &&
-        Math.abs(y-H/2)<45
-      ){
-        return i;
-      }
-    }
-  }
-
-  if(puzzle.type==="tapall"){
-
-    const positions=[
-      W/2-110,
-      W/2,
-      W/2+110
-    ];
-
-    for(let i=0;i<3;i++){
-
-      if(
-        Math.abs(x-positions[i])<45 &&
-        Math.abs(y-H/2)<45
-      ){
-
-        puzzle.lit[i]=true;
-
-        if(puzzle.lit.every(Boolean)){
-          solve();
-        }
-
-        return i;
-      }
-    }
-  }
-
-  if(puzzle.type==="direction"){
-
-    if(
-      x>W/2+20 &&
-      x<W-30 &&
-      y>H/2-50 &&
-      y<H/2+50
-    ){
-      return "right";
-    }
-
-    if(
-      x>30 &&
-      x<W/2-20 &&
-      y>H/2-50 &&
-      y<H/2+50
-    ){
-      return "left";
-    }
-  }
-
-  return null;
-}
-
-canvas.addEventListener("pointerdown",e=>{
-
-  if(!playing)return;
-
-  e.preventDefault();
-
-  const rect=canvas.getBoundingClientRect();
-
-  const x=e.clientX-rect.left;
-  const y=e.clientY-rect.top;
-
-  const target=getTapTarget(x,y);
-
-  if(target!==null){
-    checkAnswer(target);
-  }
-});
-
-function checkAnswer(answer){
-
-  if(!puzzle)return;
-
-  if(puzzle.type==="tap"){
-
-    if(answer==="open")solve();
-
-    return;
-  }
-
-  if(puzzle.type==="button"){
-
-    if(answer===puzzle.answer){
-      solve();
-    }else{
-      gentleWrong();
-    }
-
-    return;
-  }
-
-  if(puzzle.type==="choice"){
-
-    if(answer===puzzle.answer){
-      solve();
-    }else{
-      gentleWrong();
-    }
-
-    return;
-  }
-
-  if(puzzle.type==="sequence"){
-
-    if(answer===puzzle.sequence[puzzle.step]){
-
-      puzzle.step++;
-
-      if(puzzle.step>=puzzle.sequence.length){
-        solve();
-      }
-
-    }else{
-
-      puzzle.step=0;
-
-      hintEl.textContent=
-        "Almost! Watch the lights again and try once more.";
-    }
-
-    return;
-  }
-
-  if(puzzle.type==="direction"){
-
-    if(answer===puzzle.answer){
-      solve();
-    }else{
-      gentleWrong();
-    }
-
-    return;
-  }
-}
-
-function gentleWrong(){
-
-  hintEl.textContent=
-    "Not quite! No penalty — try another answer.";
-}
-
-function solve(){
-
-  stars++;
-
-  progressEl.textContent="⭐ "+stars;
-
-  messageTitle.textContent=
-    door===100
-    ?"🎉 YOU ESCAPED ALL 100 DOORS!"
-    :"🚪 Door "+door+" Opened!";
-
-  messageText.textContent=
-    door===100
-    ?"You are officially a 100 Doors master!"
-    :"Nice! The next room is waiting.";
-
-  messageButton.textContent=
-    door===100
-    ?"Play Again"
-    :"Next Door";
-
-  message.style.display="block";
-
-  playing=false;
-}
-
-messageButton.addEventListener("click",()=>{
-
-  message.style.display="none";
-
-  if(door===100){
-
-    door=1;
-    stars=0;
-
-    progressEl.textContent="⭐ 0";
-
-  }else{
-
-    door++;
-  }
-
-  startDoor();
-});
-
-function startDoor(){
-
-  puzzle=makePuzzle(door);
-
-  levelEl.textContent=
-    "Door "+door+" / 100";
-
-  hintEl.textContent=
-    puzzle.clue;
-
-  playing=true;
-}
-
-function drawPuzzle(){
-
-  if(!puzzle)return;
-
-  text(
-    puzzle.title,
-    W/2,
-    125,
-    28,
-    "#ffffff"
-  );
-
-  if(puzzle.type==="tap"){
-
-    text(
-      "TAP THE DOOR",
-      W/2,
-      H/2,
-      22,
-      "#ffe8b0"
-    );
-  }
-
-  if(puzzle.type==="button"){
-
-    const color=
-      puzzle.answer==="red"
-      ?"#e34b4b"
-      :"#45b86a";
-
-    roundRect(
-      W/2-90,
-      H/2-40,
-      180,
-      80,
-      18,
-      color
-    );
-
-    text(
-      puzzle.answer.toUpperCase(),
-      W/2,
-      H/2,
-      23
-    );
-  }
-
-  if(puzzle.type==="number"){
-
-    roundRect(
-      W/2-100,
-      H/2+70,
-      200,
-      65,
-      15,
-      "#4c9cff"
-    );
-
-    text(
-      "ENTER ANSWER",
-      W/2,
-      H/2+102,
-      18
-    );
-
-    const count=puzzle.answer;
-
-    for(let i=0;i<count;i++){
-
-      const spacing=42;
-
-      const start=
-        W/2-
-        ((count-1)*spacing)/2;
-
-      text(
-        "★",
-        start+i*spacing,
-        H/2-55,
-        28,
-        "#ffd34d"
-      );
-    }
-  }
-
-  if(puzzle.type==="choice"){
-
-    const positions=[
-      W/2-130,
-      W/2,
-      W/2+130
-    ];
-
-    const colors=[
-      "#9b7650",
-      "#e5bd4c",
-      "#6b7c8d"
-    ];
-
-    for(let i=0;i<3;i++){
-
-      circle(
-        positions[i],
-        H/2,
-        40,
-        colors[i]
-      );
-    }
-
-    text("🔑",W/2-130,H/2,28);
-  }
-
-  if(puzzle.type==="sequence"){
-
-    const positions=[
-      W/2-110,
-      W/2,
-      W/2+110
-    ];
-
-    const colors=[
-      "#e95b5b",
-      "#55b96a",
-      "#5a8ee8"
-    ];
-
-    for(let i=0;i<3;i++){
-
-      circle(
-        positions[i],
-        H/2,
-        42,
-        colors[i]
-      );
-
-      text(
-        String(i+1),
-        positions[i],
-        H/2,
-        18
-      );
-    }
-  }
-
-  if(puzzle.type==="tapall"){
-
-    const positions=[
-      W/2-110,
-      W/2,
-      W/2+110
-    ];
-
-    for(let i=0;i<3;i++){
-
-      circle(
-        positions[i],
-        H/2,
-        42,
-        puzzle.lit[i]
-        ?"#ffd85a"
-        :"#303b4c"
-      );
-
-      text(
-        puzzle.lit[i]?"✓":"?",
-        positions[i],
-        H/2,
-        25
-      );
-    }
-  }
-
-  if(puzzle.type==="direction"){
-
-    roundRect(
-      30,
-      H/2-50,
-      W/2-55,
-      100,
-      15,
-      "#37465b"
-    );
-
-    roundRect(
-      W/2+25,
-      H/2-50,
-      W/2-55,
-      100,
-      15,
-      "#4c9cff"
-    );
-
-    text("←",W/4,H/2,40);
-    text("→",W*.75,H/2,40);
-  }
-}
-
-function draw(){
-
-  clear();
-
-  if(playing){
-
-    drawDoor();
-    drawPuzzle();
-  }
-
-  requestAnimationFrame(draw);
-}
-
-document
-.getElementById("startButton")
-.addEventListener("click",()=>{
-
+document.getElementById("start").onclick=()=>{
   menu.classList.add("hidden");
-
   door=1;
   stars=0;
+  loadDoor();
+};
 
-  progressEl.textContent="⭐ 0";
+/* =====================================================
+   LOAD DOOR
+===================================================== */
 
-  startDoor();
-});
+function loadDoor(){
 
-draw();
+  solved=false;
+  state={};
 
-</script>
+  const p=puzzles[door-1];
 
-</body>
-  </html>
+  doorNumber.textContent=
+    "Door "+door+" / 100";
+
+  starsEl.textContent=
+    "⭐ "+stars;
+
+  title.textContent=
+    p.title;
+
+  clue.textContent=
+    p.clue;
+
+  feedback.textContent="";
+
+  continueBtn.style.display="none";
+
+  objects.innerHTML="";
+
+  buildPuzzle(p);
+}
+
+/* =====================================================
+   BUILD PUZZLES
+===================================================== */
+
+function buildPuzzle(p){
+
+  if(p.type==="buttons"){
+    buildButtons(p.items);
+  }
+
+  if(p.type==="number"){
+    buildNumber(p);
+  }
+
+  if(p.type==="lights"){
+    buildLights(p);
+  }
+
+  if(p.type==="sequence"){
+    buildSequence(p);
+  }
+
+  if(p.type==="memory"
