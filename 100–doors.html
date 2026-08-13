@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>100 Doors</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#101522;
+  font-family:Arial,sans-serif;
+  touch-action:none;
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+
+#top{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  color:white;
+  z-index:5;
+  pointer-events:none;
+  text-shadow:0 2px 4px #000;
+}
+
+#level{
+  font-size:21px;
+  font-weight:bold;
+}
+
+#progress{
+  font-size:20px;
+}
+
+#hint{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  width:min(90%,430px);
+  padding:13px 18px;
+  border-radius:15px;
+  background:rgba(0,0,0,.65);
+  color:white;
+  text-align:center;
+  font-size:16px;
+  z-index:6;
+  pointer-events:none;
+}
+
+#message{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(88%,430px);
+  padding:25px;
+  border-radius:20px;
+  background:rgba(12,18,30,.97);
+  color:white;
+  text-align:center;
+  z-index:20;
+  display:none;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
+
+#message h2{
+  margin-top:0;
+}
+
+button{
+  border:0;
+  border-radius:12px;
+  padding:13px 22px;
+  margin:6px;
+  background:#4c9cff;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+}
+
+button:active{
+  transform:scale(.95);
+}
+
+#menu{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(90%,450px);
+  padding:30px;
+  border-radius:24px;
+  background:rgba(13,20,34,.97);
+  color:white;
+  text-align:center;
+  z-index:30;
+}
+
+#menu h1{
+  font-size:38px;
+  margin:0 0 10px;
+}
+
+#menu p{
+  line-height:1.5;
+  color:#d9e3ef;
+}
+
+.hidden{
+  display:none!important;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="top">
+  <div id="level">Door 1 / 100</div>
+  <div id="progress">⭐ 0</div>
+</div>
+
+<div id="hint">Find the clue and open the door.</div>
+
+<div id="message">
+  <h2 id="messageTitle"></h2>
+  <p id="messageText"></p>
+  <button id="messageButton">Continue</button>
+</div>
+
+<div id="menu">
+  <h1>🚪 100 Doors</h1>
+  <p>
+    Can you escape all 100 rooms?<br><br>
+    Every room has a clue.<br>
+    Don't worry — the puzzles are designed to be fun,
+    not frustrating.
+  </p>
+  <button id="startButton">Start Game</button>
+</div>
+
+<script>
+
+"use strict";
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let W=window.innerWidth;
+let H=window.innerHeight;
+
+function resize(){
+
+  W=window.innerWidth;
+  H=window.innerHeight;
+
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+
+  canvas.width=Math.floor(W*dpr);
+  canvas.height=Math.floor(H*dpr);
+
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+let door=1;
+let stars=0;
+let playing=false;
+let puzzle=null;
+
+const levelEl=document.getElementById("level");
+const progressEl=document.getElementById("progress");
+const hintEl=document.getElementById("hint");
+
+const menu=document.getElementById("menu");
+const message=document.getElementById("message");
+const messageTitle=document.getElementById("messageTitle");
+const messageText=document.getElementById("messageText");
+const messageButton=document.getElementById("messageButton");
+
+function clear(){
+
+  const gradient=ctx.createLinearGradient(0,0,0,H);
+
+  gradient.addColorStop(0,"#27344d");
+  gradient.addColorStop(1,"#0e1420");
+
+  ctx.fillStyle=gradient;
+  ctx.fillRect(0,0,W,H);
+}
+
+function text(txt,x,y,size,color="#fff",align="center"){
+
+  ctx.fillStyle=color;
+  ctx.font=`bold ${size}px Arial`;
+  ctx.textAlign=align;
+  ctx.textBaseline="middle";
+  ctx.fillText(txt,x,y);
+}
+
+function roundRect(x,y,w,h,r,fill,stroke){
+
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,r);
+
+  if(fill){
+    ctx.fillStyle=fill;
+    ctx.fill();
+  }
+
+  if(stroke){
+    ctx.strokeStyle=stroke;
+    ctx.lineWidth=3;
+    ctx.stroke();
+  }
+}
+
+function circle(x,y,r,fill){
+
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fill;
+  ctx.fill();
+}
+
+function drawDoor(){
+
+  ctx.fillStyle="#343d4d";
+  ctx.fillRect(0,80,W,H-80);
+
+  ctx.strokeStyle="rgba(255,255,255,.06)";
+  ctx.lineWidth=1;
+
+  for(let y=90;y<H;y+=42){
+
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(W,y);
+    ctx.stroke();
+  }
+
+  const dw=Math.min(270,W*.65);
+  const dh=Math.min(430,H*.58);
+
+  const dx=W/2-dw/2;
+  const dy=H/2-dh/2+10;
+
+  roundRect(
+    dx-14,
+    dy-14,
+    dw+28,
+    dh+28,
+    10,
+    "#1a1e26"
+  );
+
+  roundRect(
+    dx,
+    dy,
+    dw,
+    dh,
+    8,
+    "#68472f",
+    "#9b704f"
+  );
+
+  ctx.strokeStyle="#4b3022";
+  ctx.lineWidth=7;
+
+  ctx.strokeRect(
+    dx+30,
+    dy+35,
+    dw-60,
+    130
+  );
+
+  ctx.strokeRect(
+    dx+30,
+    dy+195,
+    dw-60,
+    150
+  );
+
+  circle(
+    dx+dw-38,
+    dy+dh/2,
+    9,
+    "#d6b85b"
+  );
+
+  circle(
+    dx+dw-38,
+    dy+dh/2,
+    4,
+    "#8a6a28"
+  );
+
+  text(
+    String(door),
+    W/2,
+    dy+dh/2,
+    45,
+    "#ead7bd"
+  );
+}
+
+function makePuzzle(number){
+
+  const type=(number-1)%10;
+
+  if(type===0){
+
+    return {
+      type:"tap",
+      title:"The Simple Door",
+      clue:"The door is locked. Try the obvious thing.",
+      answer:"open"
+    };
+  }
+
+  if(type===1){
+
+    return {
+      type:"sequence",
+      title:"Remember the Lights",
+      clue:"Tap the lights in the order they appear.",
+      sequence:[0,1,2],
+      step:0
+    };
+  }
+
+  if(type===2){
+
+    return {
+      type:"button",
+      title:"The Big Red Button",
+      clue:"Sometimes the answer really is that simple.",
+      answer:"red"
+    };
+  }
+
+  if(type===3){
+
+    return {
+      type:"number",
+      title:"Count the Stars",
+      clue:"How many stars are above the door?",
+      answer:5+Math.floor(number/20)
+    };
+  }
+
+  if(type===4){
+
+    return {
+      type:"choice",
+      title:"Choose the Key",
+      clue:"The golden key opens the door.",
+      answer:1
+    };
+  }
+
+  if(type===5){
+
+    return {
+      type:"tapall",
+      title:"Light the Room",
+      clue:"Turn on all three lights.",
+      lit:[false,false,false]
+    };
+  }
+
+  if(type===6){
+
+    return {
+      type:"direction",
+      title:"Which Way?",
+      clue:"The arrow points toward the correct door.",
+      answer:"right"
+    };
+  }
+
+  if(type===7){
+
+    return {
+      type:"number",
+      title:"The Easy Math Door",
+      clue:"What is 2 + 3?",
+      answer:5
+    };
+  }
+
+  if(type===8){
+
+    return {
+      type:"button",
+      title:"One Button",
+      clue:"Only the green button is safe.",
+      answer:"green"
+    };
+  }
+
+  return {
+    type:"tap",
+    title:"Trust the Door",
+    clue:"There is no trick. Tap the door.",
+    answer:"open"
+  };
+}
+
+function getTapTarget(x,y){
+
+  if(!puzzle)return null;
+
+  if(puzzle.type==="tap"){
+
+    const dw=Math.min(270,W*.65);
+    const dh=Math.min(430,H*.58);
+
+    const dx=W/2-dw/2;
+    const dy=H/2-dh/2+10;
+
+    if(
+      x>=dx &&
+      x<=dx+dw &&
+      y>=dy &&
+      y<=dy+dh
+    ){
+      return "open";
+    }
+  }
+
+  if(puzzle.type==="button"){
+
+    if(
+      x>W/2-90 &&
+      x<W/2+90 &&
+      y>H/2-40 &&
+      y<H/2+40
+    ){
+      return puzzle.answer;
+    }
+  }
+
+  if(puzzle.type==="number"){
+
+    if(
+      x>W/2-100 &&
+      x<W/2+100 &&
+      y>H/2+70 &&
+      y<H/2+135
+    ){
+
+      const value=prompt(
+        puzzle.clue+"\n\nEnter your answer:"
+      );
+
+      if(value!==null){
+
+        const n=Number(value);
+
+        if(n===puzzle.answer){
+          solve();
+        }else{
+          gentleWrong();
+        }
+      }
+
+      return null;
+    }
+  }
+
+  if(puzzle.type==="choice"){
+
+    const positions=[
+      W/2-130,
+      W/2,
+      W/2+130
+    ];
+
+    for(let i=0;i<3;i++){
+
+      if(
+        Math.abs(x-positions[i])<50 &&
+        Math.abs(y-H/2)<50
+      ){
+        return i;
+      }
+    }
+  }
+
+  if(puzzle.type==="sequence"){
+
+    const positions=[
+      W/2-110,
+      W/2,
+      W/2+110
+    ];
+
+    for(let i=0;i<3;i++){
+
+      if(
+        Math.abs(x-positions[i])<45 &&
+        Math.abs(y-H/2)<45
+      ){
+        return i;
+      }
+    }
+  }
+
+  if(puzzle.type==="tapall"){
+
+    const positions=[
+      W/2-110,
+      W/2,
+      W/2+110
+    ];
+
+    for(let i=0;i<3;i++){
+
+      if(
+        Math.abs(x-positions[i])<45 &&
+        Math.abs(y-H/2)<45
+      ){
+
+        puzzle.lit[i]=true;
+
+        if(puzzle.lit.every(Boolean)){
+          solve();
+        }
+
+        return i;
+      }
+    }
+  }
+
+  if(puzzle.type==="direction"){
+
+    if(
+      x>W/2+20 &&
+      x<W-30 &&
+      y>H/2-50 &&
+      y<H/2+50
+    ){
+      return "right";
+    }
+
+    if(
+      x>30 &&
+      x<W/2-20 &&
+      y>H/2-50 &&
+      y<H/2+50
+    ){
+      return "left";
+    }
+  }
+
+  return null;
+}
+
+canvas.addEventListener("pointerdown",e=>{
+
+  if(!playing)return;
+
+  e.preventDefault();
+
+  const rect=canvas.getBoundingClientRect();
+
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+
+  const target=getTapTarget(x,y);
+
+  if(target!==null){
+    checkAnswer(target);
+  }
+});
+
+function checkAnswer(answer){
+
+  if(!puzzle)return;
+
+  if(puzzle.type==="tap"){
+
+    if(answer==="open")solve();
+
+    return;
+  }
+
+  if(puzzle.type==="button"){
+
+    if(answer===puzzle.answer){
+      solve();
+    }else{
+      gentleWrong();
+    }
+
+    return;
+  }
+
+  if(puzzle.type==="choice"){
+
+    if(answer===puzzle.answer){
+      solve();
+    }else{
+      gentleWrong();
+    }
+
+    return;
+  }
+
+  if(puzzle.type==="sequence"){
+
+    if(answer===puzzle.sequence[puzzle.step]){
+
+      puzzle.step++;
+
+      if(puzzle.step>=puzzle.sequence.length){
+        solve();
+      }
+
+    }else{
+
+      puzzle.step=0;
+
+      hintEl.textContent=
+        "Almost! Watch the lights again and try once more.";
+    }
+
+    return;
+  }
+
+  if(puzzle.type==="direction"){
+
+    if(answer===puzzle.answer){
+      solve();
+    }else{
+      gentleWrong();
+    }
+
+    return;
+  }
+}
+
+function gentleWrong(){
+
+  hintEl.textContent=
+    "Not quite! No penalty — try another answer.";
+}
+
+function solve(){
+
+  stars++;
+
+  progressEl.textContent="⭐ "+stars;
+
+  messageTitle.textContent=
+    door===100
+    ?"🎉 YOU ESCAPED ALL 100 DOORS!"
+    :"🚪 Door "+door+" Opened!";
+
+  messageText.textContent=
+    door===100
+    ?"You are officially a 100 Doors master!"
+    :"Nice! The next room is waiting.";
+
+  messageButton.textContent=
+    door===100
+    ?"Play Again"
+    :"Next Door";
+
+  message.style.display="block";
+
+  playing=false;
+}
+
+messageButton.addEventListener("click",()=>{
+
+  message.style.display="none";
+
+  if(door===100){
+
+    door=1;
+    stars=0;
+
+    progressEl.textContent="⭐ 0";
+
+  }else{
+
+    door++;
+  }
+
+  startDoor();
+});
+
+function startDoor(){
+
+  puzzle=makePuzzle(door);
+
+  levelEl.textContent=
+    "Door "+door+" / 100";
+
+  hintEl.textContent=
+    puzzle.clue;
+
+  playing=true;
+}
+
+function drawPuzzle(){
+
+  if(!puzzle)return;
+
+  text(
+    puzzle.title,
+    W/2,
+    125,
+    28,
+    "#ffffff"
+  );
+
+  if(puzzle.type==="tap"){
+
+    text(
+      "TAP THE DOOR",
+      W/2,
+      H/2,
+      22,
+      "#ffe8b0"
+    );
+  }
+
+  if(puzzle.type==="button"){
+
+    const color=
+      puzzle.answer==="red"
+      ?"#e34b4b"
+      :"#45b86a";
+
+    roundRect(
+      W/2-90,
+      H/2-40,
+      180,
+      80,
+      18,
+      color
+    );
+
+    text(
+      puzzle.answer.toUpperCase(),
+      W/2,
+      H/2,
+      23
+    );
+  }
+
+  if(puzzle.type==="number"){
+
+    roundRect(
+      W/2-100,
+      H/2+70,
+      200,
+      65,
+      15,
+      "#4c9cff"
+    );
+
+    text(
+      "ENTER ANSWER",
+      W/2,
+      H/2+102,
+      18
+    );
+
+    const count=puzzle.answer;
+
+    for(let i=0;i<count;i++){
+
+      const spacing=42;
+
+      const start=
+        W/2-
+        ((count-1)*spacing)/2;
+
+      text(
+        "★",
+        start+i*spacing,
+        H/2-55,
+        28,
+        "#ffd34d"
+      );
+    }
+  }
+
+  if(puzzle.type==="choice"){
+
+    const positions=[
+      W/2-130,
+      W/2,
+      W/2+130
+    ];
+
+    const colors=[
+      "#9b7650",
+      "#e5bd4c",
+      "#6b7c8d"
+    ];
+
+    for(let i=0;i<3;i++){
+
+      circle(
+        positions[i],
+        H/2,
+        40,
+        colors[i]
+      );
+    }
+
+    text("🔑",W/2-130,H/2,28);
+  }
+
+  if(puzzle.type==="sequence"){
+
+    const positions=[
+      W/2-110,
+      W/2,
+      W/2+110
+    ];
+
+    const colors=[
+      "#e95b5b",
+      "#55b96a",
+      "#5a8ee8"
+    ];
+
+    for(let i=0;i<3;i++){
+
+      circle(
+        positions[i],
+        H/2,
+        42,
+        colors[i]
+      );
+
+      text(
+        String(i+1),
+        positions[i],
+        H/2,
+        18
+      );
+    }
+  }
+
+  if(puzzle.type==="tapall"){
+
+    const positions=[
+      W/2-110,
+      W/2,
+      W/2+110
+    ];
+
+    for(let i=0;i<3;i++){
+
+      circle(
+        positions[i],
+        H/2,
+        42,
+        puzzle.lit[i]
+        ?"#ffd85a"
+        :"#303b4c"
+      );
+
+      text(
+        puzzle.lit[i]?"✓":"?",
+        positions[i],
+        H/2,
+        25
+      );
+    }
+  }
+
+  if(puzzle.type==="direction"){
+
+    roundRect(
+      30,
+      H/2-50,
+      W/2-55,
+      100,
+      15,
+      "#37465b"
+    );
+
+    roundRect(
+      W/2+25,
+      H/2-50,
+      W/2-55,
+      100,
+      15,
+      "#4c9cff"
+    );
+
+    text("←",W/4,H/2,40);
+    text("→",W*.75,H/2,40);
+  }
+}
+
+function draw(){
+
+  clear();
+
+  if(playing){
+
+    drawDoor();
+    drawPuzzle();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+document
+.getElementById("startButton")
+.addEventListener("click",()=>{
+
+  menu.classList.add("hidden");
+
+  door=1;
+  stars=0;
+
+  progressEl.textContent="⭐ 0";
+
+  startDoor();
+});
+
+draw();
+
+</script>
+
+</body>
+  </html>
