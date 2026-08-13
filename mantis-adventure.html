@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mantis Adventure</title>
+
+<style>
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#78bce0;
+}
+
+canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+
+#controls{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:15px;
+  height:150px;
+  pointer-events:none;
+}
+
+.control{
+  position:absolute;
+  width:75px;
+  height:55px;
+  border-radius:18px;
+  border:2px solid rgba(255,255,255,.5);
+  background:rgba(20,50,30,.7);
+  pointer-events:auto;
+  touch-action:none;
+}
+
+#forward{
+  left:calc(50% - 37px);
+  top:0;
+}
+
+#back{
+  left:calc(50% - 37px);
+  bottom:0;
+}
+
+#left{
+  left:12px;
+  top:45px;
+}
+
+#right{
+  right:12px;
+  top:45px;
+}
+
+.triangle{
+  width:0;
+  height:0;
+  margin:auto;
+}
+
+.up{
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-bottom:22px solid white;
+}
+
+.down{
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-top:22px solid white;
+}
+
+.leftShape{
+  border-top:14px solid transparent;
+  border-bottom:14px solid transparent;
+  border-right:22px solid white;
+}
+
+.rightShape{
+  border-top:14px solid transparent;
+  border-bottom:14px solid transparent;
+  border-left:22px solid white;
+}
+
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:#102718;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  z-index:20;
+}
+
+.startBox{
+  max-width:420px;
+  padding:30px;
+}
+
+#start{
+  padding:16px 30px;
+  border:0;
+  border-radius:15px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+#hud{
+  position:fixed;
+  top:10px;
+  left:10px;
+  right:10px;
+  color:white;
+  font-family:Arial,sans-serif;
+  font-weight:bold;
+  text-shadow:0 2px 4px black;
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none;
+}
+
+#warning{
+  position:fixed;
+  top:18%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 20px;
+  border-radius:15px;
+  background:rgba(150,0,0,.8);
+  color:white;
+  font:bold 20px Arial;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div>ANTS: <span id="score">0</span>/10</div>
+  <div>LIVES: <span id="lives">3</span></div>
+</div>
+
+<div id="warning">RUN!</div>
+
+<div id="controls">
+
+  <button class="control" id="forward">
+    <div class="triangle up"></div>
+  </button>
+
+  <button class="control" id="back">
+    <div class="triangle down"></div>
+  </button>
+
+  <button class="control" id="left">
+    <div class="triangle leftShape"></div>
+  </button>
+
+  <button class="control" id="right">
+    <div class="triangle rightShape"></div>
+  </button>
+
+</div>
+
+<div id="startScreen">
+  <div class="startBox">
+    <h1>Mantis Adventure</h1>
+    <p>You are a tiny mantis exploring an enormous world.</p>
+    <p>Find tiny ants, avoid giant animals, and run when a giant shadow appears.</p>
+    <button id="start">START</button>
+  </div>
+</div>
+
+<script>
+
+const canvas=document.getElementById("game");
+const gl=canvas.getContext("webgl");
+
+if(!gl){
+  alert("This browser does not support 3D WebGL.");
+}
+
+const vertexShaderSource=`
+
+attribute vec3 position;
+attribute vec3 normal;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+varying vec3 vNormal;
+
+void main(){
+
+  vNormal=normal;
+
+  gl_Position=
+    projection*
+    view*
+    model*
+    vec4(position,1.0);
+
+}
+`;
+
+const fragmentShaderSource=`
+
+precision mediump float;
+
+uniform vec3 color;
+
+varying vec3 vNormal;
+
+void main(){
+
+  vec3 light=normalize(vec3(3.0,8.0,4.0));
+
+  float brightness=
+    max(dot(normalize(vNormal),light),0.0);
+
+  brightness=.35+brightness*.65;
+
+  gl_FragColor=
+    vec4(color*brightness,1.0);
+
+}
+`;
+
+function shader(type,source){
+
+  const s=gl.createShader(type);
+
+  gl.shaderSource(s,source);
+
+  gl.compileShader(s);
+
+  return s;
+
+}
+
+const program=gl.createProgram();
+
+gl.attachShader(
+  program,
+  shader(gl.VERTEX_SHADER,vertexShaderSource)
+);
+
+gl.attachShader(
+  program,
+  shader(gl.FRAGMENT_SHADER,fragmentShaderSource)
+);
+
+gl.linkProgram(program);
+
+gl.useProgram(program);
+
+const positionLocation=
+  gl.getAttribLocation(program,"position");
+
+const normalLocation=
+  gl.getAttribLocation(program,"normal");
+
+const modelLocation=
+  gl.getUniformLocation(program,"model");
+
+const viewLocation=
+  gl.getUniformLocation(program,"view");
+
+const projectionLocation=
+  gl.getUniformLocation(program,"projection");
+
+const colorLocation=
+  gl.getUniformLocation(program,"color");
+
+
+function cube(){
+
+  const data=[];
+
+  function face(a,b,c,d,n){
+
+    const vertices=[
+
+      [-.5,-.5,-.5],
+      [.5,-.5,-.5],
+      [.5,.5,-.5],
+      [-.5,.5,-.5],
+
+      [-.5,-.5,.5],
+      [.5,-.5,.5],
+      [.5,.5,.5],
+      [-.5,.5,.5]
+
+    ];
+
+    const ids=[
+      a,b,c,
+      a,c,d
+    ];
+
+    for(let id of ids){
+
+      data.push(
+        vertices[id][0],
+        vertices[id][1],
+        vertices[id][2],
+
+        n[0],n[1],n[2]
+      );
+
+    }
+
+  }
+
+  face(0,1,2,3,[0,0,-1]);
+  face(5,4,7,6,[0,0,1]);
+  face(4,0,3,7,[-1,0,0]);
+  face(1,5,6,2,[1,0,0]);
+  face(3,2,6,7,[0,1,0]);
+  face(4,5,1,0,[0,-1,0]);
+
+  return makeMesh(data);
+
+}
+
+
+function cylinder(segments=12){
+
+  const data=[];
+
+  for(let i=0;i<segments;i++){
+
+    const a=i*Math.PI*2/segments;
+    const b=(i+1)*Math.PI*2/segments;
+
+    const x1=Math.cos(a);
+    const z1=Math.sin(a);
+
+    const x2=Math.cos(b);
+    const z2=Math.sin(b);
+
+    data.push(
+      x1,0,z1,x1,0,z1,
+      x2,0,z2,x2,0,z2,
+      x2,1,z2,x2,0,z2,
+
+      x1,0,z1,x1,0,z1,
+      x2,1,z2,x2,0,z2,
+      x1,1,z1,x1,0,z1
+    );
+
+  }
+
+  return makeMesh(data);
+
+}
+
+
+function makeMesh(data){
+
+  const buffer=gl.createBuffer();
+
+  gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    buffer
+  );
+
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(data),
+    gl.STATIC_DRAW
+  );
+
+  return {
+    buffer:buffer,
+    count:data.length/6
+  };
+
+}
+
+
+const CUBE=cube();
+const CYLINDER=cylinder();
+
+
+function identity(){
+
+  return [
+
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+
+  ];
+
+}
+
+
+function multiply(a,b){
+
+  const out=new Array(16);
+
+  for(let c=0;c<4;c++){
+
+    for(let r=0;r<4;r++){
+
+      out[c*4+r]=
+
+        a[r]*b[c*4]+
+        a[4+r]*b[c*4+1]+
+        a[8+r]*b[c*4+2]+
+        a[12+r]*b[c*4+3];
+
+    }
+
+  }
+
+  return out;
+
+}
+
+
+function translation(x,y,z){
+
+  const m=identity();
+
+  m[12]=x;
+  m[13]=y;
+  m[14]=z;
+
+  return m;
+
+}
+
+
+function scaling(x,y,z){
+
+  const m=identity();
+
+  m[0]=x;
+  m[5]=y;
+  m[10]=z;
+
+  return m;
+
+}
+
+
+function rotationY(a){
+
+  const m=identity();
+
+  const c=Math.cos(a);
+  const s=Math.sin(a);
+
+  m[0]=c;
+  m[2]=-s;
+
+  m[8]=s;
+  m[10]=c;
+
+  return m;
+
+}
+
+
+function perspective(fov,aspect,near,far){
+
+  const f=1/Math.tan(fov/2);
+
+  const m=new Array(16).fill(0);
+
+  m[0]=f/aspect;
+  m[5]=f;
+
+  m[10]=(far+near)/(near-far);
+  m[11]=-1;
+
+  m[14]=
+    (2*far*near)/
+    (near-far);
+
+  return m;
+
+}
+
+
+/*
+IMPORTANT CONTROL FIX
+
+The camera always looks in the direction:
+
+X = sin(angle)
+Z = cos(angle)
+
+FORWARD uses that exact same direction.
+
+BACK uses the opposite direction.
+
+LEFT decreases the angle.
+
+RIGHT increases the angle.
+
+Therefore the movement cannot be opposite to the camera.
+*/
+
+function camera(x,y,z,angle){
+
+  const c=Math.cos(angle);
+  const s=Math.sin(angle);
+
+  const m=identity();
+
+  m[0]=c;
+  m[2]=-s;
+
+  m[8]=-s;
+  m[10]=-c;
+
+  m[12]=-c*x+s*z;
+  m[13]=-y;
+  m[14]=s*x+c*z;
+
+  return m;
+
+}
+
+
+function drawMesh(
+  mesh,
+  x,y,z,
+  sx,sy,sz,
+  rotation,
+  color
+){
+
+  const model=
+
+    multiply(
+      translation(x,y,z),
+      multiply(
+        rotationY(rotation),
+        scaling(sx,sy,sz)
+      )
+    );
+
+  const mv=
+    multiply(view,model);
+
+  const mvp=
+    multiply(projection,mv);
+
+  gl.uniformMatrix4fv(
+    modelLocation,
+    false,
+    new Float32Array(model)
+  );
+
+  gl.uniformMatrix4fv(
+    viewLocation,
+    false,
+    new Float32Array(view)
+  );
+
+  gl.uniformMatrix4fv(
+    projectionLocation,
+    false,
+    new Float32Array(projection)
+  );
+
+  gl.uniform3fv(
+    colorLocation,
+    color
+  );
+
+  gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    mesh.buffer
+  );
+
+  gl.enableVertexAttribArray(
+    positionLocation
+  );
+
+  gl.vertexAttribPointer(
+    positionLocation,
+    3,
+    gl.FLOAT,
+    false,
+    24,
+    0
+  );
+
+  gl.enableVertexAttribArray(
+    normalLocation
+  );
+
+  gl.vertexAttribPointer(
+    normalLocation,
+    3,
+    gl.FLOAT,
+    false,
+    24,
+    12
+  );
+
+  gl.drawArrays(
+    gl.TRIANGLES,
+    0,
+    mesh.count
+  );
+
+}
+
+
+let W=innerWidth;
+let H=innerHeight;
+
+function resize(){
+
+  const d=
+    Math.min(
+      window.devicePixelRatio||1,
+      2
+    );
+
+  W=innerWidth;
+  H=innerHeight;
+
+  canvas.width=W*d;
+  canvas.height=H*d;
+
+}
+
+resize();
+
+addEventListener(
+  "resize",
+  resize
+);
+
+
+const player={
+
+  x:0,
+  z:0,
+
+  angle:0,
+
+  height:.45
+
+};
+
+
+let trees=[];
+let ants=[];
+let animals=[];
+
+let score=0;
+let lives=3;
+
+let running=false;
+
+let lastTime=0;
+
+const keys={};
+
+
+function random(a,b){
+
+  return a+
+    Math.random()*
+    (b-a);
+
+}
+
+
+function distance(a,b,c,d){
+
+  return Math.hypot(
+    a-c,
+    b-d
+  );
+
+}
+
+
+function createWorld(){
+
+  trees=[];
+  ants=[];
+
+  /*
+  The ground is enormous and follows the player,
+  so there is no giant empty void.
+  */
+
+  for(let i=0;i<180;i++){
+
+    const angle=
+      Math.random()*
+      Math.PI*2;
+
+    const distanceFromPlayer=
+      5+
+      Math.random()*75;
+
+    trees.push({
+
+      x:
+        player.x+
+        Math.cos(angle)*
+        distanceFromPlayer,
+
+      z:
+        player.z+
+        Math.sin(angle)*
+        distanceFromPlayer,
+
+      height:
+        3+
+        Math.random()*4,
+
+      radius:
+        .4+
+        Math.random()*.5
+
+    });
+
+  }
+
+
+  /*
+  Ants are small and stay approximately where
+  they spawned.
+  */
+
+  for(let i=0;i<15;i++){
+
+    const angle=
+      Math.random()*
+      Math.PI*2;
+
+    const d=
+      5+
+      Math.random()*40;
+
+    ants.push({
+
+      x:
+        player.x+
+        Math.cos(angle)*d,
+
+      z:
+        player.z+
+        Math.sin(angle)*d,
+
+      alive:true,
+
+      speed:
+        .03+
+        Math.random()*.05
+
+    });
+
+  }
+
+
+  animals=[
+
+    {
+      type:"deer",
+      x:player.x+18,
+      z:player.z+25,
+      active:false,
+      timer:0
+    },
+
+    {
+      type:"elephant",
+      x:player.x-20,
+      z:player.z+32,
+      active:false,
+      timer:0
+    }
+
+  ];
+
+}
+
+
+function updateWorld(){
+
+  /*
+  Move the world with the player by creating more
+  objects around the new location.
+  */
+
+  while(trees.length<180){
+
+    const angle=
+      Math.random()*
+      Math.PI*2;
+
+    const d=
+      40+
+      Math.random()*60;
+
+    trees.push({
+
+      x:
+        player.x+
+        Math.cos(angle)*d,
+
+      z:
+        player.z+
+        Math.sin(angle)*d,
+
+      height:
+        3+
+        Math.random()*4,
+
+      radius:
+        .4+
+        Math.random()*.5
+
+    });
+
+  }
+
+}
+
+
+function resetGame(){
+
+  player.x=0;
+  player.z=0;
+  player.angle=0;
+
+  score=0;
+  lives=3;
+
+  document.getElementById(
+    "score"
+  ).textContent=score;
+
+  document.getElementById(
+    "lives"
+  ).textContent=lives;
+
+  createWorld();
+
+}
+
+
+function startGame(){
+
+  resetGame();
+
+  running=true;
+
+  document.getElementById(
+    "startScreen"
+  ).style.display="none";
+
+  lastTime=
+    performance.now();
+
+  requestAnimationFrame(loop);
+
+}
+
+
+document.getElementById(
+  "start"
+).onclick=startGame;
+
+
+/*
+Keyboard controls are optional.
+
+The phone buttons do NOT contain keyboard symbols.
+*/
+
+addEventListener(
+  "keydown",
+  e=>{
+    keys[e.key.toLowerCase()]=true;
+  }
+);
+
+addEventListener(
+  "keyup",
+  e=>{
+    keys[e.key.toLowerCase()]=false;
+  }
+);
+
+
+function touchButton(
+  id,
+  key
+){
+
+  const button=
+    document.getElementById(id);
+
+  function down(e){
+
+    e.preventDefault();
+
+    keys[key]=true;
+
+  }
+
+  function up(e){
+
+    e.preventDefault();
+
+    keys[key]=false;
+
+  }
+
+  button.addEventListener(
+    "pointerdown",
+    down,
+    {passive:false}
+  );
+
+  button.addEventListener(
+    "pointerup",
+    up,
+    {passive:false}
+  );
+
+  button.addEventListener(
+    "pointercancel",
+    up,
+    {passive:false}
+  );
+
+}
+
+
+touchButton(
+  "forward",
+  "forwardButton"
+);
+
+touchButton(
+  "back",
+  "backButton"
+);
+
+touchButton(
+  "left",
+  "leftButton"
+);
+
+touchButton(
+  "right",
+  "rightButton"
+);
+
+
+let view;
+let projection;
+
+
+function update(dt){
+
+  /*
+  NATURAL CONTROLS
+
+  Forward:
+  exactly where the camera is looking.
+
+  Back:
+  exactly opposite.
+
+  Left:
+  turn left.
+
+  Right:
+  turn right.
+  */
+
+  const forward=
+
+    keys.forwardButton||
+    keys.w||
+    keys.arrowup
+      ?1:0;
+
+  const backward=
+
+    keys.backButton||
+    keys.s||
+    keys.arrowdown
+      ?1:0;
+
+  const left=
+
+    keys.leftButton||
+    keys.a||
+    keys.arrowleft
+      ?1:0;
+
+  const right=
+
+    keys.rightButton||
+    keys.d||
+    keys.arrowright
+      ?1:0;
+
+
+  const movement=
+    forward-backward;
+
+  const turning=
+    right-left;
+
+
+  /*
+  Turning right increases the angle.
+  */
+
+  player.angle+=
+    turning*
+    2.0*
+    dt;
+
+
+  /*
+  EXACT SAME VECTOR USED BY THE CAMERA.
+  */
+
+  const forwardX=
+    Math.sin(player.angle);
+
+  const forwardZ=
+    Math.cos(player.angle);
+
+
+  player.x+=
+    forwardX*
+    movement*
+    3.0*
+    dt;
+
+  player.z+=
+    forwardZ*
+    movement*
+    3.0*
+    dt;
+
+
+  updateWorld();
+
+
+  /*
+  Ants move extremely slowly and do not flee.
+  */
+
+  for(const ant of ants){
+
+    if(!ant.alive)
+      continue;
+
+    ant.x+=
+      Math.sin(
+        ant.z*.1
+      )*
+      ant.speed*
+      dt;
+
+    ant.z+=
+      Math.cos(
+        ant.x*.1
+      )*
+      ant.speed*
+      dt;
+
+
+    if(
+      distance(
+        player.x,
+        player.z,
+        ant.x,
+        ant.z
+      )<.45
+    ){
+
+      ant.alive=false;
+
+      score++;
+
+      document.getElementById(
+        "score"
+      ).textContent=score;
+
+      if(score>=10){
+
+        running=false;
+
+        alert(
+          "You caught 10 ants!"
+        );
+
+      }
+
+    }
+
+  }
+
+
+  /*
+  GIANT ANIMALS
+  */
+
+  let danger=false;
+
+  for(const animal of animals){
+
+    let d=
+      distance(
+        player.x,
+        player.z,
+        animal.x,
+        animal.z
+      );
+
+
+    /*
+    If an animal is too far away,
+    move it somewhere else in the world.
+    */
+
+    if(d>70){
+
+      const a=
+        Math.random()*
+        Math.PI*2;
+
+      const far=
+        25+
+        Math.random()*20;
+
+      animal.x=
+        player.x+
+        Math.cos(a)*far;
+
+      animal.z=
+        player.z+
+        Math.sin(a)*far;
+
+      animal.active=false;
+
+    }
+
+
+    /*
+    Animals sometimes decide to step toward you.
+    */
+
+    if(
+      !animal.active &&
+      d<35 &&
+      Math.random()<dt*.08
+    ){
+
+      animal.active=true;
+
+      animal.timer=3;
+
+    }
+
+
+    if(animal.active){
+
+      danger=true;
+
+      animal.timer-=dt;
+
+      if(animal.timer<=0){
+
+        const dx=
+          player.x-
+          animal.x;
+
+        const dz=
+          player.z-
+          animal.z;
+
+        const length=
+          Math.hypot(dx,dz)||1;
+
+        animal.x+=
+          dx/length*
+          dt*
+          4;
+
+        animal.z+=
+          dz/length*
+          dt*
+          4;
+
+      }
+
+
+      /*
+      The animal is close enough to step on you.
+      */
+
+      if(d<2.2){
+
+        lives--;
+
+        document.getElementById(
+          "lives"
+        ).textContent=lives;
+
+        animal.active=false;
+
+        /*
+        Push the mantis away.
+        */
+
+        player.x-=
+          Math.sin(player.angle)*4;
+
+        player.z-=
+          Math.cos(player.angle)*4;
+
+
+        if(lives<=0){
+
+          running=false;
+
+          alert(
+            "The giant stepped on you!"
+          );
+
+        }
+
+      }
+
+
+      if(d>20){
+
+        animal.active=false;
+
+      }
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "warning"
+  ).style.display=
+    danger
+      ?"block"
+      :"none";
+
+}
+
+
+function render(){
+
+  gl.viewport(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  gl.enable(
+    gl.DEPTH_TEST
+  );
+
+  gl.clearColor(
+    .35,
+    .68,
+    .86,
+    1
+  );
+
+  gl.clear(
+    gl.COLOR_BUFFER_BIT|
+    gl.DEPTH_BUFFER_BIT
+  );
+
+
+  projection=
+    perspective(
+      1.05,
+      canvas.width/
+      canvas.height,
+      .05,
+      150
+    );
+
+
+  /*
+  Camera and movement use exactly
+  the same angle.
+  */
+
+  view=
+    camera(
+      player.x,
+      player.height,
+      player.z,
+      player.angle
+    );
+
+
+  /*
+  HUGE ground.
+  */
+
+  drawMesh(
+    CUBE,
+    player.x,
+    -.15,
+    player.z,
+    120,
+    .2,
+    120,
+    0,
+    [.18,.48,.16]
+  );
+
+
+  /*
+  TREES
+  */
+
+  for(const tree of trees){
+
+    const d=
+      distance(
+        player.x,
+        player.z,
+        tree.x,
+        tree.z
+      );
+
+    if(d>90)
+      continue;
+
+
+    /*
+    Trunk
+    */
+
+    drawMesh(
+      CYLINDER,
+      tree.x,
+      0,
+      tree.z,
+      tree.radius,
+      tree.height,
+      tree.radius,
+      0,
+      [.28,.14,.05]
+    );
+
+
+    /*
+    Lower foliage
+    */
+
+    drawMesh(
+      CYLINDER,
+      tree.x,
+      tree.height*.65,
+      tree.z,
+      tree.radius*3,
+      tree.height*.5,
+      tree.radius*3,
+      0,
+      [.08,.38,.10]
+    );
+
+
+    /*
+    Upper foliage
+    */
+
+    drawMesh(
+      CYLINDER,
+      tree.x,
+      tree.height*1.0,
+      tree.z,
+      tree.radius*2.3,
+      tree.height*.4,
+      tree.radius*2.3,
+      0,
+      [.12,.48,.13]
+    );
+
+  }
+
+
+  /*
+  TINY ANTS
+  */
+
+  for(const ant of ants){
+
+    if(!ant.alive)
+      continue;
+
+    const d=
+      distance(
+        player.x,
+        player.z,
+        ant.x,
+        ant.z
+      );
+
+    if(d>50)
+      continue;
+
+
+    drawMesh(
+      CYLINDER,
+      ant.x,
+      .08,
+      ant.z,
+      .06,
+      .08,
+      .06,
+      0,
+      [.06,.035,.015]
+    );
+
+  }
+
+
+  /*
+  GIANT ANIMALS
+  */
+
+  for(const animal of animals){
+
+    const elephant=
+      animal.type==="elephant";
+
+    const bodyWidth=
+      elephant
+        ?4.0
+        :2.2;
+
+    const bodyLength=
+      elephant
+        ?5.0
+        :3.4;
+
+    const legHeight=
+      elephant
+        ?4.5
+        :3.2;
+
+    const legWidth=
+      elephant
+        ?.7
+        :.42;
+
+
+    /*
+    Giant shadow.
+    */
+
+    if(animal.active){
+
+      drawMesh(
+        CUBE,
+        animal.x,
+        .025,
+        animal.z,
+        bodyWidth*1.8,
+        .03,
+        bodyLength*1.8,
+        0,
+        [.015,.015,.015]
+      );
+
+    }
+
+
+    /*
+    Four enormous legs.
+    */
+
+    for(
+      const side of [-1,1]
+    ){
+
+      for(
+        const front of [-1,1]
+      ){
+
+        drawMesh(
+          CYLINDER,
+
+          animal.x+
+            side*
+            bodyWidth*.35,
+
+          0,
+
+          animal.z+
+            front*
+            bodyLength*.32,
+
+          legWidth,
+          legHeight,
+          legWidth,
+
+          0,
+
+          elephant
+            ?[.35,.35,.30]
+            :[.42,.27,.18]
+        );
+
+      }
+
+    }
+
+
+    /*
+    Huge body.
+    */
+
+    drawMesh(
+      CUBE,
+      animal.x,
+      legHeight,
+      animal.z,
+      bodyWidth,
+      legHeight*.65,
+      bodyLength,
+      0,
+      elephant
+        ?[.38,.39,.32]
+        :[.48,.31,.20]
+    );
+
+  }
+
+
+  /*
+  Mantis arms at the bottom of the screen.
+  */
+
+  drawMesh(
+    CYLINDER,
+    player.x-0.25,
+    -.1,
+    player.z+0.35,
+    .06,
+    .7,
+    .06,
+    player.angle-.5,
+    [.25,.55,.08]
+  );
+
+  drawMesh(
+    CYLINDER,
+    player.x+0.25,
+    -.1,
+    player.z+0.35,
+    .06,
+    .7,
+    .06,
+    player.angle+.5,
+    [.25,.55,.08]
+  );
+
+}
+
+
+function loop(time){
+
+  if(!running)
+    return;
+
+  const dt=
+    Math.min(
+      .04,
+      (time-lastTime)/1000
+    );
+
+  lastTime=time;
+
+  update(dt);
+
+  render();
+
+  requestAnimationFrame(
+    loop
+  );
+
+}
+
+
+</script>
+
+</body>
+  </html>
