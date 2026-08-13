@@ -6,95 +6,94 @@
 <title>Mantis Adventure</title>
 
 <style>
-*{box-sizing:border-box}
-
 html,body{
   margin:0;
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#79bce0;
-  font-family:Arial,sans-serif;
+  background:#75b9d8;
+  touch-action:none;
 }
 
-#game{
+canvas{
   display:block;
   width:100vw;
   height:100vh;
   touch-action:none;
 }
 
-#title{
+.control{
   position:fixed;
-  top:12px;
-  left:50%;
-  transform:translateX(-50%);
-  color:white;
-  font-size:22px;
-  font-weight:bold;
-  text-shadow:2px 2px 4px #16452c;
-  z-index:5;
-  pointer-events:none;
-}
-
-#info{
-  position:fixed;
-  top:45px;
-  left:50%;
-  transform:translateX(-50%);
-  color:white;
-  font-size:14px;
-  text-shadow:1px 1px 3px #16452c;
-  z-index:5;
-  pointer-events:none;
-}
-
-.controls{
-  position:fixed;
-  bottom:22px;
-  left:0;
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  padding:0 22px;
-  z-index:10;
-  pointer-events:none;
-}
-
-.leftControls{
-  display:flex;
-  gap:12px;
-}
-
-button{
-  width:72px;
-  height:72px;
-  border:3px solid white;
+  width:64px;
+  height:64px;
   border-radius:50%;
-  background:rgba(25,70,45,.78);
-  color:white;
-  font-size:30px;
-  font-weight:bold;
+  border:3px solid rgba(255,255,255,.9);
+  background:rgba(20,55,35,.72);
   touch-action:none;
   user-select:none;
   -webkit-user-select:none;
 }
 
-button:active{
-  background:rgba(65,150,90,.95);
-  transform:scale(.94);
+.control:active{
+  transform:scale(.92);
+  background:rgba(45,110,60,.9);
 }
 
-#restart{
-  position:fixed;
-  top:80px;
-  right:15px;
-  width:auto;
-  height:45px;
-  padding:0 18px;
-  border-radius:22px;
-  font-size:16px;
-  display:none;
+#left{
+  left:20px;
+  bottom:24px;
+}
+
+#right{
+  left:96px;
+  bottom:24px;
+}
+
+#up{
+  right:96px;
+  bottom:100px;
+}
+
+#down{
+  right:96px;
+  bottom:24px;
+}
+
+.triangle{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:0;
+  height:0;
+  border-left:13px solid transparent;
+  border-right:13px solid transparent;
+}
+
+.leftShape{
+  border-top:13px solid transparent;
+  border-bottom:13px solid transparent;
+  border-right:20px solid white;
+  border-left:0;
+}
+
+.rightShape{
+  border-top:13px solid transparent;
+  border-bottom:13px solid transparent;
+  border-left:20px solid white;
+  border-right:0;
+}
+
+.upShape{
+  border-left:13px solid transparent;
+  border-right:13px solid transparent;
+  border-bottom:20px solid white;
+}
+
+.downShape{
+  border-left:13px solid transparent;
+  border-right:13px solid transparent;
+  border-top:20px solid white;
 }
 </style>
 </head>
@@ -103,420 +102,561 @@ button:active{
 
 <canvas id="game"></canvas>
 
-<div id="title">🌿 Mantis Adventure</div>
-<div id="info">Collect the glowing fireflies!</div>
-
-<div class="controls">
-  <div class="leftControls">
-    <button id="left">◀</button>
-    <button id="right">▶</button>
-  </div>
-  <button id="jump">▲</button>
+<div id="left" class="control">
+  <div class="triangle leftShape"></div>
 </div>
 
-<button id="restart">Play Again</button>
+<div id="right" class="control">
+  <div class="triangle rightShape"></div>
+</div>
+
+<div id="up" class="control">
+  <div class="triangle upShape"></div>
+</div>
+
+<div id="down" class="control">
+  <div class="triangle downShape"></div>
+</div>
 
 <script>
+"use strict";
+
+/* =========================
+   CANVAS
+========================= */
+
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-let W=innerWidth;
-let H=innerHeight;
+let W=window.innerWidth;
+let H=window.innerHeight;
 
 function resize(){
-  W=innerWidth;
-  H=innerHeight;
-  canvas.width=W;
-  canvas.height=H;
+  W=window.innerWidth;
+  H=window.innerHeight;
+
+  canvas.width=Math.floor(W*devicePixelRatio);
+  canvas.height=Math.floor(H*devicePixelRatio);
+
+  ctx.setTransform(
+    devicePixelRatio,0,0,devicePixelRatio,0,0
+  );
 }
 
-addEventListener("resize",resize);
+window.addEventListener("resize",resize);
 resize();
 
-/* ---------------- GAME STATE ---------------- */
+/* =========================
+   CONTROLS
+========================= */
 
-const world={
-  width:5000,
-  ground:0
-};
-
-let cameraX=0;
-let score=0;
-let won=false;
-
-const player={
-  x:160,
-  y:300,
-  w:48,
-  h:55,
-  vx:0,
-  vy:0,
-  speed:4.5,
-  jump:-12,
-  grounded:false
-};
-
-const keys={
+const input={
   left:false,
   right:false,
-  jump:false
+  up:false,
+  down:false
 };
 
-/* ---------------- PLATFORMS ---------------- */
+function hold(id,key){
+  const el=document.getElementById(id);
 
-const platforms=[
-  {x:0,y:430,w:900,h:100},
-  {x:1030,y:400,w:500,h:130},
-  {x:1660,y:440,w:700,h:90},
-  {x:2490,y:370,w:500,h:160},
-  {x:3100,y:430,w:650,h:100},
-  {x:3900,y:350,w:600,h:180},
-  {x:4600,y:430,w:400,h:100}
-];
+  const start=e=>{
+    e.preventDefault();
+    input[key]=true;
+    if(e.pointerId!==undefined){
+      try{el.setPointerCapture(e.pointerId);}catch(_){}
+    }
+  };
 
-/* ---------------- FIREFLIES ---------------- */
+  const stop=e=>{
+    e.preventDefault();
+    input[key]=false;
+  };
 
-const fireflies=[
-  {x:350,y:350,taken:false},
-  {x:650,y:300,taken:false},
-  {x:1180,y:320,taken:false},
-  {x:1400,y:330,taken:false},
-  {x:1900,y:370,taken:false},
-  {x:2200,y:350,taken:false},
-  {x:2630,y:300,taken:false},
-  {x:2860,y:300,taken:false},
-  {x:3300,y:360,taken:false},
-  {x:3500,y:350,taken:false},
-  {x:4100,y:290,taken:false},
-  {x:4350,y:290,taken:false}
-];
+  el.addEventListener("pointerdown",start);
+  el.addEventListener("pointerup",stop);
+  el.addEventListener("pointercancel",stop);
+  el.addEventListener("lostpointercapture",stop);
+}
 
-/* ---------------- DECORATION ---------------- */
+hold("left","left");
+hold("right","right");
+hold("up","up");
+hold("down","down");
 
-const trees=[];
+/* =========================
+   KEYBOARD SUPPORT
+   ========================= */
 
-for(let x=100;x<5000;x+=180){
-  trees.push({
-    x:x+Math.random()*60,
-    h:80+Math.random()*80
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft")input.left=true;
+  if(e.key==="ArrowRight")input.right=true;
+  if(e.key==="ArrowUp")input.up=true;
+  if(e.key==="ArrowDown")input.down=true;
+});
+
+window.addEventListener("keyup",e=>{
+  if(e.key==="ArrowLeft")input.left=false;
+  if(e.key==="ArrowRight")input.right=false;
+  if(e.key==="ArrowUp")input.up=false;
+  if(e.key==="ArrowDown")input.down=false;
+});
+
+/* =========================
+   WORLD
+========================= */
+
+/*
+  The world is mathematically infinite.
+  Objects are generated from their world coordinates,
+  so there is no giant map to run out of.
+*/
+
+const CELL=420;
+
+function hash(x,y){
+  let n=x*374761393+y*668265263;
+  n=(n^(n>>>13))*1274126177;
+  n=n^(n>>>16);
+  return (n>>>0)/4294967295;
+}
+
+function wrap(v){
+  const SIZE=1000000000;
+
+  if(v>SIZE)v-=SIZE;
+  if(v<-SIZE)v+=SIZE;
+
+  return v;
+}
+
+/* =========================
+   PLAYER
+========================= */
+
+const player={
+  x:0,
+  y:0,
+  speed:4.2,
+  radius:20,
+  health:100,
+  invincible:0
+};
+
+/* =========================
+   PREDATORS
+========================= */
+
+const predators=[];
+
+function createPredator(x,y,type){
+  predators.push({
+    x:x,
+    y:y,
+    type:type,
+    radius:type==="tiger"?25:20,
+    speed:type==="tiger"?0.75:0.55,
+    angle:Math.random()*Math.PI*2,
+    wander:0
   });
 }
 
-const clouds=[];
+/* A few predators start near the player. */
 
-for(let i=0;i<20;i++){
-  clouds.push({
-    x:Math.random()*5000,
-    y:50+Math.random()*150,
-    s:.7+Math.random()*.8
-  });
-}
+createPredator(700,220,"tiger");
+createPredator(-700,-350,"wolf");
+createPredator(900,-650,"tiger");
 
-/* ---------------- INPUT ---------------- */
+/* =========================
+   FIXED ANTS
+========================= */
 
-function holdButton(id,property){
-  const b=document.getElementById(id);
+/*
+  Ants are anchored to world cells.
+  They do NOT wander around.
+  They only make a tiny slow animation.
+*/
 
-  const down=e=>{
-    e.preventDefault();
-    keys[property]=true;
+function antAt(cx,cy){
+  const r=hash(cx*3+17,cy*5+31);
+
+  if(r<0.43)return null;
+
+  return {
+    x:cx*CELL+90+hash(cx+4,cy+9)*240,
+    y:cy*CELL+90+hash(cx+12,cy+15)*240,
+    phase:hash(cx+30,cy+50)*6.28
   };
-
-  const up=e=>{
-    e.preventDefault();
-    keys[property]=false;
-  };
-
-  b.addEventListener("pointerdown",down);
-  b.addEventListener("pointerup",up);
-  b.addEventListener("pointercancel",up);
-  b.addEventListener("pointerleave",up);
 }
 
-holdButton("left","left");
-holdButton("right","right");
+/* =========================
+   DRAW WORLD
+========================= */
 
-document.getElementById("jump").addEventListener("pointerdown",e=>{
-  e.preventDefault();
-  keys.jump=true;
-});
-
-document.getElementById("jump").addEventListener("pointerup",e=>{
-  e.preventDefault();
-  keys.jump=false;
-});
-
-addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a")keys.left=true;
-  if(e.key==="ArrowRight"||e.key==="d")keys.right=true;
-  if(e.key==="ArrowUp"||e.key==="w"||e.key===" ")keys.jump=true;
-});
-
-addEventListener("keyup",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a")keys.left=false;
-  if(e.key==="ArrowRight"||e.key==="d")keys.right=false;
-  if(e.key==="ArrowUp"||e.key==="w"||e.key===" ")keys.jump=false;
-});
-
-/* ---------------- PHYSICS ---------------- */
-
-function update(){
-
-  if(won)return;
-
-  if(keys.left)player.vx=-player.speed;
-  else if(keys.right)player.vx=player.speed;
-  else player.vx*=.78;
-
-  if(keys.jump && player.grounded){
-    player.vy=player.jump;
-    player.grounded=false;
-  }
-
-  player.vy+=.55;
-
-  player.x+=player.vx;
-  player.y+=player.vy;
-
-  if(player.x<0)player.x=0;
-  if(player.x>world.width-player.w)
-    player.x=world.width-player.w;
-
-  player.grounded=false;
-
-  for(const p of platforms){
-
-    const hitX=
-      player.x+player.w>p.x &&
-      player.x<p.x+p.w;
-
-    const hitY=
-      player.y+player.h<=p.y+12 &&
-      player.y+player.h+player.vy>=p.y;
-
-    if(hitX&&hitY&&player.vy>=0){
-      player.y=p.y-player.h;
-      player.vy=0;
-      player.grounded=true;
-    }
-  }
-
-  /* Collect fireflies */
-
-  for(const f of fireflies){
-
-    if(f.taken)continue;
-
-    const dx=player.x+player.w/2-f.x;
-    const dy=player.y+player.h/2-f.y;
-
-    if(Math.hypot(dx,dy)<42){
-      f.taken=true;
-      score++;
-    }
-  }
-
-  /* Falling */
-
-  if(player.y>H+300){
-    player.x=160;
-    player.y=250;
-    player.vx=0;
-    player.vy=0;
-    cameraX=0;
-  }
-
-  /* Camera */
-
-  cameraX=player.x-W*.35;
-
-  if(cameraX<0)cameraX=0;
-
-  if(cameraX>world.width-W)
-    cameraX=world.width-W;
-
-  /* Win */
-
-  if(player.x>4700){
-    won=true;
-    document.getElementById("restart").style.display="block";
-  }
-}
-
-/* ---------------- DRAWING ---------------- */
-
-function drawSky(){
-
-  const g=ctx.createLinearGradient(0,0,0,H);
-
-  g.addColorStop(0,"#55a9dc");
-  g.addColorStop(.55,"#8ed5e7");
-  g.addColorStop(1,"#d4f0c0");
-
-  ctx.fillStyle=g;
+function drawGround(){
+  ctx.fillStyle="#8fcf70";
   ctx.fillRect(0,0,W,H);
-}
 
-function drawCloud(c){
+  const startX=Math.floor((player.x-W/2)/CELL)-2;
+  const endX=Math.floor((player.x+W/2)/CELL)+2;
 
-  const x=c.x-cameraX*.25;
-  const y=c.y;
-  const s=c.s;
+  const startY=Math.floor((player.y-H/2)/CELL)-2;
+  const endY=Math.floor((player.y+H/2)/CELL)+2;
 
-  ctx.fillStyle="rgba(255,255,255,.82)";
+  for(let cy=startY;cy<=endY;cy++){
+    for(let cx=startX;cx<=endX;cx++){
 
-  ctx.beginPath();
-  ctx.arc(x,y,25*s,0,Math.PI*2);
-  ctx.arc(x+28*s,y-12*s,32*s,0,Math.PI*2);
-  ctx.arc(x+60*s,y,24*s,0,Math.PI*2);
-  ctx.fill();
-}
+      const sx=cx*CELL-player.x+W/2;
+      const sy=cy*CELL-player.y+H/2;
 
-function drawTree(t){
+      const r=hash(cx,cy);
 
-  const x=t.x-cameraX;
-  const ground=480;
-  const h=t.h;
+      if(r<0.25){
+        ctx.fillStyle="#76bd5d";
+        ctx.fillRect(sx,sy,CELL,CELL);
+      }else if(r<0.5){
+        ctx.fillStyle="#84c968";
+        ctx.fillRect(sx,sy,CELL,CELL);
+      }
 
-  if(x<-100||x>W+100)return;
-
-  /* trunk */
-
-  ctx.fillStyle="#70452b";
-  ctx.fillRect(x-10,ground-h*.55,20,h*.55);
-
-  /* leaves */
-
-  ctx.fillStyle="#247a3b";
-
-  ctx.beginPath();
-  ctx.arc(x,ground-h,45,0,Math.PI*2);
-  ctx.arc(x-35,ground-h+25,35,0,Math.PI*2);
-  ctx.arc(x+35,ground-h+25,35,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="#3e9b45";
-  ctx.beginPath();
-  ctx.arc(x,ground-h-15,25,0,Math.PI*2);
-  ctx.fill();
-}
-
-function drawPlatforms(){
-
-  for(const p of platforms){
-
-    const x=p.x-cameraX;
-
-    if(x+p.w<0||x>W)continue;
-
-    /* soil */
-
-    ctx.fillStyle="#6b472c";
-    ctx.fillRect(x,p.y,p.w,p.h);
-
-    /* grass */
-
-    ctx.fillStyle="#3f9b45";
-    ctx.fillRect(x,p.y,p.w,14);
-
-    /* little grass blades */
-
-    ctx.strokeStyle="#75bd4a";
-    ctx.lineWidth=3;
-
-    for(let i=0;i<p.w;i+=25){
-      ctx.beginPath();
-      ctx.moveTo(x+i,p.y+13);
-      ctx.lineTo(x+i+5,p.y+5);
-      ctx.stroke();
+      drawPlants(cx,cy,sx,sy);
     }
   }
 }
 
-function drawFirefly(f){
+/* =========================
+   PLANTS
+========================= */
 
-  if(f.taken)return;
+function drawPlants(cx,cy,sx,sy){
 
-  const x=f.x-cameraX;
-  const y=f.y;
+  const amount=2+Math.floor(hash(cx+71,cy+93)*4);
 
-  const pulse=
-    8+Math.sin(Date.now()/180+f.x)*3;
+  for(let i=0;i<amount;i++){
 
-  ctx.fillStyle="rgba(255,239,90,.18)";
+    const px=sx+hash(cx*7+i+1,cy*11+i+4)*CELL;
+    const py=sy+hash(cx*13+i+8,cy*17+i+9)*CELL;
+
+    if(px<-50||px>W+50||py<-50||py>H+50)continue;
+
+    const size=12+hash(cx+i,cy-i)*18;
+
+    ctx.fillStyle="#4d9c43";
+
+    ctx.beginPath();
+    ctx.arc(px,py,size,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="#2e7938";
+
+    ctx.beginPath();
+    ctx.arc(px-size*.45,py+size*.2,size*.55,0,Math.PI*2);
+    ctx.arc(px+size*.45,py+size*.2,size*.55,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+/* =========================
+   ANTS
+========================= */
+
+function drawAnts(time){
+
+  const startX=Math.floor((player.x-W/2)/CELL)-2;
+  const endX=Math.floor((player.x+W/2)/CELL)+2;
+
+  const startY=Math.floor((player.y-H/2)/CELL)-2;
+  const endY=Math.floor((player.y+H/2)/CELL)+2;
+
+  for(let cy=startY;cy<=endY;cy++){
+    for(let cx=startX;cx<=endX;cx++){
+
+      const ant=antAt(cx,cy);
+
+      if(!ant)continue;
+
+      const sx=ant.x-player.x+W/2;
+      const sy=ant.y-player.y+H/2;
+
+      if(sx<-60||sx>W+60||sy<-60||sy>H+60)continue;
+
+      /*
+        Very small movement only.
+        The ant remains in its own spot.
+      */
+
+      const tiny=Math.sin(time*.00035+ant.phase)*2;
+
+      const x=sx;
+      const y=sy+tiny;
+
+      /* shadow */
+
+      ctx.fillStyle="rgba(0,0,0,.18)";
+      ctx.beginPath();
+      ctx.ellipse(x,y+7,13,5,0,0,Math.PI*2);
+      ctx.fill();
+
+      /* body */
+
+      ctx.fillStyle="#34251d";
+
+      ctx.beginPath();
+      ctx.ellipse(x,y,10,7,0,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x-9,y,5,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x+8,y,5,0,Math.PI*2);
+      ctx.fill();
+
+      /* legs */
+
+      ctx.strokeStyle="#34251d";
+      ctx.lineWidth=2;
+
+      for(let l=-1;l<=1;l++){
+
+        ctx.beginPath();
+        ctx.moveTo(x-5,y+l*3);
+        ctx.lineTo(x-15,y+l*7);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x+5,y+l*3);
+        ctx.lineTo(x+15,y+l*7);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+/* =========================
+   ANIMAL SHADOWS
+========================= */
+
+function drawAnimalShadow(x,y,size){
+
+  ctx.fillStyle="rgba(0,0,0,.28)";
+
   ctx.beginPath();
-  ctx.arc(x,y,pulse*2.2,0,Math.PI*2);
-  ctx.fill();
+  ctx.ellipse(
+    x,
+    y+size*.45,
+    size*1.15,
+    size*.38,
+    0,
+    0,
+    Math.PI*2
+  );
 
-  ctx.fillStyle="#fff56b";
-  ctx.beginPath();
-  ctx.arc(x,y,6,0,Math.PI*2);
   ctx.fill();
 }
 
-function drawMantis(){
+/* =========================
+   ANIMALS
+========================= */
 
-  const x=player.x-cameraX;
-  const y=player.y;
+function drawTiger(x,y){
 
-  ctx.save();
+  drawAnimalShadow(x,y,25);
 
-  /* shadow */
+  ctx.fillStyle="#d88b32";
 
-  ctx.fillStyle="rgba(0,0,0,.18)";
   ctx.beginPath();
-  ctx.ellipse(x+24,y+player.h+5,27,7,0,0,Math.PI*2);
+  ctx.ellipse(x,y,26,17,0,0,Math.PI*2);
   ctx.fill();
 
-  /* body */
+  ctx.fillStyle="#222";
 
-  ctx.fillStyle="#5a9e35";
+  for(let i=-2;i<=2;i++){
+    ctx.fillRect(x+i*9-2,y-13,4,26);
+  }
+
+  ctx.fillStyle="#d88b32";
+
   ctx.beginPath();
-  ctx.ellipse(x+25,y+34,19,25,0,0,Math.PI*2);
+  ctx.arc(x+25,y-5,12,0,Math.PI*2);
   ctx.fill();
-
-  /* head */
-
-  ctx.fillStyle="#74bd42";
-  ctx.beginPath();
-  ctx.arc(x+25,y+10,17,0,Math.PI*2);
-  ctx.fill();
-
-  /* eyes */
 
   ctx.fillStyle="#111";
 
   ctx.beginPath();
-  ctx.arc(x+18,y+7,4,0,Math.PI*2);
-  ctx.arc(x+32,y+7,4,0,Math.PI*2);
+  ctx.arc(x+29,y-7,2.5,0,Math.PI*2);
   ctx.fill();
+}
 
-  /* antennae */
+function drawWolf(x,y){
 
-  ctx.strokeStyle="#477b2e";
-  ctx.lineWidth=3;
+  drawAnimalShadow(x,y,20);
+
+  ctx.fillStyle="#656b72";
 
   ctx.beginPath();
-  ctx.moveTo(x+18,y-3);
-  ctx.quadraticCurveTo(x+5,y-25,x-2,y-18);
-  ctx.moveTo(x+32,y-3);
-  ctx.quadraticCurveTo(x+45,y-25,x+52,y-18);
-  ctx.stroke();
+  ctx.ellipse(x,y,23,15,0,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(x+22,y-5,12,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="#333";
+
+  ctx.beginPath();
+  ctx.moveTo(x+14,y-14);
+  ctx.lineTo(x+18,y-30);
+  ctx.lineTo(x+25,y-16);
+  ctx.fill();
+
+  ctx.fillStyle="#111";
+
+  ctx.beginPath();
+  ctx.arc(x+26,y-7,2.5,0,Math.PI*2);
+  ctx.fill();
+}
+
+/* =========================
+   PREDATOR UPDATE
+========================= */
+
+function updatePredators(){
+
+  for(const a of predators){
+
+    const dx=player.x-a.x;
+    const dy=player.y-a.y;
+
+    const distance=Math.hypot(dx,dy);
+
+    /*
+      Animals chase the player only when reasonably close.
+    */
+
+    if(distance<700){
+
+      a.x+=dx/distance*a.speed;
+      a.y+=dy/distance*a.speed;
+
+    }else{
+
+      a.wander+=0.01;
+
+      a.x+=Math.cos(a.wander+a.angle)*.12;
+      a.y+=Math.sin(a.wander+a.angle)*.12;
+    }
+
+    const hitDistance=a.radius+player.radius;
+
+    if(
+      distance<hitDistance &&
+      player.invincible<=0
+    ){
+
+      player.health-=8;
+      player.invincible=50;
+
+      a.x-=dx/distance*80;
+      a.y-=dy/distance*80;
+    }
+
+    /*
+      Keep the world effectively endless by wrapping predators.
+    */
+
+    a.x=wrap(a.x);
+    a.y=wrap(a.y);
+  }
+}
+
+/* =========================
+   DRAW PREDATORS
+========================= */
+
+function drawPredators(){
+
+  for(const a of predators){
+
+    const x=a.x-player.x+W/2;
+    const y=a.y-player.y+H/2;
+
+    if(x<-100||x>W+100||y<-100||y>H+100)continue;
+
+    if(a.type==="tiger"){
+      drawTiger(x,y);
+    }else{
+      drawWolf(x,y);
+    }
+  }
+}
+
+/* =========================
+   PLAYER MANTIS
+========================= */
+
+function drawPlayer(){
+
+  const x=W/2;
+  const y=H/2;
+
+  ctx.save();
+
+  if(player.invincible>0){
+    ctx.globalAlpha=
+      Math.floor(player.invincible/5)%2===0
+      ? .35
+      : 1;
+  }
+
+  /* shadow */
+
+  ctx.fillStyle="rgba(0,0,0,.25)";
+  ctx.beginPath();
+  ctx.ellipse(x,y+24,25,9,0,0,Math.PI*2);
+  ctx.fill();
+
+  /* body */
+
+  ctx.fillStyle="#3e8f39";
+
+  ctx.beginPath();
+  ctx.ellipse(x,y+10,18,28,0,0,Math.PI*2);
+  ctx.fill();
+
+  /* head */
+
+  ctx.fillStyle="#63ae43";
+
+  ctx.beginPath();
+  ctx.arc(x,y-19,18,0,Math.PI*2);
+  ctx.fill();
+
+  /* eyes */
+
+  ctx.fillStyle="#172016";
+
+  ctx.beginPath();
+  ctx.arc(x-7,y-22,4,0,Math.PI*2);
+  ctx.arc(x+7,y-22,4,0,Math.PI*2);
+  ctx.fill();
 
   /* arms */
 
-  ctx.strokeStyle="#477b2e";
+  ctx.strokeStyle="#367633";
   ctx.lineWidth=6;
   ctx.lineCap="round";
 
   ctx.beginPath();
-  ctx.moveTo(x+10,y+28);
-  ctx.lineTo(x-5,y+18);
-  ctx.lineTo(x-12,y+27);
 
-  ctx.moveTo(x+40,y+28);
-  ctx.lineTo(x+55,y+18);
-  ctx.lineTo(x+62,y+27);
+  ctx.moveTo(x-12,y-1);
+  ctx.lineTo(x-35,y-17);
+  ctx.lineTo(x-43,y-5);
+
+  ctx.moveTo(x+12,y-1);
+  ctx.lineTo(x+35,y-17);
+  ctx.lineTo(x+43,y-5);
 
   ctx.stroke();
 
@@ -526,104 +666,93 @@ function drawMantis(){
 
   ctx.beginPath();
 
-  ctx.moveTo(x+15,y+48);
-  ctx.lineTo(x+2,y+60);
-  ctx.lineTo(x-5,y+60);
+  ctx.moveTo(x-9,y+30);
+  ctx.lineTo(x-25,y+45);
 
-  ctx.moveTo(x+35,y+48);
-  ctx.lineTo(x+48,y+60);
-  ctx.lineTo(x+55,y+60);
+  ctx.moveTo(x+9,y+30);
+  ctx.lineTo(x+25,y+45);
 
   ctx.stroke();
 
   ctx.restore();
 }
 
-function drawHUD(){
+/* =========================
+   HEALTH BAR
+========================= */
 
-  ctx.fillStyle="rgba(15,50,35,.72)";
-  ctx.fillRect(12,85,190,45);
+function drawHealth(){
 
-  ctx.fillStyle="white";
-  ctx.font="bold 18px Arial";
-  ctx.fillText("✨ Fireflies: "+score+" / "+fireflies.length,25,114);
+  const width=150;
+  const height=12;
+
+  const x=18;
+  const y=18;
+
+  ctx.fillStyle="rgba(0,0,0,.35)";
+  ctx.fillRect(x,y,width,height);
+
+  ctx.fillStyle="#59b94a";
+  ctx.fillRect(
+    x,
+    y,
+    width*Math.max(0,player.health/100),
+    height
+  );
 }
 
-function drawWin(){
+/* =========================
+   MAIN LOOP
+========================= */
 
-  if(!won)return;
+let previous=performance.now();
 
-  ctx.fillStyle="rgba(5,35,25,.82)";
-  ctx.fillRect(0,0,W,H);
+function loop(now){
 
-  ctx.fillStyle="#fff";
-  ctx.textAlign="center";
-
-  ctx.font="bold 42px Arial";
-  ctx.fillText("🌿 Adventure Complete!",W/2,H/2-45);
-
-  ctx.font="22px Arial";
-  ctx.fillText(
-    "You collected "+score+" fireflies!",
-    W/2,H/2+5
+  const dt=Math.min(
+    (now-previous)/16.666,
+    2
   );
 
-  ctx.font="18px Arial";
-  ctx.fillText(
-    "You reached the end of the jungle.",
-    W/2,H/2+42
-  );
+  previous=now;
 
-  ctx.textAlign="left";
-}
+  /*
+    NORMAL CONTROLS:
+    left  = x decreases
+    right = x increases
+    up    = y decreases
+    down  = y increases
 
-/* ---------------- MAIN LOOP ---------------- */
+    Nothing is inverted.
+  */
 
-function draw(){
+  const speed=player.speed*dt;
 
-  drawSky();
+  if(input.left)player.x-=speed;
+  if(input.right)player.x+=speed;
+  if(input.up)player.y-=speed;
+  if(input.down)player.y+=speed;
 
-  for(const c of clouds)drawCloud(c);
+  player.x=wrap(player.x);
+  player.y=wrap(player.y);
 
-  for(const t of trees)drawTree(t);
+  if(player.invincible>0){
+    player.invincible-=dt;
+  }
 
-  drawPlatforms();
+  updatePredators();
 
-  for(const f of fireflies)drawFirefly(f);
+  drawGround();
+  drawAnts(now);
+  drawPredators();
+  drawPlayer();
+  drawHealth();
 
-  drawMantis();
-
-  drawHUD();
-
-  drawWin();
-}
-
-function loop(){
-  update();
-  draw();
   requestAnimationFrame(loop);
 }
 
-/* ---------------- RESTART ---------------- */
+requestAnimationFrame(loop);
 
-document.getElementById("restart").addEventListener("click",()=>{
-  player.x=160;
-  player.y=250;
-  player.vx=0;
-  player.vy=0;
-  cameraX=0;
-  score=0;
-  won=false;
-
-  for(const f of fireflies)f.taken=false;
-
-  document.getElementById("restart").style.display="none";
-});
-
-/* START */
-
-loop();
 </script>
-
 </body>
 </html>
