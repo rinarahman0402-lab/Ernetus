@@ -1,0 +1,1338 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini World 3D</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:Arial,sans-serif;
+  background:#75cfff;
+  touch-action:none;
+}
+
+canvas{
+  display:block;
+}
+
+#loading{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  background:linear-gradient(#71c9ff,#3c9349);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+#loading h1{
+  font-size:38px;
+  margin:10px;
+}
+
+#bar{
+  width:240px;
+  height:12px;
+  background:rgba(255,255,255,.3);
+  border-radius:20px;
+  overflow:hidden;
+}
+
+#fill{
+  width:0%;
+  height:100%;
+  background:white;
+  transition:.3s;
+}
+
+#ui{
+  position:fixed;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  color:white;
+  text-shadow:0 2px 4px #000;
+}
+
+#title{
+  position:absolute;
+  top:12px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:24px;
+  font-weight:bold;
+}
+
+#mission{
+  position:absolute;
+  top:48px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.4);
+  padding:7px 13px;
+  border-radius:15px;
+  white-space:nowrap;
+}
+
+#score{
+  position:absolute;
+  top:88px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.4);
+  padding:7px 13px;
+  border-radius:15px;
+}
+
+#controls{
+  position:absolute;
+  bottom:18px;
+  left:18px;
+  width:170px;
+  height:170px;
+  pointer-events:auto;
+}
+
+.move{
+  position:absolute;
+  width:55px;
+  height:55px;
+  border:0;
+  border-radius:15px;
+  background:rgba(0,0,0,.5);
+  color:white;
+  font-size:25px;
+  font-weight:bold;
+}
+
+#up{
+  left:58px;
+  top:0;
+}
+
+#left{
+  left:0;
+  top:58px;
+}
+
+#down{
+  left:58px;
+  top:58px;
+}
+
+#right{
+  left:116px;
+  top:58px;
+}
+
+#look{
+  position:absolute;
+  right:18px;
+  bottom:25px;
+  width:125px;
+  height:125px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.35);
+  background:rgba(0,0,0,.15);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:auto;
+}
+
+#message{
+  position:absolute;
+  left:50%;
+  bottom:170px;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.65);
+  padding:11px 18px;
+  border-radius:15px;
+  display:none;
+  white-space:nowrap;
+}
+
+#win{
+  position:fixed;
+  inset:0;
+  z-index:30;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  background:rgba(10,35,15,.88);
+  color:white;
+}
+
+#winBox{
+  padding:25px;
+}
+
+#win h1{
+  font-size:45px;
+}
+
+#again{
+  border:0;
+  padding:14px 25px;
+  border-radius:14px;
+  font-size:18px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loading">
+  <div style="font-size:80px">🌍</div>
+  <h1>Mini World 3D</h1>
+  <p id="loadingText">Creating your world...</p>
+  <div id="bar">
+    <div id="fill"></div>
+  </div>
+</div>
+
+<div id="ui">
+
+  <div id="title">🌍 Mini World 3D</div>
+
+  <div id="mission">
+    Explore the world and find all 10 gems!
+  </div>
+
+  <div id="score">
+    💎 Gems: <span id="gems">0</span>/10
+  </div>
+
+  <div id="controls">
+    <button class="move" id="up">▲</button>
+    <button class="move" id="left">◀</button>
+    <button class="move" id="down">▼</button>
+    <button class="move" id="right">▶</button>
+  </div>
+
+  <div id="look">
+    DRAG<br>
+    TO LOOK
+  </div>
+
+  <div id="message"></div>
+
+</div>
+
+<div id="win">
+  <div id="winBox">
+    <div style="font-size:90px">🏆</div>
+    <h1>Mini World Complete!</h1>
+    <p>You found all 10 gems!</p>
+    <button id="again">PLAY AGAIN</button>
+  </div>
+</div>
+
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+
+/* =========================
+   LOADING
+========================= */
+
+const fill=
+document.getElementById("fill");
+
+const loadingText=
+document.getElementById("loadingText");
+
+function loadProgress(
+  percent,
+  text
+){
+  fill.style.width=
+    percent+"%";
+
+  loadingText.textContent=
+    text;
+}
+
+
+/* =========================
+   SCENE
+========================= */
+
+loadProgress(
+  10,
+  "Starting the world..."
+);
+
+const scene=
+new THREE.Scene();
+
+scene.background=
+new THREE.Color(0x76cdf5);
+
+scene.fog=
+new THREE.Fog(
+  0x76cdf5,
+  35,
+  100
+);
+
+
+const camera=
+new THREE.PerspectiveCamera(
+  65,
+  innerWidth/innerHeight,
+  .1,
+  150
+);
+
+
+const renderer=
+new THREE.WebGLRenderer({
+  antialias:false,
+  powerPreference:"low-power"
+});
+
+renderer.setPixelRatio(
+  Math.min(
+    devicePixelRatio,
+    1.5
+  )
+);
+
+renderer.setSize(
+  innerWidth,
+  innerHeight
+);
+
+document.body.appendChild(
+  renderer.domElement
+);
+
+
+/* =========================
+   LIGHTING
+========================= */
+
+loadProgress(
+  25,
+  "Adding sunlight..."
+);
+
+const sun=
+new THREE.DirectionalLight(
+  0xffffff,
+  2
+);
+
+sun.position.set(
+  15,
+  25,
+  10
+);
+
+scene.add(sun);
+
+
+const ambient=
+new THREE.HemisphereLight(
+  0xd8f5ff,
+  0x376d30,
+  1.7
+);
+
+scene.add(ambient);
+
+
+/* =========================
+   GROUND
+========================= */
+
+loadProgress(
+  40,
+  "Building the island..."
+);
+
+const ground=
+new THREE.Mesh(
+  new THREE.PlaneGeometry(
+    100,
+    100
+  ),
+  new THREE.MeshLambertMaterial({
+    color:0x55a844
+  })
+);
+
+ground.rotation.x=
+-Math.PI/2;
+
+scene.add(ground);
+
+
+/* =========================
+   WATER
+========================= */
+
+const water=
+new THREE.Mesh(
+  new THREE.PlaneGeometry(
+    100,
+    100
+  ),
+  new THREE.MeshLambertMaterial({
+    color:0x37aee8
+  })
+);
+
+water.rotation.x=
+-Math.PI/2;
+
+water.position.y=
+-.05;
+
+scene.add(water);
+
+
+/* =========================
+   TREES
+========================= */
+
+loadProgress(
+  55,
+  "Growing trees..."
+);
+
+const trunkMaterial=
+new THREE.MeshLambertMaterial({
+  color:0x75452b
+});
+
+const leafMaterial=
+new THREE.MeshLambertMaterial({
+  color:0x287c32
+});
+
+
+function createTree(x,z){
+
+  const tree=
+  new THREE.Group();
+
+
+  const trunk=
+  new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      .18,
+      .25,
+      1.6,
+      7
+    ),
+    trunkMaterial
+  );
+
+  trunk.position.y=
+  .8;
+
+  tree.add(trunk);
+
+
+  const leaves=
+  new THREE.Mesh(
+    new THREE.ConeGeometry(
+      1.1,
+      2.4,
+      8
+    ),
+    leafMaterial
+  );
+
+  leaves.position.y=
+  2.2;
+
+  tree.add(leaves);
+
+
+  tree.position.set(
+    x,
+    0,
+    z
+  );
+
+  scene.add(tree);
+}
+
+
+const treePositions=[
+  [-8,-8],
+  [9,-7],
+  [-14,3],
+  [12,7],
+  [-4,13],
+  [17,-15],
+  [-18,-11],
+  [20,9],
+  [-12,17],
+  [5,-18],
+  [25,-4],
+  [-25,6]
+];
+
+treePositions.forEach(
+  p=>createTree(p[0],p[1])
+);
+
+
+/* =========================
+   ROCKS
+========================= */
+
+const rockMaterial=
+new THREE.MeshLambertMaterial({
+  color:0x747970
+});
+
+for(
+  let i=0;
+  i<35;
+  i++
+){
+
+  const rock=
+  new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+      .25+
+      Math.random()*.5,
+      0
+    ),
+    rockMaterial
+  );
+
+  rock.position.set(
+    (Math.random()-.5)*75,
+    .25,
+    (Math.random()-.5)*75
+  );
+
+  rock.scale.y=.65;
+
+  scene.add(rock);
+}
+
+
+/* =========================
+   FLOWERS
+========================= */
+
+const flowerColors=[
+  0xffe35b,
+  0xff6e9a,
+  0xc28cff,
+  0xffffff
+];
+
+for(
+  let i=0;
+  i<60;
+  i++
+){
+
+  const material=
+  new THREE.MeshLambertMaterial({
+    color:
+      flowerColors[
+        Math.floor(
+          Math.random()*
+          flowerColors.length
+        )
+      ]
+  });
+
+  const flower=
+  new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .07,
+      6,
+      5
+    ),
+    material
+  );
+
+  flower.position.set(
+    (Math.random()-.5)*70,
+    .08,
+    (Math.random()-.5)*70
+  );
+
+  scene.add(flower);
+}
+
+
+/* =========================
+   PLAYER
+========================= */
+
+loadProgress(
+  70,
+  "Creating your explorer..."
+);
+
+const player=
+new THREE.Group();
+
+
+const bodyMaterial=
+new THREE.MeshLambertMaterial({
+  color:0x4f75d8
+});
+
+
+const skinMaterial=
+new THREE.MeshLambertMaterial({
+  color:0xf0b27a
+});
+
+
+const body=
+new THREE.Mesh(
+  new THREE.CapsuleGeometry(
+    .35,
+    .75,
+    6,
+    8
+  ),
+  bodyMaterial
+);
+
+body.position.y=
+.9;
+
+player.add(body);
+
+
+const head=
+new THREE.Mesh(
+  new THREE.SphereGeometry(
+    .38,
+    10,
+    8
+  ),
+  skinMaterial
+);
+
+head.position.y=
+1.65;
+
+player.add(head);
+
+
+/* eyes */
+
+const eyeMaterial=
+new THREE.MeshLambertMaterial({
+  color:0x111111
+});
+
+for(
+  const side of [-1,1]
+){
+
+  const eye=
+  new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .055,
+      6,
+      5
+    ),
+    eyeMaterial
+  );
+
+  eye.position.set(
+    side*.14,
+    1.7,
+    -.32
+  );
+
+  player.add(eye);
+}
+
+
+player.position.set(
+  0,
+  0,
+  5
+);
+
+scene.add(player);
+
+
+/* =========================
+   GEMS
+========================= */
+
+loadProgress(
+  85,
+  "Hiding 10 gems..."
+);
+
+const gems=[];
+
+const gemPositions=[
+  [-8,-5],
+  [9,-10],
+  [-14,4],
+  [12,10],
+  [-4,15],
+  [17,-5],
+  [-18,-12],
+  [20,8],
+  [-12,17],
+  [4,-19]
+];
+
+
+function createGem(x,z){
+
+  const gem=
+  new THREE.Mesh(
+    new THREE.OctahedronGeometry(
+      .35,
+      0
+    ),
+    new THREE.MeshLambertMaterial({
+      color:0x68e7ff,
+      emissive:0x164c66
+    })
+  );
+
+  gem.position.set(
+    x,
+    .6,
+    z
+  );
+
+  scene.add(gem);
+
+  gems.push({
+    object:gem,
+    collected:false
+  });
+}
+
+
+gemPositions.forEach(
+  p=>createGem(
+    p[0],
+    p[1]
+  )
+);
+
+
+/* =========================
+   ANIMALS
+========================= */
+
+function createAnimal(
+  x,
+  z,
+  color
+){
+
+  const animal=
+  new THREE.Group();
+
+
+  const mat=
+  new THREE.MeshLambertMaterial({
+    color:color
+  });
+
+
+  const body=
+  new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .4,
+      8,
+      7
+    ),
+    mat
+  );
+
+  body.scale.z=1.3;
+
+  body.position.y=
+  .55;
+
+  animal.add(body);
+
+
+  const head=
+  new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .3,
+      8,
+      7
+    ),
+    mat
+  );
+
+  head.position.set(
+    0,
+    .7,
+    -.48
+  );
+
+  animal.add(head);
+
+
+  for(
+    const side of [-1,1]
+  ){
+
+    const leg=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .045,
+        .055,
+        .45,
+        5
+      ),
+      mat
+    );
+
+    leg.position.set(
+      side*.22,
+      .25,
+      0
+    );
+
+    animal.add(leg);
+  }
+
+
+  animal.position.set(
+    x,
+    0,
+    z
+  );
+
+  scene.add(animal);
+
+  return animal;
+}
+
+
+const animals=[
+  createAnimal(-6,4,0x9b6b3d),
+  createAnimal(7,6,0xe0e0e0),
+  createAnimal(14,-13,0xc9905a),
+  createAnimal(-17,8,0x8d6b45)
+];
+
+
+/* =========================
+   CONTROLS
+========================= */
+
+const keys={
+  up:false,
+  down:false,
+  left:false,
+  right:false
+};
+
+
+function setupButton(
+  id,
+  key
+){
+
+  const button=
+  document.getElementById(id);
+
+
+  button.addEventListener(
+    "pointerdown",
+    e=>{
+      e.preventDefault();
+      keys[key]=true;
+    }
+  );
+
+
+  button.addEventListener(
+    "pointerup",
+    e=>{
+      e.preventDefault();
+      keys[key]=false;
+    }
+  );
+
+
+  button.addEventListener(
+    "pointercancel",
+    ()=>{
+      keys[key]=false;
+    }
+  );
+}
+
+
+setupButton("up","up");
+setupButton("down","down");
+setupButton("left","left");
+setupButton("right","right");
+
+
+/* keyboard */
+
+addEventListener(
+  "keydown",
+  e=>{
+
+    if(
+      e.key==="ArrowUp"||
+      e.key==="w"
+    )
+      keys.up=true;
+
+    if(
+      e.key==="ArrowDown"||
+      e.key==="s"
+    )
+      keys.down=true;
+
+    if(
+      e.key==="ArrowLeft"||
+      e.key==="a"
+    )
+      keys.left=true;
+
+    if(
+      e.key==="ArrowRight"||
+      e.key==="d"
+    )
+      keys.right=true;
+  }
+);
+
+
+addEventListener(
+  "keyup",
+  e=>{
+
+    if(
+      e.key==="ArrowUp"||
+      e.key==="w"
+    )
+      keys.up=false;
+
+    if(
+      e.key==="ArrowDown"||
+      e.key==="s"
+    )
+      keys.down=false;
+
+    if(
+      e.key==="ArrowLeft"||
+      e.key==="a"
+    )
+      keys.left=false;
+
+    if(
+      e.key==="ArrowRight"||
+      e.key==="d"
+    )
+      keys.right=false;
+  }
+);
+
+
+/* =========================
+   CAMERA LOOK
+========================= */
+
+const look=
+document.getElementById("look");
+
+let dragging=false;
+let lastX=0;
+
+look.addEventListener(
+  "pointerdown",
+  e=>{
+    dragging=true;
+    lastX=e.clientX;
+
+    look.setPointerCapture(
+      e.pointerId
+    );
+  }
+);
+
+
+look.addEventListener(
+  "pointermove",
+  e=>{
+
+    if(!dragging)
+      return;
+
+    const dx=
+      e.clientX-lastX;
+
+    player.rotation.y -=
+      dx*.008;
+
+    lastX=e.clientX;
+  }
+);
+
+
+look.addEventListener(
+  "pointerup",
+  ()=>{
+    dragging=false;
+  }
+);
+
+
+/* =========================
+   GAME UI
+========================= */
+
+const gemCounter=
+document.getElementById(
+  "gems"
+);
+
+const message=
+document.getElementById(
+  "message"
+);
+
+const win=
+document.getElementById(
+  "win"
+);
+
+
+let collected=0;
+
+
+function showMessage(text){
+
+  message.textContent=
+    text;
+
+  message.style.display=
+    "block";
+
+  clearTimeout(
+    showMessage.timer
+  );
+
+  showMessage.timer=
+    setTimeout(
+      ()=>{
+        message.style.display=
+          "none";
+      },
+      1800
+    );
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+let last=
+  performance.now();
+
+
+function animate(now){
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  const delta=
+    Math.min(
+      (now-last)/1000,
+      .05
+    );
+
+  last=now;
+
+
+  let forward=0;
+  let sideways=0;
+
+
+  if(keys.up)
+    forward+=1;
+
+  if(keys.down)
+    forward-=1;
+
+  if(keys.left)
+    sideways-=1;
+
+  if(keys.right)
+    sideways+=1;
+
+
+  const length=
+    Math.hypot(
+      forward,
+      sideways
+    );
+
+
+  if(length>0){
+
+    forward/=length;
+    sideways/=length;
+
+
+    const speed=
+      5*delta;
+
+
+    const angle=
+      player.rotation.y;
+
+
+    const sin=
+      Math.sin(angle);
+
+    const cos=
+      Math.cos(angle);
+
+
+    player.position.x +=
+      (
+        sideways*cos -
+        forward*sin
+      )*speed;
+
+
+    player.position.z +=
+      (
+        sideways*sin +
+        forward*cos
+      )*speed;
+  }
+
+
+  /* world boundaries */
+
+  player.position.x=
+    THREE.MathUtils.clamp(
+      player.position.x,
+      -35,
+      35
+    );
+
+  player.position.z=
+    THREE.MathUtils.clamp(
+      player.position.z,
+      -35,
+      35
+    );
+
+
+  /* camera */
+
+  const distance=7;
+
+
+  camera.position.x=
+    player.position.x -
+    Math.sin(
+      player.rotation.y
+    )*distance;
+
+
+  camera.position.z=
+    player.position.z -
+    Math.cos(
+      player.rotation.y
+    )*distance;
+
+
+  camera.position.y=
+    4;
+
+
+  camera.lookAt(
+    player.position.x,
+    1,
+    player.position.z
+  );
+
+
+  /* gems */
+
+  for(
+    const gem of gems
+  ){
+
+    if(gem.collected)
+      continue;
+
+
+    gem.object.rotation.y +=
+      delta*2;
+
+    gem.object.rotation.x +=
+      delta;
+
+
+    const dx=
+      gem.object.position.x-
+      player.position.x;
+
+    const dz=
+      gem.object.position.z-
+      player.position.z;
+
+
+    if(
+      Math.hypot(dx,dz)<1.3
+    ){
+
+      gem.collected=true;
+
+      gem.object.visible=
+        false;
+
+      collected++;
+
+      gemCounter.textContent=
+        collected;
+
+
+      showMessage(
+        "💎 Gem found! "+
+        collected+
+        "/10"
+      );
+
+
+      if(collected===10){
+
+        setTimeout(
+          ()=>{
+            win.style.display=
+              "flex";
+          },
+          500
+        );
+      }
+    }
+  }
+
+
+  /* animals wander */
+
+  animals.forEach(
+    (animal,index)=>{
+
+      animal.rotation.y +=
+        Math.sin(
+          now*.0004+
+          index
+        )*.002;
+
+    }
+  );
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
+
+/* =========================
+   RESIZE
+========================= */
+
+addEventListener(
+  "resize",
+  ()=>{
+
+    camera.aspect=
+      innerWidth/innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      innerWidth,
+      innerHeight
+    );
+  }
+);
+
+
+/* =========================
+   RESTART
+========================= */
+
+document
+  .getElementById("again")
+  .onclick=()=>{
+    location.reload();
+  };
+
+
+/* =========================
+   START
+========================= */
+
+loadProgress(
+  100,
+  "Mini World is ready!"
+);
+
+setTimeout(
+  ()=>{
+    document
+      .getElementById("loading")
+      .style.display="none";
+  },
+  700
+);
+
+requestAnimationFrame(
+  animate
+);
+
+</script>
+
+</body>
+</html>
+```
+  
