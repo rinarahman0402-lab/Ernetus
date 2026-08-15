@@ -1,204 +1,158 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Mantis Adventure 3D</title>
 
 <style>
-*{box-sizing:border-box}
-
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#79c95a;
-  font-family:Arial,sans-serif;
-  touch-action:none;
+margin:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:#76c95b;
+font-family:Arial,sans-serif;
+touch-action:none;
 }
 
 #game{
-  position:fixed;
-  inset:0;
-}
-
-canvas{
-  display:block;
+position:fixed;
+inset:0;
 }
 
 #loading{
-  position:fixed;
-  inset:0;
-  z-index:50;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(#78c957,#397f38);
-  color:white;
-  text-align:center;
+position:fixed;
+inset:0;
+z-index:20;
+background:linear-gradient(#79d2ff,#3c8438);
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+text-align:center;
 }
 
 #loading h1{
-  font-size:30px;
-  margin:0 0 12px;
+font-size:34px;
 }
 
-#loadingBar{
-  width:230px;
-  height:12px;
-  margin-top:12px;
-  border-radius:20px;
-  background:rgba(255,255,255,.3);
-  overflow:hidden;
+#bar{
+width:240px;
+height:12px;
+background:rgba(255,255,255,.3);
+border-radius:20px;
+overflow:hidden;
 }
 
-#loadingFill{
-  width:0%;
-  height:100%;
-  background:white;
-  transition:.25s;
-}
-
-#error{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:60;
-  background:#172018;
-  color:white;
-  text-align:center;
-  padding:30px;
-  align-items:center;
-  justify-content:center;
+#fill{
+width:20%;
+height:100%;
+background:white;
 }
 
 #ui{
-  position:fixed;
-  inset:0;
-  z-index:10;
-  pointer-events:none;
-  color:white;
-  text-shadow:0 2px 4px #000;
+position:fixed;
+inset:0;
+z-index:10;
+pointer-events:none;
+color:white;
+text-shadow:0 2px 4px black;
 }
 
 #title{
-  position:absolute;
-  top:12px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:22px;
-  font-weight:bold;
-  white-space:nowrap;
+position:absolute;
+top:12px;
+left:50%;
+transform:translateX(-50%);
+font-size:23px;
+font-weight:bold;
 }
 
-#mission{
-  position:absolute;
-  top:45px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:14px;
-  white-space:nowrap;
-}
-
-#ants{
-  position:absolute;
-  top:72px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.45);
-  padding:7px 13px;
-  border-radius:15px;
-  font-weight:bold;
+#count{
+position:absolute;
+top:50px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,.5);
+padding:8px 15px;
+border-radius:20px;
+font-weight:bold;
 }
 
 #controls{
-  position:absolute;
-  left:18px;
-  bottom:18px;
-  width:170px;
-  height:170px;
-  pointer-events:auto;
+position:absolute;
+left:15px;
+bottom:15px;
+width:170px;
+height:170px;
+pointer-events:auto;
 }
 
-.control{
-  position:absolute;
-  width:55px;
-  height:55px;
-  border:0;
-  border-radius:16px;
-  background:rgba(0,0,0,.5);
-  color:white;
-  font-size:25px;
-  font-weight:bold;
-  touch-action:none;
+.move{
+position:absolute;
+width:55px;
+height:55px;
+border:0;
+border-radius:15px;
+background:rgba(0,0,0,.55);
+color:white;
+font-size:25px;
+font-weight:bold;
 }
 
-#up{left:58px;top:0}
-#left{left:0;top:58px}
-#down{left:58px;top:58px}
-#right{left:116px;top:58px}
+#up{left:57px;top:0}
+#left{left:0;top:57px}
+#down{left:57px;top:57px}
+#right{left:114px;top:57px}
 
 #look{
-  position:absolute;
-  right:18px;
-  bottom:25px;
-  width:125px;
-  height:125px;
-  border-radius:50%;
-  background:rgba(255,255,255,.12);
-  border:2px solid rgba(255,255,255,.3);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  font-size:13px;
-  pointer-events:auto;
-  text-shadow:0 1px 3px #000;
+position:absolute;
+right:18px;
+bottom:25px;
+width:120px;
+height:120px;
+border-radius:50%;
+border:2px solid rgba(255,255,255,.4);
+background:rgba(0,0,0,.15);
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+pointer-events:auto;
 }
 
 #message{
-  position:absolute;
-  left:50%;
-  bottom:160px;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.65);
-  padding:10px 16px;
-  border-radius:14px;
-  font-weight:bold;
-  display:none;
+position:absolute;
+bottom:165px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,.7);
+padding:10px 16px;
+border-radius:15px;
+display:none;
 }
 
 #win{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:40;
-  background:rgba(10,30,10,.88);
-  color:white;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:25px;
+position:fixed;
+inset:0;
+z-index:30;
+background:rgba(10,30,10,.9);
+color:white;
+display:none;
+align-items:center;
+justify-content:center;
+text-align:center;
 }
 
-#winBox{
-  max-width:420px;
-}
-
-#win h1{
-  font-size:38px;
-}
-
-#restart{
-  border:0;
-  border-radius:15px;
-  padding:14px 25px;
-  background:#54ad50;
-  color:white;
-  font-size:18px;
-  font-weight:bold;
+#win button{
+padding:15px 25px;
+font-size:18px;
+font-weight:bold;
+border:0;
+border-radius:14px;
 }
 </style>
 </head>
@@ -208,1219 +162,1064 @@ canvas{
 <div id="game"></div>
 
 <div id="loading">
-  <h1>🦗 Mantis Adventure 3D</h1>
-  <div id="loadingText">Creating the garden...</div>
-  <div id="loadingBar">
-    <div id="loadingFill"></div>
-  </div>
-</div>
-
-<div id="error">
-  <div>
-    <h1>⚠️ 3D Could Not Start</h1>
-    <p>
-      This browser could not start WebGL 2.
-      Try opening the game in the latest Chrome.
-    </p>
-  </div>
+<h1>🦗 Mantis Adventure 3D</h1>
+<p id="loadText">Loading the garden...</p>
+<div id="bar"><div id="fill"></div></div>
 </div>
 
 <div id="ui">
 
-  <div id="title">🦗 Mantis Adventure 3D</div>
+<div id="title">🦗 Mantis Adventure 3D</div>
 
-  <div id="mission">
-    Find the ants and explore the garden!
-  </div>
+<div id="count">
+🐜 Ants: <span id="antCount">0</span>/15
+</div>
 
-  <div id="ants">
-    🐜 Ants: <span id="antCount">0</span>/15
-  </div>
+<div id="controls">
+<button class="move" id="up">▲</button>
+<button class="move" id="left">◀</button>
+<button class="move" id="down">▼</button>
+<button class="move" id="right">▶</button>
+</div>
 
-  <div id="controls">
-    <button class="control" id="up">▲</button>
-    <button class="control" id="left">◀</button>
-    <button class="control" id="down">▼</button>
-    <button class="control" id="right">▶</button>
-  </div>
+<div id="look">
+DRAG<br>TO LOOK
+</div>
 
-  <div id="look">
-    DRAG<br>
-    TO LOOK
-  </div>
-
-  <div id="message"></div>
+<div id="message"></div>
 
 </div>
 
 <div id="win">
-  <div id="winBox">
-    <h1>🎉 YOU DID IT!</h1>
-    <p>
-      You found all 15 ants!
-      The garden is safe!
-    </p>
-    <button id="restart">Play Again</button>
-  </div>
+<div>
+<div style="font-size:80px">🎉</div>
+<h1>All 15 Ants Found!</h1>
+<p>You completed Mantis Adventure!</p>
+<button onclick="location.reload()">PLAY AGAIN</button>
+</div>
 </div>
 
-<script type="module">
 
-import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 
+<script>
 
-/* =========================
-   BASIC SETUP
-========================= */
+/* ==========================
+CHECK THREE.JS
+========================== */
 
-const loading =
-  document.getElementById("loading");
+if(typeof THREE==="undefined"){
 
-const loadingText =
-  document.getElementById("loadingText");
+document.getElementById("loadText").textContent=
+"3D engine could not load. Please refresh.";
 
-const loadingFill =
-  document.getElementById("loadingFill");
-
-const error =
-  document.getElementById("error");
-
-function progress(n,text){
-
-  loadingFill.style.width=n+"%";
-  loadingText.textContent=text;
+throw new Error("Three.js failed to load");
 
 }
 
 
-/* =========================
-   WEBGL CHECK
-========================= */
+/* ==========================
+SCENE
+========================== */
 
-try{
+const scene=
+new THREE.Scene();
 
-  const test =
-    document.createElement("canvas");
+scene.background=
+new THREE.Color(0x78d2ff);
 
-  if(!test.getContext("webgl2")){
+scene.fog=
+new THREE.Fog(
+0x78d2ff,
+35,
+100
+);
 
-    loading.style.display="none";
-    error.style.display="flex";
-    throw new Error("WebGL2 unavailable");
 
-  }
+/* ==========================
+CAMERA
+========================== */
+
+const camera=
+new THREE.PerspectiveCamera(
+65,
+innerWidth/innerHeight,
+0.1,
+150
+);
+
+
+/* ==========================
+RENDERER
+========================== */
+
+const renderer=
+new THREE.WebGLRenderer({
+antialias:false,
+powerPreference:"low-power"
+});
 
+renderer.setPixelRatio(
+Math.min(devicePixelRatio,1.5)
+);
+
+renderer.setSize(
+innerWidth,
+innerHeight
+);
+
+document
+.getElementById("game")
+.appendChild(renderer.domElement);
+
+
+/* ==========================
+LIGHT
+========================== */
+
+const sunlight=
+new THREE.DirectionalLight(
+0xffffff,
+2
+);
+
+sunlight.position.set(
+10,20,10
+);
+
+scene.add(sunlight);
+
+
+scene.add(
+new THREE.HemisphereLight(
+0xccefff,
+0x315b28,
+1.8
+)
+);
+
+
+/* ==========================
+GROUND
+========================== */
+
+const ground=
+new THREE.Mesh(
+new THREE.PlaneGeometry(90,90),
+new THREE.MeshLambertMaterial({
+color:0x4c9d3d
+})
+);
+
+ground.rotation.x=
+-Math.PI/2;
+
+scene.add(ground);
+
+
+/* ==========================
+PLANTS
+========================== */
+
+const leafMaterial=
+new THREE.MeshLambertMaterial({
+color:0x277b30
+});
+
+const flowerColors=[
+0xffe45c,
+0xff719c,
+0xc78cff,
+0xffffff
+];
+
+for(let i=0;i<100;i++){
+
+const plant=
+new THREE.Mesh(
+new THREE.ConeGeometry(
+.08,
+.3+Math.random()*.7,
+5
+),
+leafMaterial
+);
+
+plant.position.set(
+(Math.random()-.5)*75,
+.25,
+(Math.random()-.5)*75
+);
+
+scene.add(plant);
+}
+
+
+for(let i=0;i<60;i++){
+
+const flower=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.07,6,5
+),
+new THREE.MeshLambertMaterial({
+color:
+flowerColors[
+Math.floor(
+Math.random()*flowerColors.length
+)
+]
+})
+);
+
+flower.position.set(
+(Math.random()-.5)*70,
+.08,
+(Math.random()-.5)*70
+);
+
+scene.add(flower);
+}
+
+
+/* ==========================
+ROCKS
+========================== */
+
+for(let i=0;i<35;i++){
+
+const rock=
+new THREE.Mesh(
+new THREE.DodecahedronGeometry(
+.25+Math.random()*.5,
+0
+),
+new THREE.MeshLambertMaterial({
+color:0x777b72
+})
+);
+
+rock.position.set(
+(Math.random()-.5)*75,
+.25,
+(Math.random()-.5)*75
+);
 
-  progress(10,"Starting the 3D engine...");
+rock.scale.y=.6;
 
+scene.add(rock);
+}
 
-  /* =========================
-     SCENE
-  ========================= */
 
-  const scene =
-    new THREE.Scene();
+/* ==========================
+MANTIS
+========================== */
 
-  scene.background =
-    new THREE.Color(0x82d8ff);
+const mantis=
+new THREE.Group();
+
+const green=
+new THREE.MeshLambertMaterial({
+color:0x4d9632
+});
 
-  scene.fog =
-    new THREE.Fog(
-      0x82d8ff,
-      35,
-      100
-    );
+const lightGreen=
+new THREE.MeshLambertMaterial({
+color:0x78bd4c
+});
 
+const darkGreen=
+new THREE.MeshLambertMaterial({
+color:0x245d24
+});
 
-  const camera =
-    new THREE.PerspectiveCamera(
-      65,
-      innerWidth/innerHeight,
-      .1,
-      150
-    );
+const black=
+new THREE.MeshLambertMaterial({
+color:0x111111
+});
 
 
-  const renderer =
-    new THREE.WebGLRenderer({
-      antialias:false,
-      powerPreference:"low-power"
-    });
+/* abdomen */
+
+const abdomen=
+new THREE.Mesh(
+new THREE.CapsuleGeometry(
+.35,1.0,6,10
+),
+green
+);
 
+abdomen.rotation.x=
+Math.PI/2;
 
-  renderer.setPixelRatio(
-    Math.min(devicePixelRatio,1.5)
-  );
+abdomen.position.set(
+0,1.2,.35
+);
 
-  renderer.setSize(
-    innerWidth,
-    innerHeight
-  );
+abdomen.scale.z=1.3;
 
-  document
-    .getElementById("game")
-    .appendChild(renderer.domElement);
+mantis.add(abdomen);
 
 
-  progress(25,"Building the garden...");
+/* thorax */
 
+const thorax=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.48,12,10
+),
+darkGreen
+);
 
-  /* =========================
-     LIGHT
-  ========================= */
+thorax.scale.y=1.15;
+
+thorax.position.set(
+0,1.35,-.45
+);
 
-  const sun =
-    new THREE.DirectionalLight(
-      0xffffff,
-      2.2
-    );
+mantis.add(thorax);
 
-  sun.position.set(
-    10,20,10
-  );
 
-  scene.add(sun);
+/* head */
 
+const head=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.42,10,8
+),
+lightGreen
+);
 
-  const ambient =
-    new THREE.HemisphereLight(
-      0xc8efff,
-      0x315b28,
-      1.8
-    );
+head.scale.set(
+1.15,.85,.9
+);
 
-  scene.add(ambient);
+head.position.set(
+0,1.9,-.9
+);
 
+mantis.add(head);
 
-  /* =========================
-     GROUND
-  ========================= */
 
-  const ground =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        100,100
-      ),
-      new THREE.MeshLambertMaterial({
-        color:0x4d9b3c
-      })
-    );
+/* eyes */
 
-  ground.rotation.x=
-    -Math.PI/2;
+for(const side of [-1,1]){
 
-  scene.add(ground);
+const eye=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.14,8,6
+),
+black
+);
 
+eye.position.set(
+side*.24,
+1.95,
+-1.25
+);
 
-  /* =========================
-     PLANTS
-  ========================= */
+mantis.add(eye);
+}
 
-  const plantMaterial =
-    new THREE.MeshLambertMaterial({
-      color:0x28772f
-    });
-
-  for(let i=0;i<100;i++){
-
-    const plant =
-      new THREE.Mesh(
-        new THREE.ConeGeometry(
-          .12,
-          .5+Math.random()*.8,
-          5
-        ),
-        plantMaterial
-      );
-
-    plant.position.set(
-      (Math.random()-.5)*75,
-      .35,
-      (Math.random()-.5)*75
-    );
-
-    scene.add(plant);
-  }
 
+/* antennae */
 
-  /* =========================
-     ROCKS
-  ========================= */
-
-  const rockMaterial =
-    new THREE.MeshLambertMaterial({
-      color:0x73786d
-    });
-
-  for(let i=0;i<30;i++){
-
-    const rock =
-      new THREE.Mesh(
-        new THREE.DodecahedronGeometry(
-          .3+Math.random()*.55,
-          0
-        ),
-        rockMaterial
-      );
-
-    rock.position.set(
-      (Math.random()-.5)*70,
-      .3,
-      (Math.random()-.5)*70
-    );
+for(const side of [-1,1]){
 
-    rock.scale.y=.65;
-
-    scene.add(rock);
-  }
-
-
-  progress(45,"Creating your mantis...");
-
-
-  /* =========================
-     MANTIS
-     PROPER BODY SHAPE
-  ========================= */
-
-  const mantis =
-    new THREE.Group();
-
-
-  const green =
-    new THREE.MeshLambertMaterial({
-      color:0x4f9f32
-    });
-
-  const lightGreen =
-    new THREE.MeshLambertMaterial({
-      color:0x78bd48
-    });
-
-  const darkGreen =
-    new THREE.MeshLambertMaterial({
-      color:0x286522
-    });
-
-  const black =
-    new THREE.MeshLambertMaterial({
-      color:0x111111
-    });
-
-
-  /* ABDOMEN */
-
-  const abdomen =
-    new THREE.Mesh(
-      new THREE.CapsuleGeometry(
-        .38,
-        1.05,
-        6,
-        10
-      ),
-      green
-    );
-
-  abdomen.rotation.x=
-    Math.PI/2;
-
-  abdomen.position.set(
-    0,
-    1.25,
-    .35
-  );
-
-  abdomen.scale.set(
-    1,
-    1,
-    1.35
-  );
-
-  mantis.add(abdomen);
-
-
-  /* THORAX */
-
-  const thorax =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        .48,
-        12,
-        10
-      ),
-      darkGreen
-    );
-
-  thorax.scale.set(
-    .8,
-    1.15,
-    1
-  );
-
-  thorax.position.set(
-    0,
-    1.4,
-    -.45
-  );
-
-  mantis.add(thorax);
-
-
-  /* TRIANGULAR-LOOKING HEAD */
-
-  const head =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        .42,
-        8,
-        6
-      ),
-      lightGreen
-    );
-
-  head.scale.set(
-    1.15,
-    .85,
-    .85
-  );
-
-  head.position.set(
-    0,
-    1.9,
-    -.9
-  );
-
-  mantis.add(head);
-
-
-  /* LARGE MANTIS EYES */
-
-  const eye1 =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        .14,
-        8,
-        6
-      ),
-      black
-    );
-
-  const eye2 =
-    eye1.clone();
-
-  eye1.position.set(
-    -.25,
-    1.95,
-    -1.23
-  );
-
-  eye2.position.set(
-    .25,
-    1.95,
-    -1.23
-  );
-
-  mantis.add(eye1);
-  mantis.add(eye2);
-
-
-  /* ANTENNAE */
-
-  function antenna(x){
-
-    const a =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          .025,
-          .035,
-          .75,
-          6
-        ),
-        darkGreen
-      );
-
-    a.position.set(
-      x,
-      2.25,
-      -1.05
-    );
-
-    a.rotation.z=
-      x<0 ? -.28 : .28;
-
-    a.rotation.x=
-      -.15;
-
-    mantis.add(a);
-
-
-    const tip =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          .055,
-          6,
-          5
-        ),
-        darkGreen
-      );
-
-    tip.position.set(
-      x*1.35,
-      2.57,
-      -1.13
-    );
-
-    mantis.add(tip);
-  }
-
-  antenna(-.16);
-  antenna(.16);
-
-
-  /* =========================
-     SIX LONG LEGS
-  ========================= */
-
-  function createLeg(
-    x,z,
-    angle1,
-    angle2
-  ){
-
-    const upper =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          .055,
-          .075,
-          .9,
-          6
-        ),
-        darkGreen
-      );
-
-    upper.position.set(
-      x,
-      1.05,
-      z
-    );
-
-    upper.rotation.z=
-      angle1;
-
-    mantis.add(upper);
-
-
-    const lower =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          .04,
-          .055,
-          .95,
-          6
-        ),
-        green
-      );
-
-    lower.position.set(
-      x*1.8,
-      .58,
-      z+angle2
-    );
-
-    lower.rotation.z=
-      angle1*.45;
-
-    mantis.add(lower);
-  }
-
-
-  createLeg(-.42,.1,-1.0,-.25);
-  createLeg(.42,.1,1.0,-.25);
-
-  createLeg(-.48,.35,-1.15,.05);
-  createLeg(.48,.35,1.15,.05);
-
-  createLeg(-.42,.62,-.8,.3);
-  createLeg(.42,.62,.8,.3);
-
-
-  /* =========================
-     POWERFUL FRONT RAPTOR ARMS
-  ========================= */
-
-  function createArm(side){
-
-    const upper =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          .075,
-          .095,
-          .8,
-          6
-        ),
-        darkGreen
-      );
+const antenna=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.02,.035,.8,6
+),
+darkGreen
+);
 
-    upper.position.set(
-      side*.43,
-      1.55,
-      -.72
-    );
+antenna.position.set(
+side*.16,
+2.25,
+-1.05
+);
 
-    upper.rotation.z=
-      side*.75;
+antenna.rotation.z=
+side*.25;
 
-    upper.rotation.x=
-      -.35;
+antenna.rotation.x=
+-.15;
 
-    mantis.add(upper);
+mantis.add(antenna);
+}
 
 
-    const forearm =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          .055,
-          .075,
-          .75,
-          6
-        ),
-        green
-      );
+/* legs */
 
-    forearm.position.set(
-      side*.75,
-      1.25,
-      -1.0
-    );
+function makeLeg(
+side,
+z,
+tilt
+){
 
-    forearm.rotation.z=
-      side*1.05;
+const upper=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.045,.07,.9,6
+),
+darkGreen
+);
 
-    forearm.rotation.x=
-      -.15;
+upper.position.set(
+side*.4,
+1.0,
+z
+);
 
-    mantis.add(forearm);
+upper.rotation.z=
+side*tilt;
 
+mantis.add(upper);
 
-    /* little claw */
 
-    for(let i=0;i<2;i++){
+const lower=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.035,.05,.85,6
+),
+green
+);
 
-      const claw =
-        new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            .025,
-            .035,
-            .35,
-            5
-          ),
-          darkGreen
-        );
+lower.position.set(
+side*.8,
+.55,
+z+.15
+);
 
-      claw.position.set(
-        side*(.78+i*.06),
-        1.02,
-        -1.16
-      );
+lower.rotation.z=
+side*(tilt*.5);
 
-      claw.rotation.z=
-        side*(1.2+i*.25);
+mantis.add(lower);
+}
 
-      mantis.add(claw);
-    }
-  }
 
-  createArm(-1);
-  createArm(1);
+makeLeg(-1,.05,1);
+makeLeg(1,.05,1);
 
+makeLeg(-1,.35,1.15);
+makeLeg(1,.35,1.15);
 
-  mantis.position.set(
-    0,0,5
-  );
+makeLeg(-1,.65,.8);
+makeLeg(1,.65,.8);
 
-  scene.add(mantis);
 
+/* front arms */
 
-  progress(65,"Creating 15 ants...");
+function makeArm(side){
 
+const upper=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.06,.09,.75,6
+),
+darkGreen
+);
 
-  /* =========================
-     ANTS
-  ========================= */
+upper.position.set(
+side*.45,
+1.55,
+-.7
+);
 
-  const ants=[];
+upper.rotation.z=
+side*.8;
 
+mantis.add(upper);
 
-  function createAnt(x,z){
 
-    const ant =
-      new THREE.Group();
+const lower=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.045,.065,.7,6
+),
+green
+);
 
-    const antBody =
-      new THREE.MeshLambertMaterial({
-        color:0x151515
-      });
+lower.position.set(
+side*.75,
+1.25,
+-1
+);
 
+lower.rotation.z=
+side*1.1;
 
-    /* three body sections */
+mantis.add(lower);
+}
 
-    const abdomen =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          .18,
-          7,
-          6
-        ),
-        antBody
-      );
+makeArm(-1);
+makeArm(1);
 
-    abdomen.scale.z=1.3;
-    abdomen.position.z=.25;
 
-    ant.add(abdomen);
+mantis.position.set(
+0,0,5
+);
 
+scene.add(mantis);
 
-    const middle =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          .14,
-          7,
-          6
-        ),
-        antBody
-      );
 
-    ant.add(middle);
+/* ==========================
+ANTS
+========================== */
 
+const ants=[];
 
-    const head =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          .15,
-          7,
-          6
-        ),
-        antBody
-      );
+const antPositions=[
+[-8,-7],
+[7,-10],
+[-13,4],
+[11,8],
+[-3,-15],
+[15,-4],
+[-16,-9],
+[4,14],
+[-10,13],
+[16,14],
+[-18,2],
+[2,-22],
+[20,-15],
+[-5,22],
+[18,22]
+];
 
-    head.position.z=-.25;
 
-    ant.add(head);
+function createAnt(x,z){
 
+const ant=
+new THREE.Group();
 
-    /* six tiny legs */
+const material=
+new THREE.MeshLambertMaterial({
+color:0x171717
+});
 
-    for(let i=0;i<3;i++){
 
-      for(const side of [-1,1]){
+const body=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.18,7,6
+),
+material
+);
 
-        const leg =
-          new THREE.Mesh(
-            new THREE.CylinderGeometry(
-              .018,
-              .025,
-              .4,
-              5
-            ),
-            antBody
-          );
+body.scale.z=1.3;
 
-        leg.position.set(
-          side*.18,
-          .05,
-          -.18+i*.2
-        );
+ant.add(body);
 
-        leg.rotation.z=
-          side*1.1;
 
-        ant.add(leg);
-      }
-    }
+const head=
+new THREE.Mesh(
+new THREE.SphereGeometry(
+.15,7,6
+),
+material
+);
 
+head.position.z=-.25;
 
-    /* antennae */
+ant.add(head);
 
-    for(const side of [-1,1]){
 
-      const antenna =
-        new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            .012,
-            .018,
-            .3,
-            5
-          ),
-          antBody
-        );
+for(let i=0;i<3;i++){
 
-      antenna.position.set(
-        side*.08,
-        .13,
-        -.38
-      );
+for(const side of [-1,1]){
 
-      antenna.rotation.z=
-        side*.35;
+const leg=
+new THREE.Mesh(
+new THREE.CylinderGeometry(
+.015,.025,.35,5
+),
+material
+);
 
-      ant.add(antenna);
-    }
+leg.position.set(
+side*.18,
+.02,
+-.15+i*.18
+);
 
+leg.rotation.z=
+side*1.1;
 
-    ant.position.set(
-      x,
-      .22,
-      z
-    );
+ant.add(leg);
 
+}
+}
 
-    scene.add(ant);
 
-    ants.push({
-      object:ant,
-      collected:false
-    });
-  }
+ant.position.set(
+x,.25,z
+);
 
+scene.add(ant);
 
-  const antPositions=[
-    [-8,-7],
-    [7,-10],
-    [-13,4],
-    [11,8],
-    [-3,-15],
-    [15,-4],
-    [-16,-9],
-    [4,14],
-    [-10,13],
-    [16,14],
-    [-18,2],
-    [2,-22],
-    [20,-15],
-    [-5,22],
-    [18,22]
-  ];
+ants.push({
+object:ant,
+collected:false
+});
 
+}
 
-  antPositions.forEach(
-    p=>createAnt(p[0],p[1])
-  );
 
+antPositions.forEach(
+p=>createAnt(p[0],p[1])
+);
 
-  progress(85,"Almost ready...");
 
+/* ==========================
+PLAYER
+========================== */
 
-  /* =========================
-     PLAYER
-  ========================= */
+const player={
+x:0,
+z:5,
+rotation:0,
+speed:5
+};
 
-  const player={
-    x:0,
-    z:5,
-    rotation:0,
-    speed:5
-  };
 
+const keys={
+up:false,
+down:false,
+left:false,
+right:false
+};
 
-  const keys={
-    up:false,
-    down:false,
-    left:false,
-    right:false
-  };
 
+/* ==========================
+BUTTONS
+========================== */
 
-  function button(id,key){
+function control(
+id,
+key
+){
 
-    const b=
-      document.getElementById(id);
+const button=
+document.getElementById(id);
 
+button.addEventListener(
+"pointerdown",
+e=>{
+e.preventDefault();
+keys[key]=true;
+}
+);
 
-    b.addEventListener(
-      "pointerdown",
-      e=>{
-        e.preventDefault();
-        keys[key]=true;
-      }
-    );
+button.addEventListener(
+"pointerup",
+e=>{
+e.preventDefault();
+keys[key]=false;
+}
+);
 
+button.addEventListener(
+"pointercancel",
+()=>{
+keys[key]=false;
+}
+);
+}
 
-    b.addEventListener(
-      "pointerup",
-      e=>{
-        e.preventDefault();
-        keys[key]=false;
-      }
-    );
+control("up","up");
+control("down","down");
+control("left","left");
+control("right","right");
 
 
-    b.addEventListener(
-      "pointercancel",
-      ()=>{
-        keys[key]=false;
-      }
-    );
+/* keyboard */
 
+addEventListener(
+"keydown",
+e=>{
 
-    b.addEventListener(
-      "pointerleave",
-      ()=>{
-        keys[key]=false;
-      }
-    );
-  }
+if(e.key==="ArrowUp"||e.key==="w")
+keys.up=true;
 
+if(e.key==="ArrowDown"||e.key==="s")
+keys.down=true;
 
-  button("up","up");
-  button("down","down");
-  button("left","left");
-  button("right","right");
+if(e.key==="ArrowLeft"||e.key==="a")
+keys.left=true;
 
+if(e.key==="ArrowRight"||e.key==="d")
+keys.right=true;
 
-  /* keyboard */
+}
+);
 
-  addEventListener(
-    "keydown",
-    e=>{
 
-      if(e.key==="ArrowUp"||e.key==="w")
-        keys.up=true;
+addEventListener(
+"keyup",
+e=>{
 
-      if(e.key==="ArrowDown"||e.key==="s")
-        keys.down=true;
+if(e.key==="ArrowUp"||e.key==="w")
+keys.up=false;
 
-      if(e.key==="ArrowLeft"||e.key==="a")
-        keys.left=true;
+if(e.key==="ArrowDown"||e.key==="s")
+keys.down=false;
 
-      if(e.key==="ArrowRight"||e.key==="d")
-        keys.right=true;
-    }
-  );
+if(e.key==="ArrowLeft"||e.key==="a")
+keys.left=false;
 
+if(e.key==="ArrowRight"||e.key==="d")
+keys.right=false;
 
-  addEventListener(
-    "keyup",
-    e=>{
+}
+);
 
-      if(e.key==="ArrowUp"||e.key==="w")
-        keys.up=false;
 
-      if(e.key==="ArrowDown"||e.key==="s")
-        keys.down=false;
+/* ==========================
+LOOK
+========================== */
 
-      if(e.key==="ArrowLeft"||e.key==="a")
-        keys.left=false;
+const look=
+document.getElementById("look");
 
-      if(e.key==="ArrowRight"||e.key==="d")
-        keys.right=false;
-    }
-  );
+let looking=false;
+let lastX=0;
 
+look.addEventListener(
+"pointerdown",
+e=>{
+looking=true;
+lastX=e.clientX;
 
-  /* =========================
-     CAMERA LOOK
-  ========================= */
+look.setPointerCapture(
+e.pointerId
+);
+}
+);
 
-  const look =
-    document.getElementById("look");
+look.addEventListener(
+"pointermove",
+e=>{
 
-  let looking=false;
-  let lastX=0;
+if(!looking)return;
 
+const dx=
+e.clientX-lastX;
 
-  look.addEventListener(
-    "pointerdown",
-    e=>{
-      looking=true;
-      lastX=e.clientX;
-      look.setPointerCapture(
-        e.pointerId
-      );
-    }
-  );
+player.rotation -=
+dx*.008;
 
+lastX=e.clientX;
 
-  look.addEventListener(
-    "pointermove",
-    e=>{
+}
+);
 
-      if(!looking)return;
+look.addEventListener(
+"pointerup",
+()=>{
+looking=false;
+}
+);
 
-      const dx=
-        e.clientX-lastX;
 
-      player.rotation -=
-        dx*.008;
+/* ==========================
+COLLECTION
+========================== */
 
-      lastX=e.clientX;
-    }
-  );
+let collected=0;
 
+const antCounter=
+document.getElementById(
+"antCount"
+);
 
-  look.addEventListener(
-    "pointerup",
-    ()=>{
-      looking=false;
-    }
-  );
+const message=
+document.getElementById(
+"message"
+);
 
 
-  /* =========================
-     ANT COUNTER
-  ========================= */
+function say(text){
 
-  let collected=0;
+message.textContent=
+text;
 
-  const antCount =
-    document.getElementById(
-      "antCount"
-    );
+message.style.display=
+"block";
 
-  const message =
-    document.getElementById(
-      "message"
-    );
+clearTimeout(
+say.timer
+);
 
-  const win =
-    document.getElementById("win");
+say.timer=
+setTimeout(
+()=>{
+message.style.display=
+"none";
+},
+1600
+);
+}
 
 
-  function showMessage(text){
+/* ==========================
+GAME LOOP
+========================== */
 
-    message.textContent=text;
-    message.style.display="block";
+let last=
+performance.now();
 
-    clearTimeout(
-      showMessage.timer
-    );
 
-    showMessage.timer=
-      setTimeout(()=>{
-        message.style.display="none";
-      },1800);
-  }
+function animate(now){
 
+requestAnimationFrame(
+animate
+);
 
-  /* =========================
-     GAME LOOP
-  ========================= */
 
-  let last=
-    performance.now();
+const delta=
+Math.min(
+(now-last)/1000,
+.05
+);
 
+last=now;
 
-  function animate(now){
 
-    const delta=
-      Math.min(
-        (now-last)/1000,
-        .05
-      );
+let forward=0;
+let sideways=0;
 
-    last=now;
+if(keys.up)
+forward+=1;
 
+if(keys.down)
+forward-=1;
 
-    let forward=0;
-    let sideways=0;
 
+/*
+IMPORTANT:
+LEFT = negative
+RIGHT = positive
+*/
 
-    if(keys.up)
-      forward+=1;
+if(keys.left)
+sideways-=1;
 
-    if(keys.down)
-      forward-=1;
+if(keys.right)
+sideways+=1;
 
-    /*
-     * FIXED:
-     * LEFT IS NOW LEFT
-     * RIGHT IS NOW RIGHT
-     */
 
-    if(keys.left)
-      sideways-=1;
+const length=
+Math.hypot(
+forward,
+sideways
+);
 
-    if(keys.right)
-      sideways+=1;
 
+if(length>0){
 
-    const length=
-      Math.hypot(
-        forward,
-        sideways
-      );
+forward/=length;
+sideways/=length;
 
 
-    if(length>0){
+const speed=
+player.speed*delta;
 
-      forward/=length;
-      sideways/=length;
 
-      const speed=
-        player.speed*delta;
+const sin=
+Math.sin(
+player.rotation
+);
 
-      const sin=
-        Math.sin(
-          player.rotation
-        );
+const cos=
+Math.cos(
+player.rotation
+);
 
-      const cos=
-        Math.cos(
-          player.rotation
-        );
 
+/* correct movement */
 
-      player.x +=
-        (
-          sideways*cos -
-          forward*sin
-        )*speed;
+player.x +=
+(
+sideways*cos-
+forward*sin
+)*speed;
 
+player.z +=
+(
+sideways*sin+
+forward*cos
+)*speed;
 
-      player.z +=
-        (
-          sideways*sin +
-          forward*cos
-        )*speed;
-    }
+}
 
 
-    /* boundaries */
+/* boundaries */
 
-    player.x=
-      THREE.MathUtils.clamp(
-        player.x,
-        -35,
-        35
-      );
+player.x=
+THREE.MathUtils.clamp(
+player.x,-35,35
+);
 
-    player.z=
-      THREE.MathUtils.clamp(
-        player.z,
-        -35,
-        35
-      );
+player.z=
+THREE.MathUtils.clamp(
+player.z,-35,35
+);
 
 
-    /* mantis follows player */
+/* mantis follows player */
 
-    mantis.position.x=
-      player.x;
+mantis.position.x=
+player.x;
 
-    mantis.position.z=
-      player.z;
+mantis.position.z=
+player.z;
 
-    mantis.rotation.y=
-      player.rotation;
+mantis.rotation.y=
+player.rotation;
 
 
-    /* walking animation */
+/* camera */
 
-    if(length>0){
+camera.position.x=
+player.x-
+Math.sin(player.rotation)*7;
 
-      mantis.position.y=
-        Math.sin(now*.012)*.035;
+camera.position.z=
+player.z-
+Math.cos(player.rotation)*7;
 
-    }else{
+camera.position.y=3.6;
 
-      mantis.position.y=0;
+camera.lookAt(
+player.x,
+1.2,
+player.z
+);
 
-    }
 
+/* collect ants */
 
-    /* camera */
+for(const ant of ants){
 
-    const distance=7;
+if(ant.collected)
+continue;
 
-    camera.position.x=
-      player.x -
-      Math.sin(
-        player.rotation
-      )*distance;
+ant.object.rotation.y+=
+delta*.8;
 
-    camera.position.z=
-      player.z -
-      Math.cos(
-        player.rotation
-      )*distance;
+const dx=
+ant.object.position.x-
+player.x;
 
-    camera.position.y=3.5;
+const dz=
+ant.object.position.z-
+player.z;
 
 
-    camera.lookAt(
-      player.x,
-      1.2,
-      player.z
-    );
+if(
+Math.hypot(dx,dz)<1.5
+){
 
+ant.collected=true;
 
-    /* =========================
-       COLLECT ANTS
-    ========================= */
+ant.object.visible=false;
 
-    for(const ant of ants){
+collected++;
 
-      if(ant.collected)
-        continue;
+antCounter.textContent=
+collected;
 
+say(
+"🐜 Ant found! "+
+collected+
+"/15"
+);
 
-      ant.object.rotation.y +=
-        delta*.8;
 
+if(collected===15){
 
-      const dx=
-        ant.object.position.x-
-        player.x;
+setTimeout(
+()=>{
+document.getElementById(
+"win"
+).style.display="flex";
+},
+400
+);
 
-      const dz=
-        ant.object.position.z-
-        player.z;
+}
 
-      const distanceToAnt=
-        Math.hypot(dx,dz);
+}
 
+}
 
-      if(distanceToAnt<1.5){
 
-        ant.collected=true;
+/* render */
 
-        ant.object.visible=false;
+renderer.render(
+scene,
+camera
+);
 
-        collected++;
+}
 
-        antCount.textContent=
-          collected;
 
-        showMessage(
-          "🐜 Ant collected! "+
-          collected+
-          "/15"
-        );
+/* ==========================
+RESIZE
+========================== */
 
+addEventListener(
+"resize",
+()=>{
 
-        if(collected===15){
+camera.aspect=
+innerWidth/innerHeight;
 
-          setTimeout(()=>{
-            win.style.display="flex";
-          },500);
+camera.updateProjectionMatrix();
 
-        }
-      }
-    }
+renderer.setSize(
+innerWidth,
+innerHeight
+);
 
+}
+);
 
-    renderer.render(
-      scene,
-      camera
-    );
 
+/* ==========================
+START
+========================== */
 
-    requestAnimationFrame(
-      animate
-    );
-  }
+document.getElementById(
+"loadText"
+).textContent=
+"Ready!";
 
+document.getElementById(
+"fill"
+).style.width="100%";
 
-  /* =========================
-     RESIZE
-  ====================
+
+setTimeout(
+()=>{
+document.getElementById(
+"loading"
+).style.display="none";
+},
+500
+);
+
+
+requestAnimationFrame(
+animate
+);
+
+</script>
+
+</body>
+</html>
+```
