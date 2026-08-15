@@ -1,194 +1,65 @@
-    
-  
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ernetus - Games</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eternetus Games</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#182848,#4b6cb7);
+    color:white;
+    text-align:center;
+}
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #0d151d;
-      color: white;
-    }
+.container{
+    padding:60px 20px;
+}
 
-    header {
-      text-align: center;
-      padding: 60px 20px 35px;
-      background: #145b42;
-    }
+h1{
+    font-size:45px;
+    margin-bottom:10px;
+}
 
-    header h1 {
-      margin: 0 0 12px;
-      font-size: 48px;
-    }
+p{
+    font-size:20px;
+}
 
-    header p {
-      margin: 0;
-      font-size: 20px;
-      color: #d7eee4;
-    }
+.game-button{
+    display:inline-block;
+    margin:15px;
+    padding:20px 35px;
+    border-radius:18px;
+    background:#55d66b;
+    color:#07150a;
+    text-decoration:none;
+    font-size:23px;
+    font-weight:bold;
+}
 
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 55px 20px;
-    }
-
-    main > h2 {
-      text-align: center;
-      font-size: 42px;
-      margin: 0 0 40px;
-    }
-
-    .games {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 30px;
-    }
-
-    .game-card {
-      background: #1a2832;
-      border-radius: 28px;
-      padding: 40px 30px;
-      text-align: center;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    }
-
-    .game-icon {
-      font-size: 70px;
-      margin-bottom: 20px;
-    }
-
-    .game-card h3 {
-      font-size: 32px;
-      margin: 10px 0 20px;
-    }
-
-    .game-card p {
-      font-size: 18px;
-      line-height: 1.6;
-      color: #cbd5dc;
-      min-height: 90px;
-    }
-
-    .play {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 18px 30px;
-      background: #43c18a;
-      color: white;
-      text-decoration: none;
-      border-radius: 14px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .play:hover {
-      background: #35ad79;
-    }
-
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      color: #9daab3;
-      font-size: 17px;
-    }
-
-    @media (max-width: 700px) {
-      header h1 {
-        font-size: 38px;
-      }
-
-      main > h2 {
-        font-size: 34px;
-      }
-
-      .games {
-        grid-template-columns: 1fr;
-      }
-
-      .game-card h3 {
-        font-size: 28px;
-      }
-    }
-  </style>
+.game-button:hover{
+    transform:scale(1.05);
+}
+</style>
 </head>
 
 <body>
 
-  <header>
-    <h1>Ernetus ✨</h1>
-    <p>A collection of games made with imagination 🎮</p>
-  </header>
+<div class="container">
 
-  <main>
+    <h1>🎮 Eternetus Games</h1>
 
-    <h2>Our Games</h2>
+    <p>Choose a game and start playing!</p>
 
-    <div class="games">
+    <a class="game-button" href="mini-world.html">
+        🌍 PLAY MINI WORLD
+    </a>
 
-      <!-- PATH OF GOOD DEEDS -->
-      <div class="game-card">
-        <div class="game-icon">🌿</div>
-
-        <h3>Path of Good Deeds</h3>
-
-        <p>
-          Explore a peaceful neighborhood, help people,
-          care for the community, and make time for salat.
-        </p>
-
-        <a class="play" href="path-of-good-deeds.html">
-          ▶ Play Game
-        </a>
-      </div>
-
-
-      <!-- MANTIS ADVENTURE -->
-      <div class="game-card">
-        <div class="game-icon">🦗</div>
-
-        <h3>Mantis Adventure</h3>
-
-        <p>
-          Enter a mysterious world and begin an exciting
-          adventure as a powerful mantis.
-        </p>
-
-        <a class="play" href="mantis-adventure.html">
-          ▶ Play Game
-        </a>
-      </div>
-<!-- 100 DOORS -->
-<div class="game-card">
-  <div class="game-icon">🚪</div>
-
-  <h3>100 Doors</h3>
-
-  <p>
-    Can you solve all 100 doors? Explore, think, and find your way through!
-  </p>
-
-  <a class="play" href="100-doors.html">
-    ▶ Play Game
-  </a>
 </div>
-    </div>
-
-  </main>
-
-  <footer>
-    © 2026 Ernetus · More games coming soon 🎮
-  </footer>
 
 </body>
 </html>
