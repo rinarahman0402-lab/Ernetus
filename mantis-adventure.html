@@ -1,1225 +1,1259 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Mantis Adventure 3D</title>
 
 <style>
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
 html,body{
-margin:0;
-width:100%;
-height:100%;
-overflow:hidden;
-background:#76c95b;
-font-family:Arial,sans-serif;
-touch-action:none;
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#87ceeb;
+    font-family:Arial,sans-serif;
+    touch-action:none;
 }
 
-#game{
-position:fixed;
-inset:0;
+canvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
 }
 
-#loading{
-position:fixed;
-inset:0;
-z-index:20;
-background:linear-gradient(#79d2ff,#3c8438);
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-text-align:center;
-}
-
-#loading h1{
-font-size:34px;
-}
-
-#bar{
-width:240px;
-height:12px;
-background:rgba(255,255,255,.3);
-border-radius:20px;
-overflow:hidden;
-}
-
-#fill{
-width:20%;
-height:100%;
-background:white;
-}
-
-#ui{
-position:fixed;
-inset:0;
-z-index:10;
-pointer-events:none;
-color:white;
-text-shadow:0 2px 4px black;
+#hud{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    color:white;
+    text-shadow:0 2px 4px #000;
 }
 
 #title{
-position:absolute;
-top:12px;
-left:50%;
-transform:translateX(-50%);
-font-size:23px;
-font-weight:bold;
+    position:absolute;
+    top:12px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:24px;
+    font-weight:bold;
+    white-space:nowrap;
 }
 
-#count{
-position:absolute;
-top:50px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,.5);
-padding:8px 15px;
-border-radius:20px;
-font-weight:bold;
+#ants{
+    position:absolute;
+    top:52px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#0009;
+    padding:9px 17px;
+    border-radius:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+#warning{
+    position:absolute;
+    top:95px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#8b2200dd;
+    padding:9px 16px;
+    border-radius:18px;
+    display:none;
+    font-weight:bold;
+    white-space:nowrap;
 }
 
 #controls{
-position:absolute;
-left:15px;
-bottom:15px;
-width:170px;
-height:170px;
-pointer-events:auto;
+    position:fixed;
+    left:18px;
+    bottom:18px;
+    width:235px;
+    height:180px;
+    pointer-events:none;
 }
 
-.move{
-position:absolute;
-width:55px;
-height:55px;
-border:0;
-border-radius:15px;
-background:rgba(0,0,0,.55);
-color:white;
-font-size:25px;
-font-weight:bold;
+.control{
+    position:absolute;
+    width:76px;
+    height:58px;
+    border:2px solid #ffffff66;
+    border-radius:16px;
+    background:#16251ddd;
+    color:white;
+    font-size:15px;
+    font-weight:bold;
+    box-shadow:0 4px 10px #0007;
+    pointer-events:auto;
+    touch-action:none;
 }
 
-#up{left:57px;top:0}
-#left{left:0;top:57px}
-#down{left:57px;top:57px}
-#right{left:114px;top:57px}
+.control:active{
+    background:#3e6749;
+    transform:scale(.96);
+}
+
+#forward{
+    left:79px;
+    top:0;
+}
+
+#back{
+    left:79px;
+    bottom:0;
+}
+
+#left{
+    left:0;
+    top:61px;
+}
+
+#right{
+    right:0;
+    top:61px;
+}
 
 #look{
-position:absolute;
-right:18px;
-bottom:25px;
-width:120px;
-height:120px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,.4);
-background:rgba(0,0,0,.15);
-display:flex;
-align-items:center;
-justify-content:center;
-text-align:center;
-pointer-events:auto;
+    position:fixed;
+    right:18px;
+    bottom:25px;
+    width:155px;
+    height:155px;
+    border:2px solid #ffffff44;
+    border-radius:50%;
+    background:#0002;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:#fff;
+    font-weight:bold;
+    pointer-events:auto;
+    touch-action:none;
 }
 
 #message{
-position:absolute;
-bottom:165px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,.7);
-padding:10px 16px;
-border-radius:15px;
-display:none;
+    position:fixed;
+    left:50%;
+    bottom:200px;
+    transform:translateX(-50%);
+    background:#000c;
+    color:white;
+    padding:12px 20px;
+    border-radius:18px;
+    font-weight:bold;
+    display:none;
+    z-index:5;
 }
 
-#win{
-position:fixed;
-inset:0;
-z-index:30;
-background:rgba(10,30,10,.9);
-color:white;
-display:none;
-align-items:center;
-justify-content:center;
-text-align:center;
+#start{
+    position:fixed;
+    inset:0;
+    z-index:20;
+    background:linear-gradient(#70c9ef,#43894c);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    text-align:center;
+    padding:25px;
 }
 
-#win button{
-padding:15px 25px;
-font-size:18px;
-font-weight:bold;
-border:0;
-border-radius:14px;
+#start h1{
+    font-size:38px;
+    margin:10px 0;
+}
+
+#start p{
+    max-width:500px;
+    font-size:18px;
+    line-height:1.5;
+}
+
+#startButton{
+    border:0;
+    border-radius:18px;
+    padding:17px 32px;
+    font-size:20px;
+    font-weight:bold;
+    background:#50d37b;
+    color:#082713;
+}
+
+#finish{
+    position:fixed;
+    inset:0;
+    z-index:30;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:#06130ddf;
+    color:white;
+    text-align:center;
+}
+
+#finishBox{
+    background:#10241a;
+    border:2px solid #4ed77b;
+    border-radius:25px;
+    padding:30px;
+    margin:20px;
+}
+
+#finish button{
+    border:0;
+    border-radius:14px;
+    padding:13px 24px;
+    font-size:18px;
+    font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div id="game"></div>
+<canvas id="game"></canvas>
 
-<div id="loading">
-<h1>🦗 Mantis Adventure 3D</h1>
-<p id="loadText">Loading the garden...</p>
-<div id="bar"><div id="fill"></div></div>
-</div>
-
-<div id="ui">
-
-<div id="title">🦗 Mantis Adventure 3D</div>
-
-<div id="count">
-🐜 Ants: <span id="antCount">0</span>/15
+<div id="hud">
+    <div id="title">Mantis Adventure 3D</div>
+    <div id="ants">Ants caught: 0 / 15</div>
+    <div id="warning">WATCH OUT!</div>
 </div>
 
 <div id="controls">
-<button class="move" id="up">▲</button>
-<button class="move" id="left">◀</button>
-<button class="move" id="down">▼</button>
-<button class="move" id="right">▶</button>
+    <button class="control" id="forward">FORWARD</button>
+    <button class="control" id="back">BACK</button>
+    <button class="control" id="left">TURN LEFT</button>
+    <button class="control" id="right">TURN RIGHT</button>
 </div>
 
 <div id="look">
-DRAG<br>TO LOOK
+    DRAG<br>TO LOOK
 </div>
 
 <div id="message"></div>
 
+<div id="start">
+    <div style="font-size:80px;">🦗</div>
+    <h1>Mantis Adventure 3D</h1>
+    <p>
+        You are tiny in a giant world.
+        Find and catch 15 giant ants while exploring the forest.
+        Watch out for animals walking nearby!
+    </p>
+    <button id="startButton">START ADVENTURE</button>
 </div>
 
-<div id="win">
-<div>
-<div style="font-size:80px">🎉</div>
-<h1>All 15 Ants Found!</h1>
-<p>You completed Mantis Adventure!</p>
-<button onclick="location.reload()">PLAY AGAIN</button>
+<div id="finish">
+    <div id="finishBox">
+        <div style="font-size:75px;">🏆</div>
+        <h1>15 Ants Caught!</h1>
+        <p>You survived the giant forest and completed the adventure.</p>
+        <button onclick="location.reload()">PLAY AGAIN</button>
+    </div>
 </div>
-</div>
-
-
-<!-- Three.js -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 
 <script>
+"use strict";
 
-/* ==========================
-CHECK THREE.JS
-========================== */
+/* =========================================================
+   MANTIS ADVENTURE 3D
+   Standalone canvas version.
+   No external libraries.
+   ========================================================= */
 
-if(typeof THREE==="undefined"){
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-document.getElementById("loadText").textContent=
-"3D engine could not load. Please refresh.";
+let W = 0;
+let H = 0;
+let FOV = 0;
 
-throw new Error("Three.js failed to load");
+function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
 
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    FOV = Math.min(W,H) * 0.95;
 }
 
-
-/* ==========================
-SCENE
-========================== */
-
-const scene=
-new THREE.Scene();
-
-scene.background=
-new THREE.Color(0x78d2ff);
-
-scene.fog=
-new THREE.Fog(
-0x78d2ff,
-35,
-100
-);
+window.addEventListener("resize",resize);
+resize();
 
 
-/* ==========================
-CAMERA
-========================== */
+/* =========================================================
+   PLAYER
+   ========================================================= */
 
-const camera=
-new THREE.PerspectiveCamera(
-65,
-innerWidth/innerHeight,
-0.1,
-150
-);
-
-
-/* ==========================
-RENDERER
-========================== */
-
-const renderer=
-new THREE.WebGLRenderer({
-antialias:false,
-powerPreference:"low-power"
-});
-
-renderer.setPixelRatio(
-Math.min(devicePixelRatio,1.5)
-);
-
-renderer.setSize(
-innerWidth,
-innerHeight
-);
-
-document
-.getElementById("game")
-.appendChild(renderer.domElement);
+const player = {
+    x:0,
+    z:0,
+    yaw:0,
+    speed:8
+};
 
 
-/* ==========================
-LIGHT
-========================== */
+/* =========================================================
+   CONTROLS
+   ========================================================= */
 
-const sunlight=
-new THREE.DirectionalLight(
-0xffffff,
-2
-);
+const keys = {
+    forward:false,
+    back:false,
+    left:false,
+    right:false
+};
 
-sunlight.position.set(
-10,20,10
-);
+function holdButton(id,name){
 
-scene.add(sunlight);
+    const button = document.getElementById(id);
 
+    button.addEventListener("pointerdown",function(e){
+        e.preventDefault();
+        keys[name] = true;
+        button.setPointerCapture(e.pointerId);
+    });
 
-scene.add(
-new THREE.HemisphereLight(
-0xccefff,
-0x315b28,
-1.8
-)
-);
+    button.addEventListener("pointerup",function(e){
+        e.preventDefault();
+        keys[name] = false;
+    });
 
+    button.addEventListener("pointercancel",function(){
+        keys[name] = false;
+    });
 
-/* ==========================
-GROUND
-========================== */
-
-const ground=
-new THREE.Mesh(
-new THREE.PlaneGeometry(90,90),
-new THREE.MeshLambertMaterial({
-color:0x4c9d3d
-})
-);
-
-ground.rotation.x=
--Math.PI/2;
-
-scene.add(ground);
-
-
-/* ==========================
-PLANTS
-========================== */
-
-const leafMaterial=
-new THREE.MeshLambertMaterial({
-color:0x277b30
-});
-
-const flowerColors=[
-0xffe45c,
-0xff719c,
-0xc78cff,
-0xffffff
-];
-
-for(let i=0;i<100;i++){
-
-const plant=
-new THREE.Mesh(
-new THREE.ConeGeometry(
-.08,
-.3+Math.random()*.7,
-5
-),
-leafMaterial
-);
-
-plant.position.set(
-(Math.random()-.5)*75,
-.25,
-(Math.random()-.5)*75
-);
-
-scene.add(plant);
+    button.addEventListener("lostpointercapture",function(){
+        keys[name] = false;
+    });
 }
 
-
-for(let i=0;i<60;i++){
-
-const flower=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.07,6,5
-),
-new THREE.MeshLambertMaterial({
-color:
-flowerColors[
-Math.floor(
-Math.random()*flowerColors.length
-)
-]
-})
-);
-
-flower.position.set(
-(Math.random()-.5)*70,
-.08,
-(Math.random()-.5)*70
-);
-
-scene.add(flower);
-}
+holdButton("forward","forward");
+holdButton("back","back");
+holdButton("left","left");
+holdButton("right","right");
 
 
-/* ==========================
-ROCKS
-========================== */
+/* =========================================================
+   LOOK CONTROL
+   ========================================================= */
 
-for(let i=0;i<35;i++){
+const look = document.getElementById("look");
 
-const rock=
-new THREE.Mesh(
-new THREE.DodecahedronGeometry(
-.25+Math.random()*.5,
-0
-),
-new THREE.MeshLambertMaterial({
-color:0x777b72
-})
-);
+let looking = false;
+let lastLookX = 0;
 
-rock.position.set(
-(Math.random()-.5)*75,
-.25,
-(Math.random()-.5)*75
-);
-
-rock.scale.y=.6;
-
-scene.add(rock);
-}
-
-
-/* ==========================
-MANTIS
-========================== */
-
-const mantis=
-new THREE.Group();
-
-const green=
-new THREE.MeshLambertMaterial({
-color:0x4d9632
+look.addEventListener("pointerdown",function(e){
+    e.preventDefault();
+    looking = true;
+    lastLookX = e.clientX;
+    look.setPointerCapture(e.pointerId);
 });
 
-const lightGreen=
-new THREE.MeshLambertMaterial({
-color:0x78bd4c
+look.addEventListener("pointermove",function(e){
+
+    if(!looking) return;
+
+    const dx = e.clientX - lastLookX;
+
+    /*
+       Drag RIGHT = look RIGHT
+       Drag LEFT  = look LEFT
+    */
+
+    player.yaw += dx * 0.009;
+
+    lastLookX = e.clientX;
 });
 
-const darkGreen=
-new THREE.MeshLambertMaterial({
-color:0x245d24
+look.addEventListener("pointerup",function(){
+    looking = false;
 });
 
-const black=
-new THREE.MeshLambertMaterial({
-color:0x111111
+look.addEventListener("pointercancel",function(){
+    looking = false;
 });
 
 
-/* abdomen */
+/* =========================================================
+   WORLD OBJECTS
+   ========================================================= */
 
-const abdomen=
-new THREE.Mesh(
-new THREE.CapsuleGeometry(
-.35,1.0,6,10
-),
-green
-);
+const objects = [];
 
-abdomen.rotation.x=
-Math.PI/2;
-
-abdomen.position.set(
-0,1.2,.35
-);
-
-abdomen.scale.z=1.3;
-
-mantis.add(abdomen);
+const ants = [];
+const animals = [];
+const trees = [];
+const rocks = [];
 
 
-/* thorax */
+/* deterministic random */
 
-const thorax=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.48,12,10
-),
-darkGreen
-);
+let seed = 72931;
 
-thorax.scale.y=1.15;
+function random(){
 
-thorax.position.set(
-0,1.35,-.45
-);
+    seed = (seed * 1664525 + 1013904223) >>> 0;
 
-mantis.add(thorax);
-
-
-/* head */
-
-const head=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.42,10,8
-),
-lightGreen
-);
-
-head.scale.set(
-1.15,.85,.9
-);
-
-head.position.set(
-0,1.9,-.9
-);
-
-mantis.add(head);
-
-
-/* eyes */
-
-for(const side of [-1,1]){
-
-const eye=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.14,8,6
-),
-black
-);
-
-eye.position.set(
-side*.24,
-1.95,
--1.25
-);
-
-mantis.add(eye);
+    return seed / 4294967296;
 }
 
 
-/* antennae */
-
-for(const side of [-1,1]){
-
-const antenna=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.02,.035,.8,6
-),
-darkGreen
-);
-
-antenna.position.set(
-side*.16,
-2.25,
--1.05
-);
-
-antenna.rotation.z=
-side*.25;
-
-antenna.rotation.x=
--.15;
-
-mantis.add(antenna);
-}
-
-
-/* legs */
-
-function makeLeg(
-side,
-z,
-tilt
-){
-
-const upper=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.045,.07,.9,6
-),
-darkGreen
-);
-
-upper.position.set(
-side*.4,
-1.0,
-z
-);
-
-upper.rotation.z=
-side*tilt;
-
-mantis.add(upper);
-
-
-const lower=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.035,.05,.85,6
-),
-green
-);
-
-lower.position.set(
-side*.8,
-.55,
-z+.15
-);
-
-lower.rotation.z=
-side*(tilt*.5);
-
-mantis.add(lower);
-}
-
-
-makeLeg(-1,.05,1);
-makeLeg(1,.05,1);
-
-makeLeg(-1,.35,1.15);
-makeLeg(1,.35,1.15);
-
-makeLeg(-1,.65,.8);
-makeLeg(1,.65,.8);
-
-
-/* front arms */
-
-function makeArm(side){
-
-const upper=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.06,.09,.75,6
-),
-darkGreen
-);
-
-upper.position.set(
-side*.45,
-1.55,
--.7
-);
-
-upper.rotation.z=
-side*.8;
-
-mantis.add(upper);
-
-
-const lower=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.045,.065,.7,6
-),
-green
-);
-
-lower.position.set(
-side*.75,
-1.25,
--1
-);
-
-lower.rotation.z=
-side*1.1;
-
-mantis.add(lower);
-}
-
-makeArm(-1);
-makeArm(1);
-
-
-mantis.position.set(
-0,0,5
-);
-
-scene.add(mantis);
-
-
-/* ==========================
-ANTS
-========================== */
-
-const ants=[];
-
-const antPositions=[
-[-8,-7],
-[7,-10],
-[-13,4],
-[11,8],
-[-3,-15],
-[15,-4],
-[-16,-9],
-[4,14],
-[-10,13],
-[16,14],
-[-18,2],
-[2,-22],
-[20,-15],
-[-5,22],
-[18,22]
-];
-
+/* =========================================================
+   ANT CREATION
+   ========================================================= */
 
 function createAnt(x,z){
 
-const ant=
-new THREE.Group();
-
-const material=
-new THREE.MeshLambertMaterial({
-color:0x171717
-});
-
-
-const body=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.18,7,6
-),
-material
-);
-
-body.scale.z=1.3;
-
-ant.add(body);
-
-
-const head=
-new THREE.Mesh(
-new THREE.SphereGeometry(
-.15,7,6
-),
-material
-);
-
-head.position.z=-.25;
-
-ant.add(head);
-
-
-for(let i=0;i<3;i++){
-
-for(const side of [-1,1]){
-
-const leg=
-new THREE.Mesh(
-new THREE.CylinderGeometry(
-.015,.025,.35,5
-),
-material
-);
-
-leg.position.set(
-side*.18,
-.02,
--.15+i*.18
-);
-
-leg.rotation.z=
-side*1.1;
-
-ant.add(leg);
-
+    ants.push({
+        x:x,
+        z:z,
+        size:2.0,
+        caught:false,
+        phase:random()*10
+    });
 }
-}
-
-
-ant.position.set(
-x,.25,z
-);
-
-scene.add(ant);
-
-ants.push({
-object:ant,
-collected:false
-});
-
-}
-
-
-antPositions.forEach(
-p=>createAnt(p[0],p[1])
-);
-
-
-/* ==========================
-PLAYER
-========================== */
-
-const player={
-x:0,
-z:5,
-rotation:0,
-speed:5
-};
-
-
-const keys={
-up:false,
-down:false,
-left:false,
-right:false
-};
-
-
-/* ==========================
-BUTTONS
-========================== */
-
-function control(
-id,
-key
-){
-
-const button=
-document.getElementById(id);
-
-button.addEventListener(
-"pointerdown",
-e=>{
-e.preventDefault();
-keys[key]=true;
-}
-);
-
-button.addEventListener(
-"pointerup",
-e=>{
-e.preventDefault();
-keys[key]=false;
-}
-);
-
-button.addEventListener(
-"pointercancel",
-()=>{
-keys[key]=false;
-}
-);
-}
-
-control("up","up");
-control("down","down");
-control("left","left");
-control("right","right");
-
-
-/* keyboard */
-
-addEventListener(
-"keydown",
-e=>{
-
-if(e.key==="ArrowUp"||e.key==="w")
-keys.up=true;
-
-if(e.key==="ArrowDown"||e.key==="s")
-keys.down=true;
-
-if(e.key==="ArrowLeft"||e.key==="a")
-keys.left=true;
-
-if(e.key==="ArrowRight"||e.key==="d")
-keys.right=true;
-
-}
-);
-
-
-addEventListener(
-"keyup",
-e=>{
-
-if(e.key==="ArrowUp"||e.key==="w")
-keys.up=false;
-
-if(e.key==="ArrowDown"||e.key==="s")
-keys.down=false;
-
-if(e.key==="ArrowLeft"||e.key==="a")
-keys.left=false;
-
-if(e.key==="ArrowRight"||e.key==="d")
-keys.right=false;
-
-}
-);
-
-
-/* ==========================
-LOOK
-========================== */
-
-const look=
-document.getElementById("look");
-
-let looking=false;
-let lastX=0;
-
-look.addEventListener(
-"pointerdown",
-e=>{
-looking=true;
-lastX=e.clientX;
-
-look.setPointerCapture(
-e.pointerId
-);
-}
-);
-
-look.addEventListener(
-"pointermove",
-e=>{
-
-if(!looking)return;
-
-const dx=
-e.clientX-lastX;
-
-player.rotation -=
-dx*.008;
-
-lastX=e.clientX;
-
-}
-);
-
-look.addEventListener(
-"pointerup",
-()=>{
-looking=false;
-}
-);
-
-
-/* ==========================
-COLLECTION
-========================== */
-
-let collected=0;
-
-const antCounter=
-document.getElementById(
-"antCount"
-);
-
-const message=
-document.getElementById(
-"message"
-);
-
-
-function say(text){
-
-message.textContent=
-text;
-
-message.style.display=
-"block";
-
-clearTimeout(
-say.timer
-);
-
-say.timer=
-setTimeout(
-()=>{
-message.style.display=
-"none";
-},
-1600
-);
-}
-
-
-/* ==========================
-GAME LOOP
-========================== */
-
-let last=
-performance.now();
-
-
-function animate(now){
-
-requestAnimationFrame(
-animate
-);
-
-
-const delta=
-Math.min(
-(now-last)/1000,
-.05
-);
-
-last=now;
-
-
-let forward=0;
-let sideways=0;
-
-if(keys.up)
-forward+=1;
-
-if(keys.down)
-forward-=1;
 
 
 /*
-IMPORTANT:
-LEFT = negative
-RIGHT = positive
+   Exactly 15 ants.
 */
 
-if(keys.left)
-sideways-=1;
+createAnt(12,-18);
+createAnt(-18,-30);
+createAnt(27,-42);
+createAnt(-35,-55);
+createAnt(50,-20);
 
-if(keys.right)
-sideways+=1;
+createAnt(-60,15);
+createAnt(-35,35);
+createAnt(15,40);
+createAnt(48,48);
+createAnt(75,25);
 
-
-const length=
-Math.hypot(
-forward,
-sideways
-);
-
-
-if(length>0){
-
-forward/=length;
-sideways/=length;
-
-
-const speed=
-player.speed*delta;
+createAnt(-80,70);
+createAnt(-25,85);
+createAnt(35,90);
+createAnt(85,75);
+createAnt(110,35);
 
 
-const sin=
-Math.sin(
-player.rotation
-);
+/* =========================================================
+   TREES
+   ========================================================= */
 
-const cos=
-Math.cos(
-player.rotation
-);
+for(let i=0;i<95;i++){
 
+    const angle = random()*Math.PI*2;
+    const distance = 35 + random()*330;
 
-/* correct movement */
-
-player.x +=
-(
-sideways*cos-
-forward*sin
-)*speed;
-
-player.z +=
-(
-sideways*sin+
-forward*cos
-)*speed;
-
+    trees.push({
+        x:Math.cos(angle)*distance,
+        z:Math.sin(angle)*distance,
+        size:1.4+random()*1.8,
+        type:random()
+    });
 }
 
 
-/* boundaries */
+/* =========================================================
+   ROCKS
+   ========================================================= */
 
-player.x=
-THREE.MathUtils.clamp(
-player.x,-35,35
-);
+for(let i=0;i<65;i++){
 
-player.z=
-THREE.MathUtils.clamp(
-player.z,-35,35
-);
+    const angle = random()*Math.PI*2;
+    const distance = 25+random()*340;
 
-
-/* mantis follows player */
-
-mantis.position.x=
-player.x;
-
-mantis.position.z=
-player.z;
-
-mantis.rotation.y=
-player.rotation;
-
-
-/* camera */
-
-camera.position.x=
-player.x-
-Math.sin(player.rotation)*7;
-
-camera.position.z=
-player.z-
-Math.cos(player.rotation)*7;
-
-camera.position.y=3.6;
-
-camera.lookAt(
-player.x,
-1.2,
-player.z
-);
-
-
-/* collect ants */
-
-for(const ant of ants){
-
-if(ant.collected)
-continue;
-
-ant.object.rotation.y+=
-delta*.8;
-
-const dx=
-ant.object.position.x-
-player.x;
-
-const dz=
-ant.object.position.z-
-player.z;
-
-
-if(
-Math.hypot(dx,dz)<1.5
-){
-
-ant.collected=true;
-
-ant.object.visible=false;
-
-collected++;
-
-antCounter.textContent=
-collected;
-
-say(
-"🐜 Ant found! "+
-collected+
-"/15"
-);
-
-
-if(collected===15){
-
-setTimeout(
-()=>{
-document.getElementById(
-"win"
-).style.display="flex";
-},
-400
-);
-
-}
-
-}
-
+    rocks.push({
+        x:Math.cos(angle)*distance,
+        z:Math.sin(angle)*distance,
+        size:.5+random()*1.1
+    });
 }
 
 
-/* render */
+/* =========================================================
+   ANIMALS
+   ========================================================= */
 
-renderer.render(
-scene,
-camera
-);
+animals.push({
+    type:"deer",
+    x:35,
+    z:-5,
+    size:7,
+    direction:1,
+    speed:2
+});
 
+animals.push({
+    type:"deer",
+    x:-55,
+    z:45,
+    size:8,
+    direction:-1,
+    speed:1.5
+});
+
+animals.push({
+    type:"elephant",
+    x:70,
+    z:-70,
+    size:13,
+    direction:1,
+    speed:1.1
+});
+
+animals.push({
+    type:"elephant",
+    x:-95,
+    z:-30,
+    size:14,
+    direction:-1,
+    speed:1
+});
+
+
+/* =========================================================
+   PROJECTION
+   ========================================================= */
+
+function project(x,y,z){
+
+    const dx = x-player.x;
+    const dz = z-player.z;
+
+    const cos = Math.cos(player.yaw);
+    const sin = Math.sin(player.yaw);
+
+    /*
+       Camera forward:
+       positive transformed Z = in front
+    */
+
+    const cameraX =
+        dx*cos - dz*sin;
+
+    const cameraZ =
+        dx*sin + dz*cos;
+
+    if(cameraZ <= 0.2){
+        return null;
+    }
+
+    const scale = FOV / cameraZ;
+
+    return {
+        x:W/2 + cameraX*scale,
+        y:H*0.53 - y*scale,
+        scale:scale,
+        depth:cameraZ
+    };
 }
 
 
-/* ==========================
-RESIZE
-========================== */
+/* =========================================================
+   SKY
+   ========================================================= */
 
-addEventListener(
-"resize",
-()=>{
+function drawSky(){
 
-camera.aspect=
-innerWidth/innerHeight;
+    const gradient =
+        ctx.createLinearGradient(
+            0,0,0,H*.6
+        );
 
-camera.updateProjectionMatrix();
+    gradient.addColorStop(
+        0,
+        "#55bfe8"
+    );
 
-renderer.setSize(
-innerWidth,
-innerHeight
-);
+    gradient.addColorStop(
+        1,
+        "#b9e6f1"
+    );
 
+    ctx.fillStyle=gradient;
+
+    ctx.fillRect(
+        0,0,W,H
+    );
 }
-);
 
 
-/* ==========================
-START
-========================== */
+/* =========================================================
+   GROUND
+   ========================================================= */
 
-document.getElementById(
-"loadText"
-).textContent=
-"Ready!";
+function drawGround(){
 
-document.getElementById(
-"fill"
-).style.width="100%";
+    const horizon = H*.53;
 
+    ctx.fillStyle="#4c8e3b";
 
-setTimeout(
-()=>{
-document.getElementById(
-"loading"
-).style.display="none";
-},
-500
-);
+    ctx.fillRect(
+        0,
+        horizon,
+        W,
+        H-horizon
+    );
 
 
-requestAnimationFrame(
-animate
-);
+    /*
+       Perspective ground lines.
+    */
 
-</script>
+    ctx.strokeStyle="#6fae51";
+    ctx.globalAlpha=.35;
+    ctx.lineWidth=1;
 
-</body>
-</html>
-```
+    for(let i=1;i<14;i++){
+
+        const p =
+            i/14;
+
+        const y =
+            horizon +
+            Math.pow(p,1.7)*(H-horizon);
+
+        ctx.beginPath();
+
+        ctx.moveTo(0,y);
+        ctx.lineTo(W,y);
+
+        ctx.stroke();
+    }
+
+    ctx.globalAlpha=1;
+}
+
+
+/* =========================================================
+   TREE
+   ========================================================= */
+
+function drawTree(tree){
+
+    const base =
+        project(
+            tree.x,
+            0,
+            tree.z
+        );
+
+    if(!base) return;
+
+    if(base.x<-200 ||
+       base.x>W+200 ||
+       base.y<-300 ||
+       base.y>H+200) return;
+
+    const s =
+        tree.size*base.scale;
+
+    if(s<2) return;
+
+
+    /*
+       shadow
+    */
+
+    ctx.fillStyle="#183b1c99";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        base.x,
+        base.y+3,
+        s*.75,
+        s*.22,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       trunk
+    */
+
+    const top =
+        project(
+            tree.x,
+            tree.size*5,
+            tree.z
+        );
+
+    if(!top) return;
+
+    ctx.fillStyle="#65422c";
+
+    ctx.fillRect(
+        base.x-s*.18,
+        top.y,
+        s*.36,
+        base.y-top.y
+    );
+
+
+    /*
+       foliage
+    */
+
+    let leaf="#237538";
+
+    if(tree.type<.3){
+        leaf="#17652d";
+    }
+
+    if(tree.type>.8){
+        leaf="#3e963e";
+    }
+
+    ctx.fillStyle=leaf;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        top.x,
+        top.y-s*1.1
+    );
+
+    ctx.lineTo(
+        top.x-s*.9,
+        top.y+s*.2
+    );
+
+    ctx.lineTo(
+        top.x+s*.9,
+        top.y+s*.2
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        top.x,
+        top.y-s*.5
+    );
+
+    ctx.lineTo(
+        top.x-s*1.15,
+        top.y+s*.65
+    );
+
+    ctx.lineTo(
+        top.x+s*1.15,
+        top.y+s*.65
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+}
+
+
+/* =========================================================
+   ROCK
+   ========================================================= */
+
+function drawRock(rock){
+
+    const p =
+        project(
+            rock.x,
+            rock.size,
+            rock.z
+        );
+
+    if(!p) return;
+
+    const s =
+        rock.size*p.scale;
+
+    if(s<1) return;
+
+    ctx.fillStyle="#777d76";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        p.x,
+        p.y,
+        s,
+        s*.6,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+}
+
+
+/* =========================================================
+   ANT
+   ========================================================= */
+
+function drawAnt(ant,time){
+
+    if(ant.caught) return;
+
+    const bob =
+        Math.sin(
+            time*.005+ant.phase
+        )*.12;
+
+    const base =
+        project(
+            ant.x,
+            0,
+            ant.z
+        );
+
+    if(!base) return;
+
+    const body =
+        project(
+            ant.x,
+            ant.size*1.4+bob,
+            ant.z
+        );
+
+    if(!body) return;
+
+    const s =
+        ant.size*body.scale;
+
+    if(s<2) return;
+
+    /*
+       shadow
+    */
+
+    ctx.fillStyle="#18251a99";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        base.x,
+        base.y+3,
+        s*1.4,
+        s*.38,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       legs
+    */
+
+    ctx.strokeStyle="#3b2418";
+    ctx.lineWidth=Math.max(2,s*.13);
+    ctx.lineCap="round";
+
+    for(let i=-1;i<=1;i++){
+
+        const yy =
+            body.y + i*s*.25;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            body.x-s*.15,
+            yy
+        );
+
+        ctx.lineTo(
+            body.x-s*1.15,
+            yy+s*.45
+        );
+
+        ctx.moveTo(
+            body.x+s*.15,
+            yy
+        );
+
+        ctx.lineTo(
+            body.x+s*1.15,
+            yy+s*.45
+        );
+
+        ctx.stroke();
+    }
+
+
+    /*
+       abdomen
+    */
+
+    ctx.fillStyle="#5b3322";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        body.x,
+        body.y,
+        s*1.05,
+        s*.55,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       thorax
+    */
+
+    ctx.fillStyle="#7b4930";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        body.x-s*.75,
+        body.y,
+        s*.45,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       head
+    */
+
+    ctx.fillStyle="#382116";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        body.x-s*1.2,
+        body.y-s*.05,
+        s*.32,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       antennae
+    */
+
+    ctx.strokeStyle="#382116";
+    ctx.lineWidth=Math.max(1,s*.07);
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        body.x-s*1.35,
+        body.y-s*.25
+    );
+
+    ctx.lineTo(
+        body.x-s*1.9,
+        body.y-s*.9
+    );
+
+    ctx.moveTo(
+        body.x-s*1.2,
+        body.y-s*.25
+    );
+
+    ctx.lineTo(
+        body.x-s*1.45,
+        body.y-s*1
+    );
+
+    ctx.stroke();
+}
+
+
+/* =========================================================
+   ANIMALS
+   ========================================================= */
+
+function drawAnimal(animal){
+
+    const p =
+        project(
+            animal.x,
+            0,
+            animal.z
+        );
+
+    if(!p) return;
+
+    const s =
+        animal.size*p.scale;
+
+    if(s<2) return;
+
+
+    /*
+       large shadow
+    */
+
+    ctx.fillStyle="#17251a99";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        p.x,
+        p.y+4,
+        s*1.5,
+        s*.5,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    if(animal.type==="deer"){
+
+        const body =
+            project(
+                animal.x,
+                animal.size*1.25,
+                animal.z
+            );
+
+        if(!body) return;
+
+        ctx.fillStyle="#9a623b";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            body.x,
+            body.y,
+            s*1.35,
+            s*.55,
+            0,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+           legs
+        */
+
+        ctx.strokeStyle="#704326";
+        ctx.lineWidth=Math.max(2,s*.13);
+
+        for(let i=-1;i<=1;i+=2){
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                body.x+i*s*.55,
+                body.y+s*.35
+            );
+
+            ctx.lineTo(
+                body.x+i*s*.55,
+                body.y+s*1.4
+            );
+
+            ctx.stroke();
+        }
+
+
+        /*
+           neck and head
+        */
+
+        ctx.strokeStyle="#9a623b";
+        ctx.lineWidth=s*.3;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            body.x-s*.75,
+            body.y
+        );
+
+        ctx.lineTo(
+            body.x-s*1.15,
+            body.y-s*.9
+        );
+
+        ctx.stroke();
+
+
+        ctx.fillStyle="#9a623b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            body.x-s*1.25,
+            body.y-s*1,
+            s*.4,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+    }else{
+
+        /*
+           elephant
+        */
+
+        const body =
+            project(
+                animal.x,
+                animal.size*1.1,
+                animal.z
+            );
+
+        if(!body) return;
+
+        ctx.fillStyle="#777b7d";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            body.x,
+            body.y,
+            s*1.45,
+            s*.85,
+            0,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+           legs
+        */
+
+        ctx.strokeStyle="#666a6c";
+        ctx.lineWidth=s*.28;
+
+        for(let i=-1;i<=1;i+=2){
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                body.x+i*s*.7,
+                body.y+s*.45
+            );
+
+            ctx.lineTo(
+                body.x+i*s*.7,
+                body.y+s*1.45
+            );
+
+            ctx.stroke();
+        }
+
+
+        /*
+           head
+        */
+
+        ctx.fillStyle="#777b7d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            body.x-s*1.15,
+            body.y-s*.1,
+            s*.65,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+           trunk
+        */
+
+        ctx.strokeStyle="#777b7d";
+        ctx.lineWidth=s*.22;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            body.x-s*1.55,
+            body.y
+        );
+
+        ctx.lineTo(
+            body.x-s*2.05,
+            body.y+s*.65
+        );
+
+        ctx.stroke();
+    }
+}
+
+
+/* =========================================================
+   RENDER ALL OBJECTS IN DEPTH ORDER
+   ========================================================= */
+
+function drawWorld(time){
+
+    const renderables=[];
+
+    for(const tree of trees){
+
+        const dx=tree.x-player.x;
+        const dz=tree.z-player.z;
+
+        const depth=
+            dx*Math.sin(player.yaw)
+            +
+            dz*Math.cos(player.yaw);
+
+        renderables.push({
+            depth:depth,
+            draw:()=>drawTree(tree)
+ 
