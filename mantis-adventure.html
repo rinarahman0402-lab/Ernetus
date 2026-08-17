@@ -5,1732 +5,831 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Mantis Adventure 3D</title>
-
 <style>
-*{
-  box-sizing:border-box;
-  user-select:none;
-  -webkit-user-select:none;
-  touch-action:none;
-}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#79c8e8}
+canvas{position:fixed;inset:0;width:100%;height:100%}
 
-html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#73bde5;
-  font-family:Arial,sans-serif;
+#start,#win{
+ position:fixed;inset:0;z-index:50;
+ display:flex;flex-direction:column;
+ justify-content:center;align-items:center;
+ text-align:center;padding:24px;color:white
 }
+#start{background:linear-gradient(#68c5ea,#78c963 55%,#315f32)}
+#win{display:none;background:#173d21ee}
 
-canvas{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-}
+.title{font-size:clamp(38px,10vw,70px);font-weight:900;text-shadow:4px 4px #234d2a}
+.subtitle{max-width:650px;font-size:18px;line-height:1.5}
 
-#start,
-#win{
-  position:fixed;
-  inset:0;
-  z-index:20;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:25px;
-  color:white;
+.bigButton{
+ margin-top:20px;border:0;border-radius:20px;
+ padding:18px 34px;background:#ffd447;
+ color:#18351d;font-size:21px;font-weight:900
 }
-
-#start{
-  background:
-    linear-gradient(
-      #4caed8 0%,
-      #77c96b 55%,
-      #275c2d 100%
-    );
-}
-
-#win{
-  display:none;
-  background:
-    linear-gradient(
-      #e9bd4b,
-      #478d45
-    );
-}
-
-.title{
-  font-size:clamp(38px,10vw,68px);
-  font-weight:900;
-  text-shadow:3px 4px 0 #173b20;
-}
-
-.subtitle{
-  max-width:650px;
-  font-size:18px;
-  line-height:1.5;
-}
-
-#playButton,
-#againButton{
-  margin-top:22px;
-  border:0;
-  border-radius:20px;
-  padding:18px 34px;
-  background:#ffd447;
-  color:#17351d;
-  font-size:21px;
-  font-weight:900;
-}
-
-#playButton:active,
-#againButton:active{
-  transform:scale(.94);
-}
+.bigButton:active{transform:scale(.94)}
 
 #hud{
-  display:none;
-  position:fixed;
-  z-index:10;
-  top:10px;
-  left:10px;
-  right:10px;
-  justify-content:space-between;
-  gap:8px;
-  pointer-events:none;
+ display:none;position:fixed;z-index:20;top:10px;left:10px;right:10px;
+ justify-content:space-between;gap:8px;pointer-events:none
 }
-
 .info{
-  background:#102016dd;
-  color:white;
-  padding:10px 14px;
-  border-radius:14px;
-  font-weight:bold;
+ background:#112016dd;color:white;padding:10px 14px;
+ border-radius:14px;font-weight:bold
 }
 
 #controls{
-  display:none;
-  position:fixed;
-  z-index:11;
-  left:10px;
-  bottom:10px;
-  width:280px;
-  height:190px;
+ display:none;position:fixed;z-index:30;
+ left:10px;bottom:10px;width:285px;height:185px
 }
-
-.control{
-  position:absolute;
-  width:88px;
-  height:58px;
-  border:2px solid #ffffff88;
-  border-radius:17px;
-  background:#102016dd;
-  color:white;
-  font-size:11px;
-  font-weight:900;
+.move{
+ position:absolute;width:88px;height:58px;
+ border:2px solid #ffffff77;border-radius:17px;
+ background:#112016dd;color:white;font-size:10px;font-weight:900
 }
+.move:active{background:#438d46;transform:scale(.93)}
+#forward{left:98px;top:0}
+#back{left:98px;bottom:0}
+#left{left:0;top:63px}
+#right{right:0;top:63px}
 
-.control:active{
-  background:#4c9149;
-  transform:scale(.94);
-}
-
-#forward{
-  left:96px;
-  top:0;
-}
-
-#back{
-  left:96px;
-  bottom:0;
-}
-
-#left{
-  left:0;
-  top:65px;
-}
-
-#right{
-  right:0;
-  top:65px;
-}
-
-#catchButton{
-  display:none;
-  position:fixed;
-  z-index:12;
-  right:15px;
-  bottom:35px;
-  border:0;
-  border-radius:20px;
-  padding:20px;
-  background:#ffd447;
-  color:#17351d;
-  font-size:16px;
-  font-weight:900;
+#catch{
+ display:none;position:fixed;z-index:30;
+ right:14px;bottom:30px;width:125px;min-height:60px;
+ border:0;border-radius:18px;background:#ffd447;
+ color:#18351d;font-size:13px;font-weight:900
 }
 
 #message{
-  display:none;
-  position:fixed;
-  z-index:15;
-  top:75px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#102016ee;
-  color:white;
-  padding:13px 18px;
-  border-radius:16px;
-  font-weight:bold;
-  text-align:center;
-}
-
-#danger{
-  display:none;
-  position:fixed;
-  z-index:13;
-  bottom:15px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#a62525dd;
-  color:white;
-  padding:10px 18px;
-  border-radius:15px;
-  font-weight:bold;
+ display:none;position:fixed;z-index:40;
+ top:80px;left:50%;transform:translateX(-50%);
+ background:#112016ee;color:white;padding:12px 18px;
+ border-radius:15px;font-weight:bold;text-align:center
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="gameCanvas"></canvas>
+<canvas id="canvas"></canvas>
 
-<!-- START SCREEN -->
 <div id="start">
-
-  <div style="font-size:90px">🦗</div>
-
-  <div class="title">
-    MANTIS ADVENTURE 3D
-  </div>
-
-  <div class="subtitle">
-    You are a tiny mantis in a gigantic forest.
-    Catch all <b>15 ants</b> while avoiding giant
-    animals.
-  </div>
-
-  <button id="playButton">
-    PLAY GAME
-  </button>
-
+ <div style="font-size:90px">🦗</div>
+ <div class="title">MANTIS ADVENTURE 3D</div>
+ <p class="subtitle">
+   You are a tiny mantis in a gigantic forest.
+   Catch all <b>15 ants</b> and avoid the giant animals!
+ </p>
+ <button class="bigButton" id="playButton">PLAY GAME</button>
 </div>
 
-
-<!-- WIN SCREEN -->
 <div id="win">
-
-  <div style="font-size:90px">🏆</div>
-
-  <div class="title">
-    15 ANTS CAUGHT!
-  </div>
-
-  <div class="subtitle">
-    You completed Mantis Adventure!
-  </div>
-
-  <button id="againButton">
-    PLAY AGAIN
-  </button>
-
+ <div style="font-size:85px">🏆</div>
+ <div class="title">15 ANTS CAUGHT!</div>
+ <p class="subtitle">You completed Mantis Adventure!</p>
+ <button class="bigButton" id="againButton">PLAY AGAIN</button>
 </div>
 
-
-<!-- HUD -->
 <div id="hud">
-
-  <div class="info">
-    ANTS:
-    <span id="antCount">0 / 15</span>
-  </div>
-
-  <div class="info">
-    MANTIS ADVENTURE
-  </div>
-
+ <div class="info">ANTS: <span id="count">0 / 15</span></div>
+ <div class="info">MANTIS ADVENTURE</div>
 </div>
 
-
-<!-- CONTROLS -->
 <div id="controls">
-
-  <button class="control" id="forward">
-    MOVE FORWARD
-  </button>
-
-  <button class="control" id="back">
-    MOVE BACK
-  </button>
-
-  <button class="control" id="left">
-    TURN LEFT
-  </button>
-
-  <button class="control" id="right">
-    TURN RIGHT
-  </button>
-
+ <button class="move" id="forward">MOVE FORWARD</button>
+ <button class="move" id="back">MOVE BACK</button>
+ <button class="move" id="left">TURN LEFT</button>
+ <button class="move" id="right">TURN RIGHT</button>
 </div>
 
-
-<button id="catchButton">
-  CATCH ANT
-</button>
-
-<div id="danger">
-  GIANT ANIMAL NEARBY!
-</div>
-
+<button id="catch">CATCH ANT</button>
 <div id="message"></div>
 
-
 <script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-const canvas =
-  document.getElementById("gameCanvas");
-
-const ctx =
-  canvas.getContext("2d");
-
-
-let width=innerWidth;
-let height=innerHeight;
-
+let W=innerWidth,H=innerHeight;
 let playing=false;
+let caught=0;
 
-let antsCaught=0;
-
-let player={
-  x:0,
-  z:20,
-  angle:0
+const player={
+ x:0,
+ z:35,
+ angle:0
 };
 
 const keys={
-  forward:false,
-  back:false,
-  left:false,
-  right:false
+ forward:false,
+ back:false,
+ left:false,
+ right:false
 };
 
 let ants=[];
 let trees=[];
 let animals=[];
 
-
-/* =========================================
-   RESIZE
-========================================= */
-
 function resize(){
+ W=innerWidth;
+ H=innerHeight;
 
-  width=innerWidth;
-  height=innerHeight;
+ const dpr=Math.min(devicePixelRatio||1,2);
 
-  const dpr=
-    Math.min(
-      devicePixelRatio || 1,
-      2
-    );
+ canvas.width=W*dpr;
+ canvas.height=H*dpr;
+ canvas.style.width=W+"px";
+ canvas.style.height=H+"px";
 
-  canvas.width=
-    width*dpr;
-
-  canvas.height=
-    height*dpr;
-
-  canvas.style.width=
-    width+"px";
-
-  canvas.style.height=
-    height+"px";
-
-  ctx.setTransform(
-    dpr,0,0,dpr,0,0
-  );
+ ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-
-addEventListener(
-  "resize",
-  resize
-);
 
 resize();
+addEventListener("resize",resize);
 
-
-/* =========================================
-   RANDOM
-========================================= */
-
-function random(min,max){
-  return min+
-    Math.random()*(max-min);
+function random(a,b){
+ return a+Math.random()*(b-a);
 }
 
-
-/* =========================================
-   CREATE WORLD
-========================================= */
+/* ---------- WORLD ---------- */
 
 function createWorld(){
 
-  ants=[];
-  trees=[];
-  animals=[];
+ caught=0;
 
-  antsCaught=0;
+ player.x=0;
+ player.z=35;
+ player.angle=0;
 
-  player.x=0;
-  player.z=20;
-  player.angle=0;
+ ants=[];
+ trees=[];
+ animals=[];
 
+ for(let i=0;i<15;i++){
 
-  /* 15 ANTS */
+  let x,z;
 
-  for(let i=0;i<15;i++){
+  do{
+   x=random(-80,80);
+   z=random(-105,-10);
+  }while(Math.hypot(x,z-player.z)<18);
 
-    let x,z;
+  ants.push({
+   x:x,
+   z:z,
+   alive:true
+  });
+ }
 
-    do{
+ for(let i=0;i<70;i++){
 
-      x=random(-70,70);
-      z=random(-90,5);
+  trees.push({
+   x:random(-105,105),
+   z:random(-110,100),
+   size:random(.7,1.5)
+  });
+ }
 
-    }while(
-      Math.hypot(x,z-player.z)<15
-    );
+ for(let i=0;i<5;i++){
 
-    ants.push({
-      x:x,
-      z:z,
-      alive:true,
-      bob:Math.random()*6
-    });
-  }
+  animals.push({
+   type:i<3?"deer":"elephant",
+   x:random(-80,80),
+   z:random(-90,0),
+   angle:random(0,Math.PI*2),
+   speed:i<3?1.5:.7
+  });
+ }
 
-
-  /* TREES */
-
-  for(let i=0;i<65;i++){
-
-    const x=random(-100,100);
-    const z=random(-100,100);
-
-    if(
-      Math.abs(x)<12 &&
-      Math.abs(z)<12
-    ) continue;
-
-    trees.push({
-      x:x,
-      z:z,
-      size:random(.8,1.5)
-    });
-  }
-
-
-  /* DEER */
-
-  for(let i=0;i<4;i++){
-
-    animals.push({
-      type:"deer",
-      x:random(-70,70),
-      z:random(-70,0),
-      angle:random(0,Math.PI*2),
-      speed:random(1.2,2)
-    });
-  }
-
-
-  /* ELEPHANTS */
-
-  for(let i=0;i<2;i++){
-
-    animals.push({
-      type:"elephant",
-      x:random(-60,60),
-      z:random(-70,-20),
-      angle:random(0,Math.PI*2),
-      speed:.7
-    });
-  }
-
-
-  updateCount();
+ updateCount();
 }
 
-
-/* =========================================
-   WORLD TO SCREEN
-   Simple perspective projection
-========================================= */
+/* ---------- 3D PROJECTION ---------- */
 
 function project(x,z,size){
 
-  const dx=x-player.x;
-  const dz=z-player.z;
+ const dx=x-player.x;
+ const dz=z-player.z;
 
-  /*
-    Rotate world according to
-    the direction the mantis faces.
-  */
+ const sin=Math.sin(player.angle);
+ const cos=Math.cos(player.angle);
 
-  const sin=Math.sin(player.angle);
-  const cos=Math.cos(player.angle);
+ const forward=-dx*sin-dz*cos;
+ const side=dx*cos-dz*sin;
 
-  const forward=
-    -dx*sin+
-    -dz*cos;
+ if(forward<=1)return null;
 
-  const side=
-    dx*cos+
-    -dz*sin;
+ const scale=440/forward;
 
-
-  if(forward<=1)
-    return null;
-
-
-  const scale=
-    430/forward;
-
-
-  return {
-
-    x:
-      width/2+
-      side*scale,
-
-    y:
-      height*.50+
-      150*scale,
-
-    size:
-      size*scale,
-
-    depth:forward
-  };
+ return{
+  x:W/2+side*scale,
+  y:H*.49+145*scale,
+  size:Math.max(2,size*scale),
+  depth:forward
+ };
 }
 
-
-/* =========================================
-   DRAW TREE
-========================================= */
-
-function drawTree(tree){
-
-  const p=
-    project(
-      tree.x,
-      tree.z,
-      tree.size
-    );
-
-  if(!p)
-    return;
-
-
-  if(
-    p.x<-100 ||
-    p.x>width+100
-  )
-    return;
-
-
-  /* trunk */
-
-  ctx.fillStyle="#633a1c";
-
-  ctx.fillRect(
-    p.x-p.size*.18,
-    p.y-p.size*2.5,
-    p.size*.36,
-    p.size*2.5
-  );
-
-
-  /* leaves */
-
-  ctx.fillStyle="#19652b";
-
-  ctx.beginPath();
-
-  ctx.arc(
-    p.x,
-    p.y-p.size*2.8,
-    p.size*1.35,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  ctx.fillStyle="#2c8b39";
-
-  ctx.beginPath();
-
-  ctx.arc(
-    p.x-p.size*.55,
-    p.y-p.size*3.1,
-    p.size*.9,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-}
-
-
-/* =========================================
-   DRAW ANT
-========================================= */
-
-function drawAnt(ant){
-
-  if(!ant.alive)
-    return;
-
-
-  const p=
-    project(
-      ant.x,
-      ant.z,
-      1
-    );
-
-  if(!p)
-    return;
-
-
-  const s=
-    Math.max(
-      4,
-      Math.min(
-        30,
-        p.size
-      )
-    );
-
-
-  ctx.save();
-
-  ctx.translate(
-    p.x,
-    p.y
-  );
-
-
-  /* body */
-
-  ctx.fillStyle="#17100c";
-
-  ctx.beginPath();
-
-  ctx.ellipse(
-    0,
-    0,
-    s*.65,
-    s*.35,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  /* head */
-
-  ctx.beginPath();
-
-  ctx.arc(
-    s*.65,
-    0,
-    s*.35,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  /* legs */
-
-  ctx.strokeStyle="#120c08";
-
-  ctx.lineWidth=
-    Math.max(1,s*.10);
-
-
-  for(let i=-1;i<=1;i++){
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      i*s*.25,
-      -s*.2
-    );
-
-    ctx.lineTo(
-      i*s*.7,
-      -s*.55
-    );
-
-    ctx.stroke();
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      i*s*.25,
-      s*.2
-    );
-
-    ctx.lineTo(
-      i*s*.7,
-      s*.55
-    );
-
-    ctx.stroke();
-
-  }
-
-
-  ctx.restore();
-
-}
-
-
-/* =========================================
-   DRAW ANIMALS
-========================================= */
-
-function drawAnimal(a){
-
-  const p=
-    project(
-      a.x,
-      a.z,
-      a.type==="elephant"
-      ? 8
-      : 5
-    );
-
-  if(!p)
-    return;
-
-
-  const s=
-    Math.max(
-      8,
-      Math.min(
-        90,
-        p.size
-      )
-    );
-
-
-  ctx.save();
-
-  ctx.translate(
-    p.x,
-    p.y
-  );
-
-
-  if(a.type==="elephant"){
-
-    ctx.fillStyle="#72777b";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      0,
-      0,
-      s*1.1,
-      s*.7,
-      0,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      0,
-      -s*.55,
-      s*.6,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    ctx.fillRect(
-      -s*.65,
-      s*.35,
-      s*.25,
-      s*.75
-    );
-
-    ctx.fillRect(
-      -s*.15,
-      s*.35,
-      s*.25,
-      s*.75
-    );
-
-    ctx.fillRect(
-      s*.35,
-      s*.35,
-      s*.25,
-      s*.75
-    );
-
-
-  }else{
-
-    ctx.fillStyle="#7a4a21";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      0,
-      0,
-      s,
-      s*.55,
-      0,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      0,
-      -s*.55,
-      s*.42,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    ctx.fillRect(
-      -s*.65,
-      s*.35,
-      s*.18,
-      s*.8
-    );
-
-    ctx.fillRect(
-      -s*.15,
-      s*.35,
-      s*.18,
-      s*.8
-    );
-
-    ctx.fillRect(
-      s*.35,
-      s*.35,
-      s*.18,
-      s*.8
-    );
-
-  }
-
-
-  ctx.restore();
-
-}
-
-
-/* =========================================
-   DRAW GROUND
-========================================= */
+/* ---------- GROUND ---------- */
 
 function drawGround(){
 
-  const gradient=
-    ctx.createLinearGradient(
-      0,
-      0,
-      0,
-      height
-    );
+ const gradient=ctx.createLinearGradient(0,0,0,H);
 
-  gradient.addColorStop(
-    0,
-    "#8bd0ed"
-  );
+ gradient.addColorStop(0,"#79cceb");
+ gradient.addColorStop(.48,"#5eaa4e");
+ gradient.addColorStop(1,"#28562c");
 
-  gradient.addColorStop(
-    .48,
-    "#5fae50"
-  );
+ ctx.fillStyle=gradient;
+ ctx.fillRect(0,0,W,H);
 
-  gradient.addColorStop(
-    1,
-    "#285b2c"
-  );
+ ctx.strokeStyle="#ffffff20";
 
-  ctx.fillStyle=gradient;
+ for(let i=0;i<13;i++){
 
-  ctx.fillRect(
-    0,
-    0,
-    width,
-    height
-  );
+  const y=H*.53+i*i*8;
 
-
-  /* ground perspective lines */
-
-  ctx.strokeStyle="#ffffff20";
-
-  ctx.lineWidth=1;
-
-
-  for(let i=0;i<12;i++){
-
-    const y=
-      height*.55+
-      i*i*8;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      0,
-      y
-    );
-
-    ctx.lineTo(
-      width,
-      y
-    );
-
-    ctx.stroke();
-
-  }
-
+  ctx.beginPath();
+  ctx.moveTo(0,y);
+  ctx.lineTo(W,y);
+  ctx.stroke();
+ }
 }
 
+/* ---------- TREES ---------- */
 
-/* =========================================
-   DRAW PLAYER MANTIS
-========================================= */
+function drawTree(o){
 
-function drawPlayer(){
+ const p=project(o.x,o.z,o.size);
+ if(!p)return;
 
-  const x=
-    width/2;
+ ctx.fillStyle="#633b1d";
 
-  const y=
-    height*.62;
+ ctx.fillRect(
+  p.x-p.size*.18,
+  p.y-p.size*2.5,
+  p.size*.36,
+  p.size*2.5
+ );
 
+ ctx.fillStyle="#237637";
 
-  ctx.save();
+ ctx.beginPath();
+ ctx.arc(
+  p.x,
+  p.y-p.size*2.8,
+  p.size*1.35,
+  0,
+  Math.PI*2
+ );
+ ctx.fill();
 
-  ctx.translate(
-    x,
-    y
-  );
+ ctx.fillStyle="#329344";
 
+ ctx.beginPath();
+ ctx.arc(
+  p.x-p.size*.55,
+  p.y-p.size*3.1,
+  p.size*.85,
+  0,
+  Math.PI*2
+ );
+ ctx.fill();
+}
 
-  /* body */
+/* ---------- ANTS ---------- */
 
-  ctx.fillStyle="#2b8d43";
+function drawAnt(a){
+
+ if(!a.alive)return;
+
+ const p=project(a.x,a.z,1);
+ if(!p)return;
+
+ const s=Math.max(4,Math.min(30,p.size));
+
+ ctx.save();
+ ctx.translate(p.x,p.y);
+
+ ctx.fillStyle="#17100c";
+
+ ctx.beginPath();
+ ctx.ellipse(0,0,s*.7,s*.4,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.arc(s*.65,0,s*.4,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.strokeStyle="#17100c";
+ ctx.lineWidth=Math.max(1,s*.1);
+
+ for(let i=-1;i<=1;i++){
 
   ctx.beginPath();
-
-  ctx.ellipse(
-    0,
-    18,
-    18,
-    35,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  /* head */
-
-  ctx.fillStyle="#47a94d";
+  ctx.moveTo(i*s*.25,-s*.2);
+  ctx.lineTo(i*s*.7,-s*.55);
+  ctx.stroke();
 
   ctx.beginPath();
+  ctx.moveTo(i*s*.25,s*.2);
+  ctx.lineTo(i*s*.7,s*.55);
+  ctx.stroke();
+ }
 
-  ctx.ellipse(
-    0,
-    -25,
-    24,
-    19,
-    0,
-    0,
-    Math.PI*2
-  );
+ ctx.restore();
+}
 
-  ctx.fill();
+/* ---------- GIANT ANIMALS ---------- */
 
+function drawAnimal(a){
 
-  /* eyes */
+ const p=project(
+  a.x,
+  a.z,
+  a.type==="elephant"?8:5
+ );
 
-  ctx.fillStyle="#101610";
+ if(!p)return;
+
+ const s=Math.max(8,Math.min(95,p.size));
+
+ ctx.save();
+ ctx.translate(p.x,p.y);
+
+ if(a.type==="elephant"){
+
+  ctx.fillStyle="#74797c";
 
   ctx.beginPath();
-
-  ctx.arc(
-    -9,
-    -28,
-    4,
-    0,
-    Math.PI*2
-  );
-
+  ctx.ellipse(0,0,s*1.1,s*.65,0,0,Math.PI*2);
   ctx.fill();
 
   ctx.beginPath();
-
-  ctx.arc(
-    9,
-    -28,
-    4,
-    0,
-    Math.PI*2
-  );
-
+  ctx.arc(0,-s*.55,s*.58,0,Math.PI*2);
   ctx.fill();
 
+  ctx.fillRect(-s*.65,s*.3,s*.23,s*.8);
+  ctx.fillRect(-s*.15,s*.3,s*.23,s*.8);
+  ctx.fillRect(s*.35,s*.3,s*.23,s*.8);
 
-  /* arms */
+ }else{
 
-  ctx.strokeStyle="#28783b";
-
-  ctx.lineWidth=7;
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    -13,
-    0
-  );
-
-  ctx.lineTo(
-    -34,
-    -20
-  );
-
-  ctx.stroke();
-
+  ctx.fillStyle="#794a22";
 
   ctx.beginPath();
-
-  ctx.moveTo(
-    13,
-    0
-  );
-
-  ctx.lineTo(
-    34,
-    -20
-  );
-
-  ctx.stroke();
-
-
-  /* legs */
-
-  ctx.lineWidth=6;
+  ctx.ellipse(0,0,s,s*.52,0,0,Math.PI*2);
+  ctx.fill();
 
   ctx.beginPath();
+  ctx.arc(0,-s*.55,s*.4,0,Math.PI*2);
+  ctx.fill();
 
-  ctx.moveTo(
-    -10,
-    40
-  );
+  ctx.fillRect(-s*.6,s*.3,s*.17,s*.75);
+  ctx.fillRect(-s*.15,s*.3,s*.17,s*.75);
+  ctx.fillRect(s*.3,s*.3,s*.17,s*.75);
+ }
 
-  ctx.lineTo(
-    -28,
-    60
-  );
-
-  ctx.stroke();
-
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    10,
-    40
-  );
-
-  ctx.lineTo(
-    28,
-    60
-  );
-
-  ctx.stroke();
-
-
-  ctx.restore();
-
+ ctx.restore();
 }
 
+/* ---------- MANTIS ---------- */
 
-/* =========================================
-   UPDATE ANIMALS
-========================================= */
+function drawMantis(){
 
-function updateAnimals(dt){
+ const x=W/2;
+ const y=H*.65;
 
-  let danger=false;
+ ctx.save();
+ ctx.translate(x,y);
 
+ /* body */
+ ctx.fillStyle="#2b8d43";
 
-  for(const a of animals){
+ ctx.beginPath();
+ ctx.ellipse(0,18,17,34,0,0,Math.PI*2);
+ ctx.fill();
 
-    a.x +=
-      Math.sin(a.angle)*
-      a.speed*
-      dt;
+ /* head */
+ ctx.fillStyle="#49a94f";
 
-    a.z +=
-      -Math.cos(a.angle)*
-      a.speed*
-      dt;
+ ctx.beginPath();
+ ctx.ellipse(0,-25,23,18,0,0,Math.PI*2);
+ ctx.fill();
 
+ /* eyes */
+ ctx.fillStyle="#101610";
 
-    if(
-      Math.abs(a.x)>90 ||
-      Math.abs(a.z)>90
-    ){
+ ctx.beginPath();
+ ctx.arc(-9,-28,4,0,Math.PI*2);
+ ctx.fill();
 
-      a.angle+=Math.PI;
+ ctx.beginPath();
+ ctx.arc(9,-28,4,0,Math.PI*2);
+ ctx.fill();
 
-    }
+ /* arms */
+ ctx.strokeStyle="#27773a";
+ ctx.lineWidth=7;
 
+ ctx.beginPath();
+ ctx.moveTo(-12,0);
+ ctx.lineTo(-34,-22);
+ ctx.stroke();
 
-    const distance=
-      Math.hypot(
-        a.x-player.x,
-        a.z-player.z
-      );
+ ctx.beginPath();
+ ctx.moveTo(12,0);
+ ctx.lineTo(34,-22);
+ ctx.stroke();
 
+ /* legs */
+ ctx.lineWidth=6;
 
-    if(distance<10){
+ ctx.beginPath();
+ ctx.moveTo(-10,40);
+ ctx.lineTo(-28,60);
+ ctx.stroke();
 
-      danger=true;
+ ctx.beginPath();
+ ctx.moveTo(10,40);
+ ctx.lineTo(28,60);
+ ctx.stroke();
 
-      player.x +=
-        (player.x-a.x)*
-        .01;
-
-      player.z +=
-        (player.z-a.z)*
-        .01;
-
-    }
-
-  }
-
-
-  document.getElementById(
-    "danger"
-  ).style.display=
-    danger
-    ? "block"
-    : "none";
-
+ ctx.restore();
 }
 
-
-/* =========================================
-   MOVEMENT
-========================================= */
-
-function updatePlayer(dt){
-
-  const moveSpeed=
-    8*dt;
-
-  const turnSpeed=
-    2.5*dt;
-
-
-  /* LEFT = LEFT */
-
-  if(keys.left){
-
-    player.angle -=
-      turnSpeed;
-
-  }
-
-
-  /* RIGHT = RIGHT */
-
-  if(keys.right){
-
-    player.angle +=
-      turnSpeed;
-
-  }
-
-
-  if(keys.forward){
-
-    player.x +=
-      Math.sin(player.angle)*
-      moveSpeed;
-
-    player.z +=
-      -Math.cos(player.angle)*
-      moveSpeed;
-
-  }
-
-
-  if(keys.back){
-
-    player.x -=
-      Math.sin(player.angle)*
-      moveSpeed;
-
-    player.z -=
-      -Math.cos(player.angle)*
-      moveSpeed;
-
-  }
-
-
-  player.x=
-    Math.max(
-      -95,
-      Math.min(
-        95,
-        player.x
-      )
-    );
-
-  player.z=
-    Math.max(
-      -95,
-      Math.min(
-        95,
-        player.z
-      )
-    );
-
-}
-
-
-/* =========================================
-   FIND NEAREST ANT
-========================================= */
+/* ---------- FIND NEAREST ANT ---------- */
 
 function nearestAnt(){
 
-  let best=null;
-  let distance=9999;
+ let best=null;
+ let distance=Infinity;
 
+ for(const a of ants){
 
-  for(const ant of ants){
+  if(!a.alive)continue;
 
-    if(!ant.alive)
-      continue;
+  const d=Math.hypot(
+   a.x-player.x,
+   a.z-player.z
+  );
 
-
-    const d=
-      Math.hypot(
-        ant.x-player.x,
-        ant.z-player.z
-      );
-
-
-    if(d<distance){
-
-      distance=d;
-      best=ant;
-
-    }
-
+  if(d<distance){
+   distance=d;
+   best=a;
   }
+ }
 
-
-  return {
-    ant:best,
-    distance:distance
-  };
-
+ return{
+  ant:best,
+  distance:distance
+ };
 }
 
+/* ---------- CATCH ---------- */
 
-/* =========================================
-   CATCH ANT
-========================================= */
+document.getElementById("catch")
+.addEventListener("click",function(){
 
-document
-.getElementById("catchButton")
-.addEventListener(
-  "click",
-  function(){
+ if(!playing)return;
 
-    if(!playing)
-      return;
+ const n=nearestAnt();
 
+ if(!n.ant)return;
 
-    const n=
-      nearestAnt();
+ if(n.distance>8){
 
+  showMessage("Move closer to the ant!");
 
-    if(!n.ant){
+  return;
+ }
 
-      return;
+ n.ant.alive=false;
 
-    }
+ caught++;
 
+ updateCount();
 
-    if(n.distance>7){
+ showMessage(
+  "ANT CAUGHT! "+caught+" / 15"
+ );
 
-      showMessage(
-        "Move closer to the ant!"
-      );
+ if(caught>=15){
 
-      return;
+  setTimeout(winGame,500);
+ }
+});
 
-    }
-
-
-    n.ant.alive=false;
-
-    antsCaught++;
-
-
-    updateCount();
-
-
-    showMessage(
-      "ANT CAUGHT! "+
-      antsCaught+
-      " / 15"
-    );
-
-
-    if(antsCaught>=15){
-
-      setTimeout(
-        winGame,
-        700
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================================
-   UPDATE CATCH BUTTON
-========================================= */
+/* ---------- CATCH BUTTON ---------- */
 
 function updateCatchButton(){
 
-  const n=
-    nearestAnt();
+ const n=nearestAnt();
 
-
-  document.getElementById(
-    "catchButton"
-  ).style.display=
-    n.ant &&
-    n.distance<7
-    ? "block"
-    : "none";
-
+ document.getElementById("catch").style.display=
+  n.ant && n.distance<8
+  ? "block"
+  : "none";
 }
 
+/* ---------- MOVEMENT ---------- */
 
-/* =========================================
-   COUNT
-========================================= */
+function updatePlayer(dt){
+
+ const speed=9*dt;
+ const turn=2.5*dt;
+
+ /* LEFT IS LEFT */
+ if(keys.left)
+  player.angle-=turn;
+
+ /* RIGHT IS RIGHT */
+ if(keys.right)
+  player.angle+=turn;
+
+ if(keys.forward){
+
+  player.x+=
+   Math.sin(player.angle)*speed;
+
+  player.z+=
+   -Math.cos(player.angle)*speed;
+ }
+
+ if(keys.back){
+
+  player.x-=
+   Math.sin(player.angle)*speed;
+
+  player.z-=
+   -Math.cos(player.angle)*speed;
+ }
+
+ player.x=Math.max(-105,Math.min(105,player.x));
+ player.z=Math.max(-110,Math.min(100,player.z));
+}
+
+/* ---------- ANIMAL MOVEMENT ---------- */
+
+function updateAnimals(dt){
+
+ for(const a of animals){
+
+  a.x+=
+   Math.sin(a.angle)*
+   a.speed*
+   dt;
+
+  a.z+=
+   -Math.cos(a.angle)*
+   a.speed*
+   dt;
+
+  if(Math.abs(a.x)>105||Math.abs(a.z)>105)
+   a.angle+=Math.PI;
+ }
+}
+
+/* ---------- RENDER ---------- */
+
+function drawWorld(){
+
+ drawGround();
+
+ const things=[];
+
+ for(const t of trees){
+
+  things.push({
+   depth:Math.hypot(
+    t.x-player.x,
+    t.z-player.z
+   ),
+   draw:()=>drawTree(t)
+  });
+ }
+
+ for(const a of ants){
+
+  if(a.alive){
+
+   things.push({
+    depth:Math.hypot(
+     a.x-player.x,
+     a.z-player.z
+    ),
+    draw:()=>drawAnt(a)
+   });
+  }
+ }
+
+ for(const a of animals){
+
+  things.push({
+   depth:Math.hypot(
+    a.x-player.x,
+    a.z-player.z
+   ),
+   draw:()=>drawAnimal(a)
+  });
+ }
+
+ things.sort(
+  (a,b)=>b.depth-a.depth
+ );
+
+ for(const t of things)
+  t.draw();
+
+ drawMantis();
+}
+
+/* ---------- COUNT ---------- */
 
 function updateCount(){
 
-  document.getElementById(
-    "antCount"
-  ).textContent=
-    antsCaught+
-    " / 15";
-
+ document.getElementById("count")
+ .textContent=caught+" / 15";
 }
 
+/* ---------- MESSAGE ---------- */
 
-/* =========================================
-   MESSAGE
-========================================= */
-
-let messageTimer;
+let messageTimer=null;
 
 function showMessage(text){
 
-  const box=
-    document.getElementById(
-      "message"
-    );
+ const box=document.getElementById("message");
 
-  box.textContent=text;
+ box.textContent=text;
+ box.style.display="block";
 
-  box.style.display="block";
+ clearTimeout(messageTimer);
 
-  clearTimeout(
-    messageTimer
-  );
-
-  messageTimer=
-    setTimeout(
-      function(){
-
-        box.style.display="none";
-
-      },
-      1600
-    );
-
+ messageTimer=setTimeout(()=>{
+  box.style.display="none";
+ },1800);
 }
 
+/* ---------- TOUCH CONTROLS ---------- */
 
-/* =========================================
-   CONTROLS
-========================================= */
+function holdButton(id,key){
 
-function holdButton(
-  id,
-  key
-){
+ const button=document.getElementById(id);
 
-  const button=
-    document.getElementById(id);
+ button.addEventListener(
+  "pointerdown",
+  function(e){
 
+   e.preventDefault();
 
-  button.addEventListener(
-    "pointerdown",
-    function(e){
+   keys[key]=true;
 
-      e.preventDefault();
+   button.setPointerCapture(e.pointerId);
+  }
+ );
 
-      keys[key]=true;
+ function stop(){
+  keys[key]=false;
+ }
 
-      button.setPointerCapture(
-        e.pointerId
-      );
-
-    }
-  );
-
-
-  button.addEventListener(
-    "pointerup",
-    function(e){
-
-      e.preventDefault();
-
-      keys[key]=false;
-
-    }
-  );
-
-
-  button.addEventListener(
-    "pointercancel",
-    function(){
-
-      keys[key]=false;
-
-    }
-  );
-
-
-  button.addEventListener(
-    "lostpointercapture",
-    function(){
-
-      keys[key]=false;
-
-    }
-  );
-
+ button.addEventListener("pointerup",stop);
+ button.addEventListener("pointercancel",stop);
+ button.addEventListener("lostpointercapture",stop);
 }
 
+holdButton("forward","forward");
+holdButton("back","back");
+holdButton("left","left");
+holdButton("right","right");
 
-holdButton(
-  "forward",
-  "forward"
-);
+/* ---------- KEYBOARD ---------- */
 
-holdButton(
-  "back",
-  "back"
-);
+addEventListener("keydown",function(e){
 
-holdButton(
-  "left",
-  "left"
-);
+ if(e.key==="ArrowUp")
+  keys.forward=true;
 
-holdButton(
-  "right",
-  "right"
-);
+ if(e.key==="ArrowDown")
+  keys.back=true;
 
+ if(e.key==="ArrowLeft")
+  keys.left=true;
 
-/* =========================================
-   KEYBOARD
-========================================= */
+ if(e.key==="ArrowRight")
+  keys.right=true;
+});
 
-addEventListener(
-  "keydown",
-  function(e){
+addEventListener("keyup",function(e){
 
-    if(e.key==="ArrowUp")
-      keys.forward=true;
+ if(e.key==="ArrowUp")
+  keys.forward=false;
 
-    if(e.key==="ArrowDown")
-      keys.back=true;
+ if(e.key==="ArrowDown")
+  keys.back=false;
 
-    if(e.key==="ArrowLeft")
-      keys.left=true;
+ if(e.key==="ArrowLeft")
+  keys.left=false;
 
-    if(e.key==="ArrowRight")
-      keys.right=true;
+ if(e.key==="ArrowRight")
+  keys.right=false;
+});
 
-  }
-);
+/* ---------- START BUTTON ---------- */
 
+document.getElementById("playButton")
+.addEventListener("click",function(){
 
-addEventListener(
-  "keyup",
-  function(e){
+ /*
+   IMPORTANT:
+   The game starts DIRECTLY here.
+   No loading screen.
+   No external library.
+ */
 
-    if(e.key==="ArrowUp")
-      keys.forward=false;
+ createWorld();
 
-    if(e.key==="ArrowDown")
-      keys.back=false;
+ playing=true;
 
-    if(e.key==="ArrowLeft")
-      keys.left=false;
+ document.getElementById("start")
+ .style.display="none";
 
-    if(e.key==="ArrowRight")
-      keys.right=false;
+ document.getElementById("hud")
+ .style.display="flex";
 
-  }
-);
+ document.getElementById("controls")
+ .style.display="block";
 
+ showMessage(
+  "Catch all 15 ants!"
+ );
+});
 
-/* =========================================
-   RENDER
-========================================= */
+/* ---------- PLAY AGAIN ---------- */
 
-let lastTime=0;
+document.getElementById("againButton")
+.addEventListener("click",function(){
 
+ document.getElementById("win")
+ .style.display="none";
+
+ createWorld();
+
+ playing=true;
+
+ document.getElementById("hud")
+ .style.display="flex";
+
+ document.getElementById("controls")
+ .style.display="block";
+
+});
+
+/* ---------- WIN ---------- */
+
+function winGame(){
+
+ playing=false;
+
+ document.getElementById("hud")
+ .style.display="none";
+
+ document.getElementById("controls")
+ .style.display="none";
+
+ document.getElementById("catch")
+ .style.display="none";
+
+ document.getElementById("win")
+ .style.display="flex";
+}
+
+/* ---------- GAME LOOP ---------- */
+
+let last=0;
 
 function gameLoop(time){
 
-  const dt=
-    Math.min(
-      .04,
-      (time-lastTime)/1000
-    );
-
-  lastTime=time;
-
-
-  if(playing){
-
-    updatePlayer(dt);
-
-    updateAnimals(dt);
-
-    updateCatchButton();
-
-    drawGround();
-
-
-    /*
-      Draw distant objects first.
-      This gives the scene a
-      perspective/3D appearance.
-    */
-
-    const things=[];
-
-
-    for(
-      const tree of trees
-    ){
-
-      things.push({
-        depth:
-          Math.hypot(
-            tree.x-player.x,
-            tree.z-player.z
-          ),
-        draw:
-          function(){
-            drawTree(tree);
-          }
-      });
-
-    }
-
-
-    for(
-      const ant of ants
-    ){
-
-      if(ant.alive){
-
-        things.push({
-          depth:
-            Math.hypot(
-              ant.x-player.x,
-              ant.z-player.z
-            ),
-          draw:
-            function(){
-              drawAnt(ant);
-            }
-        });
-
-      }
-
-    }
-
-
-    for(
-      const animal of animals
-    ){
-
-      things.push({
-        depth:
-          Math.hypot(
-            animal.x-player.x,
-            animal.z-player.z
-          ),
-        draw:
-          function(){
-            drawAnimal(animal);
-          }
-      });
-
-    }
-
-
-    things.sort(
-      (a,b)=>
-        b.depth-a.depth
-    );
-
-
-    for(
-      const thing of things
-    ){
-
-      thing.draw();
-
-    }
-
-
-    drawPlayer();
-
-  }
-
-
-  requestAnimationFrame(
-    gameLoop
+ const dt=
+  Math.min(
+   .04,
+   last ? (time-last)/1000 : 0
   );
 
+ last=time;
+
+ if(playing){
+
+  updatePlayer(dt);
+  updateAnimals(dt);
+  updateCatchButton();
+  drawWorld();
+ }
+
+ requestAnimationFrame(gameLoop);
 }
 
+requestAnimationFrame(gameLoop);
 
-/* =========================================
-   THE IMPORTANT PLAY BUTTON
-========================================= */
-
-document
-.getElementById("playButton")
-.addEventListener(
-  "click",
-  function(){
-
-    /*
-      This directly starts the game.
-      No external library.
-      No loading screen.
-    */
-
-    createWorld();
-
-    playing=true;
-
-
-    document.getElementById(
-      "start"
-    ).style.display="none";
-
-
-    document.getElementById(
-      "hud"
-    ).style.display="flex";
-
-
-    document.getElementById(
-      "controls"
-    ).style.display="block";
-
-
-    showMessage(
-      "Find and catch all 15 ants!"
-    );
-
-  }
-);
-
-
-/* =========================================
-   PLAY AGAIN
-========================================= */
-
-document
-.getElementById("againButton")
-.addEventListener(
-  "click",
-  function(){
-
-    document.getElementById
+</script>
+</body>
+</html>
+```
