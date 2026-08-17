@@ -1,10 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1,user-scalable=no">
-
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Mantis Adventure 3D</title>
 
 <style>
@@ -20,7 +19,7 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#72c9ed;
+  background:#73bde5;
   font-family:Arial,sans-serif;
 }
 
@@ -29,13 +28,13 @@ canvas{
   inset:0;
   width:100%;
   height:100%;
-  display:block;
 }
 
-.screen{
+#start,
+#win{
   position:fixed;
   inset:0;
-  z-index:100;
+  z-index:20;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -46,174 +45,160 @@ canvas{
 }
 
 #start{
-  background:linear-gradient(#55bfe8,#319051);
+  background:
+    linear-gradient(
+      #4caed8 0%,
+      #77c96b 55%,
+      #275c2d 100%
+    );
 }
 
 #win{
   display:none;
-  background:linear-gradient(#e8ad39,#5d9b43);
-}
-
-#error{
-  display:none;
-  background:#17211c;
+  background:
+    linear-gradient(
+      #e9bd4b,
+      #478d45
+    );
 }
 
 .title{
-  font-size:clamp(40px,10vw,72px);
+  font-size:clamp(38px,10vw,68px);
   font-weight:900;
-  margin:10px;
+  text-shadow:3px 4px 0 #173b20;
 }
 
 .subtitle{
-  font-size:19px;
-  line-height:1.5;
   max-width:650px;
+  font-size:18px;
+  line-height:1.5;
 }
 
-.bigButton{
+#playButton,
+#againButton{
   margin-top:22px;
-  padding:18px 32px;
   border:0;
   border-radius:20px;
-  background:#ffd64d;
-  color:#18351c;
+  padding:18px 34px;
+  background:#ffd447;
+  color:#17351d;
   font-size:21px;
   font-weight:900;
 }
 
-.bigButton:active{
+#playButton:active,
+#againButton:active{
   transform:scale(.94);
 }
 
 #hud{
+  display:none;
   position:fixed;
+  z-index:10;
   top:10px;
   left:10px;
   right:10px;
-  z-index:30;
-  display:none;
   justify-content:space-between;
+  gap:8px;
   pointer-events:none;
 }
 
-.hud{
-  background:#102018dd;
+.info{
+  background:#102016dd;
   color:white;
   padding:10px 14px;
   border-radius:14px;
   font-weight:bold;
-  font-size:14px;
 }
 
 #controls{
   display:none;
   position:fixed;
-  left:12px;
-  bottom:12px;
-  width:260px;
+  z-index:11;
+  left:10px;
+  bottom:10px;
+  width:280px;
   height:190px;
-  z-index:40;
 }
 
 .control{
   position:absolute;
-  width:82px;
+  width:88px;
   height:58px;
-  border:2px solid #ffffff99;
+  border:2px solid #ffffff88;
   border-radius:17px;
-  background:#102018dd;
+  background:#102016dd;
   color:white;
   font-size:11px;
   font-weight:900;
 }
 
 .control:active{
-  background:#397d3f;
+  background:#4c9149;
   transform:scale(.94);
 }
 
 #forward{
-  left:89px;
+  left:96px;
   top:0;
 }
 
 #back{
-  left:89px;
+  left:96px;
   bottom:0;
 }
 
-#turnLeft{
+#left{
   left:0;
-  top:64px;
+  top:65px;
 }
 
-#turnRight{
+#right{
   right:0;
-  top:64px;
+  top:65px;
 }
 
-#catch{
+#catchButton{
   display:none;
   position:fixed;
-  right:14px;
-  bottom:30px;
-  z-index:45;
-  padding:19px 20px;
+  z-index:12;
+  right:15px;
+  bottom:35px;
   border:0;
   border-radius:20px;
-  background:#ffd64d;
-  color:#17351c;
-  font-weight:900;
+  padding:20px;
+  background:#ffd447;
+  color:#17351d;
   font-size:16px;
+  font-weight:900;
 }
 
 #message{
   display:none;
   position:fixed;
-  z-index:50;
-  top:72px;
+  z-index:15;
+  top:75px;
   left:50%;
   transform:translateX(-50%);
-  max-width:90%;
-  padding:12px 18px;
+  background:#102016ee;
+  color:white;
+  padding:13px 18px;
   border-radius:16px;
-  background:#102018ed;
-  color:white;
-  text-align:center;
   font-weight:bold;
-}
-
-#intro{
-  display:none;
-  position:fixed;
-  z-index:60;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(90%,500px);
-  padding:24px;
-  border-radius:22px;
-  background:#102018ee;
-  color:white;
   text-align:center;
-}
-
-#intro button{
-  margin-top:10px;
 }
 
 #danger{
   display:none;
   position:fixed;
+  z-index:13;
+  bottom:15px;
   left:50%;
-  bottom:12px;
   transform:translateX(-50%);
-  z-index:35;
-  background:#a52323dd;
+  background:#a62525dd;
   color:white;
   padding:10px 18px;
-  border-radius:14px;
+  border-radius:15px;
   font-weight:bold;
 }
 </style>
@@ -221,32 +206,32 @@ canvas{
 
 <body>
 
-<canvas id="game"></canvas>
+<canvas id="gameCanvas"></canvas>
 
-<!-- START -->
-<div id="start" class="screen">
+<!-- START SCREEN -->
+<div id="start">
 
   <div style="font-size:90px">🦗</div>
 
   <div class="title">
-    Mantis Adventure 3D
+    MANTIS ADVENTURE 3D
   </div>
 
   <div class="subtitle">
     You are a tiny mantis in a gigantic forest.
-    Find and catch all <b>15 ants</b> while avoiding
-    giant animals that could accidentally step on you.
+    Catch all <b>15 ants</b> while avoiding giant
+    animals.
   </div>
 
-  <button class="bigButton" id="playButton">
+  <button id="playButton">
     PLAY GAME
   </button>
 
 </div>
 
 
-<!-- WIN -->
-<div id="win" class="screen">
+<!-- WIN SCREEN -->
+<div id="win">
 
   <div style="font-size:90px">🏆</div>
 
@@ -255,30 +240,12 @@ canvas{
   </div>
 
   <div class="subtitle">
-    You survived the giant forest and completed
-    the Mantis Adventure!
+    You completed Mantis Adventure!
   </div>
 
-  <button class="bigButton" id="againButton">
+  <button id="againButton">
     PLAY AGAIN
   </button>
-
-</div>
-
-
-<!-- ERROR -->
-<div id="error" class="screen">
-
-  <div style="font-size:80px">⚠️</div>
-
-  <div class="title">
-    3D COULD NOT START
-  </div>
-
-  <div class="subtitle">
-    Your browser could not start WebGL.
-    Reload the page and try again in Chrome.
-  </div>
 
 </div>
 
@@ -286,13 +253,13 @@ canvas{
 <!-- HUD -->
 <div id="hud">
 
-  <div class="hud">
+  <div class="info">
     ANTS:
     <span id="antCount">0 / 15</span>
   </div>
 
-  <div class="hud">
-    MANTIS ADVENTURE 3D
+  <div class="info">
+    MANTIS ADVENTURE
   </div>
 
 </div>
@@ -309,654 +276,127 @@ canvas{
     MOVE BACK
   </button>
 
-  <button class="control" id="turnLeft">
+  <button class="control" id="left">
     TURN LEFT
   </button>
 
-  <button class="control" id="turnRight">
+  <button class="control" id="right">
     TURN RIGHT
   </button>
 
 </div>
 
 
-<button id="catch">
+<button id="catchButton">
   CATCH ANT
 </button>
 
-
 <div id="danger">
-  DANGER! GIANT ANIMAL NEARBY!
+  GIANT ANIMAL NEARBY!
 </div>
-
 
 <div id="message"></div>
 
 
-<div id="intro">
-
-  <h2 id="introTitle">
-    THE GIANT FOREST
-  </h2>
-
-  <p id="introText">
-    Find 15 ants hidden throughout the forest.
-    Walk close to an ant and press CATCH ANT.
-  </p>
-
-  <button class="bigButton" id="startAdventure">
-    START ADVENTURE
-  </button>
-
-</div>
-
-
 <script>
 
-/* =====================================================
-   MANTIS ADVENTURE 3D
-   Native WebGL
-   No external libraries
-===================================================== */
-
 const canvas =
-  document.getElementById("game");
+  document.getElementById("gameCanvas");
 
-const gl =
-  canvas.getContext("webgl", {
-    antialias:true,
-    alpha:false,
-    depth:true
-  }) ||
-  canvas.getContext("experimental-webgl");
+const ctx =
+  canvas.getContext("2d");
 
 
-if(!gl){
-
-  document.getElementById("start")
-    .style.display="none";
-
-  document.getElementById("error")
-    .style.display="flex";
-
-}else{
-
-
-/* =====================================================
-   SHADERS
-===================================================== */
-
-const vertexSource = `
-
-attribute vec3 aPosition;
-attribute vec3 aColor;
-
-uniform mat4 uProjection;
-uniform mat4 uView;
-uniform mat4 uModel;
-
-varying vec3 vColor;
-
-void main(){
-
-  gl_Position =
-    uProjection *
-    uView *
-    uModel *
-    vec4(aPosition,1.0);
-
-  vColor = aColor;
-}
-`;
-
-
-const fragmentSource = `
-
-precision mediump float;
-
-varying vec3 vColor;
-
-void main(){
-
-  gl_FragColor =
-    vec4(vColor,1.0);
-
-}
-`;
-
-
-/* =====================================================
-   SHADER COMPILER
-===================================================== */
-
-function shader(type,source){
-
-  const s =
-    gl.createShader(type);
-
-  gl.shaderSource(s,source);
-
-  gl.compileShader(s);
-
-  if(!gl.getShaderParameter(
-    s,
-    gl.COMPILE_STATUS
-  )){
-
-    console.log(
-      gl.getShaderInfoLog(s)
-    );
-
-    return null;
-  }
-
-  return s;
-}
-
-
-const vs =
-  shader(
-    gl.VERTEX_SHADER,
-    vertexSource
-  );
-
-const fs =
-  shader(
-    gl.FRAGMENT_SHADER,
-    fragmentSource
-  );
-
-
-const program =
-  gl.createProgram();
-
-gl.attachShader(program,vs);
-gl.attachShader(program,fs);
-
-gl.linkProgram(program);
-
-gl.useProgram(program);
-
-
-/* =====================================================
-   LOCATIONS
-===================================================== */
-
-const positionLocation =
-  gl.getAttribLocation(
-    program,
-    "aPosition"
-  );
-
-const colorLocation =
-  gl.getAttribLocation(
-    program,
-    "aColor"
-  );
-
-const projectionLocation =
-  gl.getUniformLocation(
-    program,
-    "uProjection"
-  );
-
-const viewLocation =
-  gl.getUniformLocation(
-    program,
-    "uView"
-  );
-
-const modelLocation =
-  gl.getUniformLocation(
-    program,
-    "uModel"
-  );
-
-
-/* =====================================================
-   CUBE
-===================================================== */
-
-const vertices = new Float32Array([
-
-  -1,-1,-1,
-   1,-1,-1,
-   1, 1,-1,
-  -1, 1,-1,
-
-  -1,-1, 1,
-   1,-1, 1,
-   1, 1, 1,
-  -1, 1, 1
-
-]);
-
-
-const indices = new Uint16Array([
-
-  0,1,2,
-  0,2,3,
-
-  4,6,5,
-  4,7,6,
-
-  0,4,5,
-  0,5,1,
-
-  3,2,6,
-  3,6,7,
-
-  0,3,7,
-  0,7,4,
-
-  1,5,6,
-  1,6,2
-
-]);
-
-
-const vertexBuffer =
-  gl.createBuffer();
-
-gl.bindBuffer(
-  gl.ARRAY_BUFFER,
-  vertexBuffer
-);
-
-gl.bufferData(
-  gl.ARRAY_BUFFER,
-  vertices,
-  gl.STATIC_DRAW
-);
-
-
-const indexBuffer =
-  gl.createBuffer();
-
-gl.bindBuffer(
-  gl.ELEMENT_ARRAY_BUFFER,
-  indexBuffer
-);
-
-gl.bufferData(
-  gl.ELEMENT_ARRAY_BUFFER,
-  indices,
-  gl.STATIC_DRAW
-);
-
-
-/* =====================================================
-   MATH
-===================================================== */
-
-function identity(){
-
-  return new Float32Array([
-
-    1,0,0,0,
-    0,1,0,0,
-    0,0,1,0,
-    0,0,0,1
-
-  ]);
-}
-
-
-function multiply(a,b){
-
-  const r =
-    new Float32Array(16);
-
-  for(let c=0;c<4;c++){
-
-    for(let row=0;row<4;row++){
-
-      r[c*4+row] =
-        a[row] *
-        b[c*4] +
-
-        a[4+row] *
-        b[c*4+1] +
-
-        a[8+row] *
-        b[c*4+2] +
-
-        a[12+row] *
-        b[c*4+3];
-
-    }
-
-  }
-
-  return r;
-}
-
-
-function translate(x,y,z){
-
-  const m=identity();
-
-  m[12]=x;
-  m[13]=y;
-  m[14]=z;
-
-  return m;
-}
-
-
-function scale(x,y,z){
-
-  const m=identity();
-
-  m[0]=x;
-  m[5]=y;
-  m[10]=z;
-
-  return m;
-}
-
-
-function rotateY(a){
-
-  const c=Math.cos(a);
-  const s=Math.sin(a);
-
-  return new Float32Array([
-
-     c,0,-s,0,
-     0,1, 0,0,
-     s,0, c,0,
-     0,0, 0,1
-
-  ]);
-}
-
-
-function perspective(
-  fov,
-  aspect,
-  near,
-  far
-){
-
-  const f=
-    1/Math.tan(fov/2);
-
-  const nf=
-    1/(near-far);
-
-  return new Float32Array([
-
-    f/aspect,0,0,0,
-
-    0,f,0,0,
-
-    0,0,
-    (far+near)*nf,
-    -1,
-
-    0,0,
-    (2*far*near)*nf,
-    0
-
-  ]);
-}
-
-
-function lookAt(
-  eye,
-  center,
-  up
-){
-
-  let zx =
-    eye[0]-center[0];
-
-  let zy =
-    eye[1]-center[1];
-
-  let zz =
-    eye[2]-center[2];
-
-
-  let length =
-    Math.hypot(zx,zy,zz);
-
-  zx/=length;
-  zy/=length;
-  zz/=length;
-
-
-  let xx =
-    up[1]*zz -
-    up[2]*zy;
-
-  let xy =
-    up[2]*zx -
-    up[0]*zz;
-
-  let xz =
-    up[0]*zy -
-    up[1]*zx;
-
-
-  length =
-    Math.hypot(xx,xy,xz);
-
-  xx/=length;
-  xy/=length;
-  xz/=length;
-
-
-  const yx =
-    zy*xz -
-    zz*xy;
-
-  const yy =
-    zz*xx -
-    zx*xz;
-
-  const yz =
-    zx*xy -
-    zy*xx;
-
-
-  return new Float32Array([
-
-    xx,yx,zx,0,
-
-    xy,yy,zy,0,
-
-    xz,yz,zz,0,
-
-    -(xx*eye[0]+
-      xy*eye[1]+
-      xz*eye[2]),
-
-    -(yx*eye[0]+
-      yy*eye[1]+
-      yz*eye[2]),
-
-    -(zx*eye[0]+
-      zy*eye[1]+
-      zz*eye[2]),
-
-    1
-
-  ]);
-}
-
-
-/* =====================================================
-   GAME
-===================================================== */
+let width=innerWidth;
+let height=innerHeight;
 
 let playing=false;
 
 let antsCaught=0;
 
-let objects=[];
-
 let player={
-
   x:0,
-  y:1.2,
-  z:18,
-
-  yaw:0
-
+  z:20,
+  angle:0
 };
 
-
-const input={
-
+const keys={
   forward:false,
   back:false,
   left:false,
   right:false
-
 };
 
+let ants=[];
+let trees=[];
+let animals=[];
 
-/* =====================================================
+
+/* =========================================
+   RESIZE
+========================================= */
+
+function resize(){
+
+  width=innerWidth;
+  height=innerHeight;
+
+  const dpr=
+    Math.min(
+      devicePixelRatio || 1,
+      2
+    );
+
+  canvas.width=
+    width*dpr;
+
+  canvas.height=
+    height*dpr;
+
+  canvas.style.width=
+    width+"px";
+
+  canvas.style.height=
+    height+"px";
+
+  ctx.setTransform(
+    dpr,0,0,dpr,0,0
+  );
+}
+
+addEventListener(
+  "resize",
+  resize
+);
+
+resize();
+
+
+/* =========================================
    RANDOM
-===================================================== */
+========================================= */
 
 function random(min,max){
-
-  return min +
-    Math.random() *
-    (max-min);
-
+  return min+
+    Math.random()*(max-min);
 }
 
 
-/* =====================================================
-   ADD OBJECT
-===================================================== */
+/* =========================================
+   CREATE WORLD
+========================================= */
 
-function add(
-  type,
-  x,y,z,
-  sx,sy,sz,
-  color
-){
+function createWorld(){
 
-  objects.push({
-
-    type,
-
-    x,y,z,
-
-    sx,sy,sz,
-
-    color,
-
-    active:true,
-
-    angle:random(0,6.28),
-
-    speed:random(.3,.8)
-
-  });
-
-}
-
-
-/* =====================================================
-   BUILD FOREST
-===================================================== */
-
-function buildForest(){
-
-  objects=[];
+  ants=[];
+  trees=[];
+  animals=[];
 
   antsCaught=0;
 
-
-  /* REAL GROUND */
-
-  add(
-    "ground",
-    0,-1,0,
-    80,1,80,
-    [.12,.38,.10]
-  );
-
-
-  /* FOREST TREES */
-
-  for(let i=0;i<55;i++){
-
-    let x=
-      random(-65,65);
-
-    let z=
-      random(-65,65);
-
-
-    if(
-      Math.abs(x)<8 &&
-      Math.abs(z)<8
-    ){
-
-      continue;
-
-    }
-
-
-    /* trunk */
-
-    add(
-      "treeTrunk",
-      x,
-      3,
-      z,
-      1.2,
-      4,
-      1.2,
-      [.30,.16,.07]
-    );
-
-
-    /* canopy */
-
-    add(
-      "treeLeaf",
-      x,
-      7,
-      z,
-      3.5,
-      2.8,
-      3.5,
-      [.04,.30,.08]
-    );
-
-  }
-
-
-  /* SMALL PLANTS */
-
-  for(let i=0;i<35;i++){
-
-    const x=
-      random(-65,65);
-
-    const z=
-      random(-65,65);
-
-    add(
-      "plant",
-      x,
-      .7,
-      z,
-      .25,
-      1.4,
-      .25,
-      [.08,.55,.10]
-    );
-
-  }
+  player.x=0;
+  player.z=20;
+  player.angle=0;
 
 
   /* 15 ANTS */
@@ -967,550 +407,876 @@ function buildForest(){
 
     do{
 
-      x=random(-50,50);
-      z=random(-55,5);
+      x=random(-70,70);
+      z=random(-90,5);
 
     }while(
-      Math.hypot(x,z-player.z)<12
+      Math.hypot(x,z-player.z)<15
     );
 
-
-    add(
-      "ant",
-      x,
-      .55,
-      z,
-      .55,
-      .35,
-      .8,
-      [.20,.06,.025]
-    );
-
+    ants.push({
+      x:x,
+      z:z,
+      alive:true,
+      bob:Math.random()*6
+    });
   }
 
 
-  /* GIANT DEER */
+  /* TREES */
+
+  for(let i=0;i<65;i++){
+
+    const x=random(-100,100);
+    const z=random(-100,100);
+
+    if(
+      Math.abs(x)<12 &&
+      Math.abs(z)<12
+    ) continue;
+
+    trees.push({
+      x:x,
+      z:z,
+      size:random(.8,1.5)
+    });
+  }
+
+
+  /* DEER */
 
   for(let i=0;i<4;i++){
 
-    add(
-      "deer",
-      random(-45,45),
-      4,
-      random(-45,0),
-      4,
-      5,
-      2,
-      [.38,.20,.08]
-    );
-
+    animals.push({
+      type:"deer",
+      x:random(-70,70),
+      z:random(-70,0),
+      angle:random(0,Math.PI*2),
+      speed:random(1.2,2)
+    });
   }
 
 
-  /* GIANT ELEPHANTS */
+  /* ELEPHANTS */
 
   for(let i=0;i<2;i++){
 
-    add(
-      "elephant",
-      random(-40,40),
-      4,
-      random(-45,-15),
-      6,
-      5,
-      4,
-      [.32,.34,.35]
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   DRAW CUBE
-===================================================== */
-
-function drawCube(o){
-
-  let model=
-    translate(
-      o.x,
-      o.y,
-      o.z
-    );
-
-
-  model=
-    multiply(
-      model,
-      rotateY(o.angle)
-    );
-
-
-  model=
-    multiply(
-      model,
-      scale(
-        o.sx,
-        o.sy,
-        o.sz
-      )
-    );
-
-
-  const c=o.color;
-
-
-  const colors=
-    new Float32Array([
-
-      c[0],c[1],c[2],
-      c[0]*.85,c[1]*.85,c[2]*.85,
-      c[0]*1.12,c[1]*1.12,c[2]*1.12,
-      c[0]*.70,c[1]*.70,c[2]*.70,
-
-      c[0]*.92,c[1]*.92,c[2]*.92,
-      c[0]*.78,c[1]*.78,c[2]*.78,
-      c[0]*1.08,c[1]*1.08,c[2]*1.08,
-      c[0]*.65,c[1]*.65,c[2]*.65
-
-    ]);
-
-
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    vertexBuffer
-  );
-
-  gl.enableVertexAttribArray(
-    positionLocation
-  );
-
-  gl.vertexAttribPointer(
-    positionLocation,
-    3,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
-
-
-  const colorBuffer=
-    gl.createBuffer();
-
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    colorBuffer
-  );
-
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    colors,
-    gl.STREAM_DRAW
-  );
-
-
-  gl.enableVertexAttribArray(
-    colorLocation
-  );
-
-  gl.vertexAttribPointer(
-    colorLocation,
-    3,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
-
-
-  gl.bindBuffer(
-    gl.ELEMENT_ARRAY_BUFFER,
-    indexBuffer
-  );
-
-
-  gl.uniformMatrix4fv(
-    modelLocation,
-    false,
-    model
-  );
-
-
-  gl.drawElements(
-    gl.TRIANGLES,
-    36,
-    gl.UNSIGNED_SHORT,
-    0
-  );
-
-}
-
-
-/* =====================================================
-   DRAW SPECIAL ANT
-===================================================== */
-
-function drawAnt(o){
-
-  /* body */
-
-  drawCube({
-
-    x:o.x,
-    y:o.y,
-    z:o.z,
-
-    sx:.7,
-    sy:.35,
-    sz:1.0,
-
-    angle:o.angle,
-
-    color:[.20,.05,.02]
-
-  });
-
-
-  /* head */
-
-  const hx=
-    o.x +
-    Math.sin(o.angle)*.9;
-
-  const hz=
-    o.z -
-    Math.cos(o.angle)*.9;
-
-
-  drawCube({
-
-    x:hx,
-    y:o.y+.05,
-    z:hz,
-
-    sx:.5,
-    sy:.4,
-    sz:.5,
-
-    angle:o.angle,
-
-    color:[.27,.07,.025]
-
-  });
-
-}
-
-
-/* =====================================================
-   DRAW DEER
-===================================================== */
-
-function drawDeer(o){
-
-  drawCube({
-
-    x:o.x,
-    y:o.y,
-    z:o.z,
-
-    sx:4,
-    sy:2,
-    sz:2,
-
-    angle:o.angle,
-
-    color:[.38,.20,.08]
-
-  });
-
-
-  /* legs */
-
-  const legs=[
-
-    [-2.5,-1],
-    [2.5,-1],
-    [-2.5,1],
-    [2.5,1]
-
-  ];
-
-
-  for(const l of legs){
-
-    drawCube({
-
-      x:o.x+l[0],
-      y:o.y-3,
-      z:o.z+l[1],
-
-      sx:.55,
-      sy:2,
-      sz:.55,
-
-      angle:o.angle,
-
-      color:[.30,.15,.06]
-
+    animals.push({
+      type:"elephant",
+      x:random(-60,60),
+      z:random(-70,-20),
+      angle:random(0,Math.PI*2),
+      speed:.7
     });
-
   }
 
 
-  /* neck */
-
-  drawCube({
-
-    x:o.x,
-    y:o.y+3,
-    z:o.z-1.2,
-
-    sx:1.2,
-    sy:2.5,
-    sz:1.2,
-
-    angle:o.angle,
-
-    color:[.40,.22,.09]
-
-  });
-
+  updateCount();
 }
 
 
-/* =====================================================
-   DRAW ELEPHANT
-===================================================== */
+/* =========================================
+   WORLD TO SCREEN
+   Simple perspective projection
+========================================= */
 
-function drawElephant(o){
+function project(x,z,size){
 
-  drawCube({
+  const dx=x-player.x;
+  const dz=z-player.z;
 
-    x:o.x,
-    y:o.y,
-    z:o.z,
+  /*
+    Rotate world according to
+    the direction the mantis faces.
+  */
 
-    sx:5,
-    sy:3,
-    sz:3,
+  const sin=Math.sin(player.angle);
+  const cos=Math.cos(player.angle);
 
-    angle:o.angle,
+  const forward=
+    -dx*sin+
+    -dz*cos;
 
-    color:[.32,.34,.36]
-
-  });
-
-
-  /* four huge legs */
-
-  const legs=[
-
-    [-3,-2],
-    [3,-2],
-    [-3,2],
-    [3,2]
-
-  ];
+  const side=
+    dx*cos+
+    -dz*sin;
 
 
-  for(const l of legs){
-
-    drawCube({
-
-      x:o.x+l[0],
-      y:o.y-3.5,
-      z:o.z+l[1],
-
-      sx:1,
-      sy:2.5,
-      sz:1,
-
-      angle:0,
-
-      color:[.27,.29,.31]
-
-    });
-
-  }
+  if(forward<=1)
+    return null;
 
 
-  /* head */
+  const scale=
+    430/forward;
 
-  drawCube({
 
-    x:o.x,
-    y:o.y+2,
-    z:o.z-3.2,
+  return {
 
-    sx:3,
-    sy:2.5,
-    sz:2.5,
+    x:
+      width/2+
+      side*scale,
 
-    angle:o.angle,
+    y:
+      height*.50+
+      150*scale,
 
-    color:[.35,.37,.39]
+    size:
+      size*scale,
 
-  });
+    depth:forward
+  };
+}
+
+
+/* =========================================
+   DRAW TREE
+========================================= */
+
+function drawTree(tree){
+
+  const p=
+    project(
+      tree.x,
+      tree.z,
+      tree.size
+    );
+
+  if(!p)
+    return;
+
+
+  if(
+    p.x<-100 ||
+    p.x>width+100
+  )
+    return;
 
 
   /* trunk */
 
-  drawCube({
+  ctx.fillStyle="#633a1c";
 
-    x:o.x,
-    y:o.y,
-    z:o.z-5.4,
+  ctx.fillRect(
+    p.x-p.size*.18,
+    p.y-p.size*2.5,
+    p.size*.36,
+    p.size*2.5
+  );
 
-    sx:.9,
-    sy:2.5,
-    sz:.9,
 
-    angle:0,
+  /* leaves */
 
-    color:[.27,.29,.31]
+  ctx.fillStyle="#19652b";
 
-  });
+  ctx.beginPath();
+
+  ctx.arc(
+    p.x,
+    p.y-p.size*2.8,
+    p.size*1.35,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.fillStyle="#2c8b39";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    p.x-p.size*.55,
+    p.y-p.size*3.1,
+    p.size*.9,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
 
 }
 
 
-/* =====================================================
-   UPDATE ANIMALS
-===================================================== */
+/* =========================================
+   DRAW ANT
+========================================= */
 
-function updateAnimals(dt){
+function drawAnt(ant){
 
-  for(const o of objects){
-
-    if(
-      o.type!=="deer" &&
-      o.type!=="elephant"
-    ){
-
-      continue;
-
-    }
+  if(!ant.alive)
+    return;
 
 
-    o.angle +=
-      Math.sin(
-        performance.now()*.0005+
-        o.x
-      )*.0002;
+  const p=
+    project(
+      ant.x,
+      ant.z,
+      1
+    );
+
+  if(!p)
+    return;
 
 
-    const speed=
-      o.type==="elephant"
-      ? .7
-      : 1.0;
+  const s=
+    Math.max(
+      4,
+      Math.min(
+        30,
+        p.size
+      )
+    );
 
 
-    o.x +=
-      Math.sin(o.angle)*
-      speed*
-      dt;
+  ctx.save();
+
+  ctx.translate(
+    p.x,
+    p.y
+  );
 
 
-    o.z +=
-      -Math.cos(o.angle)*
-      speed*
-      dt;
+  /* body */
+
+  ctx.fillStyle="#17100c";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    0,
+    s*.65,
+    s*.35,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
 
 
-    if(
-      o.x>60 ||
-      o.x<-60 ||
-      o.z>60 ||
-      o.z<-60
-    ){
+  /* head */
 
-      o.angle += Math.PI;
+  ctx.beginPath();
 
-    }
+  ctx.arc(
+    s*.65,
+    0,
+    s*.35,
+    0,
+    Math.PI*2
+  );
 
-
-    const d=
-      Math.hypot(
-        o.x-player.x,
-        o.z-player.z
-      );
+  ctx.fill();
 
 
-    if(d<9){
+  /* legs */
 
-      document.getElementById(
-        "danger"
-      ).style.display="block";
+  ctx.strokeStyle="#120c08";
 
-    }
-
-    else{
-
-      document.getElementById(
-        "danger"
-      ).style.display="none";
-
-    }
+  ctx.lineWidth=
+    Math.max(1,s*.10);
 
 
-    if(d<4){
+  for(let i=-1;i<=1;i++){
 
-      player.x +=
-        Math.sin(o.angle+Math.PI)*
-        .08;
+    ctx.beginPath();
 
-      player.z +=
-        -Math.cos(o.angle+Math.PI)*
-        .08;
+    ctx.moveTo(
+      i*s*.25,
+      -s*.2
+    );
 
-      showMessage(
-        "A giant animal almost stepped on you!"
-      );
+    ctx.lineTo(
+      i*s*.7,
+      -s*.55
+    );
 
-    }
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      i*s*.25,
+      s*.2
+    );
+
+    ctx.lineTo(
+      i*s*.7,
+      s*.55
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================
+   DRAW ANIMALS
+========================================= */
+
+function drawAnimal(a){
+
+  const p=
+    project(
+      a.x,
+      a.z,
+      a.type==="elephant"
+      ? 8
+      : 5
+    );
+
+  if(!p)
+    return;
+
+
+  const s=
+    Math.max(
+      8,
+      Math.min(
+        90,
+        p.size
+      )
+    );
+
+
+  ctx.save();
+
+  ctx.translate(
+    p.x,
+    p.y
+  );
+
+
+  if(a.type==="elephant"){
+
+    ctx.fillStyle="#72777b";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      s*1.1,
+      s*.7,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      -s*.55,
+      s*.6,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillRect(
+      -s*.65,
+      s*.35,
+      s*.25,
+      s*.75
+    );
+
+    ctx.fillRect(
+      -s*.15,
+      s*.35,
+      s*.25,
+      s*.75
+    );
+
+    ctx.fillRect(
+      s*.35,
+      s*.35,
+      s*.25,
+      s*.75
+    );
+
+
+  }else{
+
+    ctx.fillStyle="#7a4a21";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      s,
+      s*.55,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      -s*.55,
+      s*.42,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillRect(
+      -s*.65,
+      s*.35,
+      s*.18,
+      s*.8
+    );
+
+    ctx.fillRect(
+      -s*.15,
+      s*.35,
+      s*.18,
+      s*.8
+    );
+
+    ctx.fillRect(
+      s*.35,
+      s*.35,
+      s*.18,
+      s*.8
+    );
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================
+   DRAW GROUND
+========================================= */
+
+function drawGround(){
+
+  const gradient=
+    ctx.createLinearGradient(
+      0,
+      0,
+      0,
+      height
+    );
+
+  gradient.addColorStop(
+    0,
+    "#8bd0ed"
+  );
+
+  gradient.addColorStop(
+    .48,
+    "#5fae50"
+  );
+
+  gradient.addColorStop(
+    1,
+    "#285b2c"
+  );
+
+  ctx.fillStyle=gradient;
+
+  ctx.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  /* ground perspective lines */
+
+  ctx.strokeStyle="#ffffff20";
+
+  ctx.lineWidth=1;
+
+
+  for(let i=0;i<12;i++){
+
+    const y=
+      height*.55+
+      i*i*8;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,
+      y
+    );
+
+    ctx.lineTo(
+      width,
+      y
+    );
+
+    ctx.stroke();
 
   }
 
 }
 
 
-/* =====================================================
-   DISTANCE TO ANT
-===================================================== */
+/* =========================================
+   DRAW PLAYER MANTIS
+========================================= */
 
-function nearestAnt(){
+function drawPlayer(){
 
-  let best=null;
+  const x=
+    width/2;
 
-  let bestDistance=9999;
+  const y=
+    height*.62;
 
 
-  for(const o of objects){
+  ctx.save();
+
+  ctx.translate(
+    x,
+    y
+  );
+
+
+  /* body */
+
+  ctx.fillStyle="#2b8d43";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    18,
+    18,
+    35,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* head */
+
+  ctx.fillStyle="#47a94d";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    -25,
+    24,
+    19,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* eyes */
+
+  ctx.fillStyle="#101610";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -9,
+    -28,
+    4,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    9,
+    -28,
+    4,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* arms */
+
+  ctx.strokeStyle="#28783b";
+
+  ctx.lineWidth=7;
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    -13,
+    0
+  );
+
+  ctx.lineTo(
+    -34,
+    -20
+  );
+
+  ctx.stroke();
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    13,
+    0
+  );
+
+  ctx.lineTo(
+    34,
+    -20
+  );
+
+  ctx.stroke();
+
+
+  /* legs */
+
+  ctx.lineWidth=6;
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    -10,
+    40
+  );
+
+  ctx.lineTo(
+    -28,
+    60
+  );
+
+  ctx.stroke();
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    10,
+    40
+  );
+
+  ctx.lineTo(
+    28,
+    60
+  );
+
+  ctx.stroke();
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================
+   UPDATE ANIMALS
+========================================= */
+
+function updateAnimals(dt){
+
+  let danger=false;
+
+
+  for(const a of animals){
+
+    a.x +=
+      Math.sin(a.angle)*
+      a.speed*
+      dt;
+
+    a.z +=
+      -Math.cos(a.angle)*
+      a.speed*
+      dt;
+
 
     if(
-      o.type!=="ant" ||
-      !o.active
+      Math.abs(a.x)>90 ||
+      Math.abs(a.z)>90
     ){
 
-      continue;
+      a.angle+=Math.PI;
 
     }
 
 
-    const d=
+    const distance=
       Math.hypot(
-        o.x-player.x,
-        o.z-player.z
+        a.x-player.x,
+        a.z-player.z
       );
 
 
-    if(d<bestDistance){
+    if(distance<10){
 
-      bestDistance=d;
-      best=o;
+      danger=true;
+
+      player.x +=
+        (player.x-a.x)*
+        .01;
+
+      player.z +=
+        (player.z-a.z)*
+        .01;
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "danger"
+  ).style.display=
+    danger
+    ? "block"
+    : "none";
+
+}
+
+
+/* =========================================
+   MOVEMENT
+========================================= */
+
+function updatePlayer(dt){
+
+  const moveSpeed=
+    8*dt;
+
+  const turnSpeed=
+    2.5*dt;
+
+
+  /* LEFT = LEFT */
+
+  if(keys.left){
+
+    player.angle -=
+      turnSpeed;
+
+  }
+
+
+  /* RIGHT = RIGHT */
+
+  if(keys.right){
+
+    player.angle +=
+      turnSpeed;
+
+  }
+
+
+  if(keys.forward){
+
+    player.x +=
+      Math.sin(player.angle)*
+      moveSpeed;
+
+    player.z +=
+      -Math.cos(player.angle)*
+      moveSpeed;
+
+  }
+
+
+  if(keys.back){
+
+    player.x -=
+      Math.sin(player.angle)*
+      moveSpeed;
+
+    player.z -=
+      -Math.cos(player.angle)*
+      moveSpeed;
+
+  }
+
+
+  player.x=
+    Math.max(
+      -95,
+      Math.min(
+        95,
+        player.x
+      )
+    );
+
+  player.z=
+    Math.max(
+      -95,
+      Math.min(
+        95,
+        player.z
+      )
+    );
+
+}
+
+
+/* =========================================
+   FIND NEAREST ANT
+========================================= */
+
+function nearestAnt(){
+
+  let best=null;
+  let distance=9999;
+
+
+  for(const ant of ants){
+
+    if(!ant.alive)
+      continue;
+
+
+    const d=
+      Math.hypot(
+        ant.x-player.x,
+        ant.z-player.z
+      );
+
+
+    if(d<distance){
+
+      distance=d;
+      best=ant;
 
     }
 
@@ -1518,35 +1284,39 @@ function nearestAnt(){
 
 
   return {
-    object:best,
-    distance:bestDistance
+    ant:best,
+    distance:distance
   };
 
 }
 
 
-/* =====================================================
+/* =========================================
    CATCH ANT
-===================================================== */
+========================================= */
 
-document.getElementById(
-  "catch"
-).addEventListener(
+document
+.getElementById("catchButton")
+.addEventListener(
   "click",
-  ()=>{
+  function(){
 
-    const nearest=
+    if(!playing)
+      return;
+
+
+    const n=
       nearestAnt();
 
 
-    if(!nearest.object){
+    if(!n.ant){
 
       return;
 
     }
 
 
-    if(nearest.distance>4){
+    if(n.distance>7){
 
       showMessage(
         "Move closer to the ant!"
@@ -1557,15 +1327,12 @@ document.getElementById(
     }
 
 
-    nearest.object.active=false;
+    n.ant.alive=false;
 
     antsCaught++;
 
 
-    document.getElementById(
-      "antCount"
-    ).textContent=
-      antsCaught+" / 15";
+    updateCount();
 
 
     showMessage(
@@ -1579,117 +1346,391 @@ document.getElementById(
 
       setTimeout(
         winGame,
-        800
+        700
       );
 
     }
 
-  });
-
-
-/* =====================================================
-   MOVEMENT
-===================================================== */
-
-function movePlayer(dt){
-
-  if(!playing)
-    return;
-
-
-  const moveSpeed=
-    7 * dt;
-
-  const turnSpeed=
-    2.4 * dt;
-
-
-  /*
-    CORRECT DIRECTIONS:
-
-    TURN LEFT  = decrease yaw
-    TURN RIGHT = increase yaw
-
-    MOVE FORWARD = forward direction
-    MOVE BACK = opposite direction
-  */
-
-
-  if(input.left){
-
-    player.yaw -=
-      turnSpeed;
-
   }
+);
 
 
-  if(input.right){
+/* =========================================
+   UPDATE CATCH BUTTON
+========================================= */
 
-    player.yaw +=
-      turnSpeed;
+function updateCatchButton(){
 
-  }
-
-
-  let amount=0;
-
-
-  if(input.forward)
-    amount+=1;
-
-  if(input.back)
-    amount-=1;
+  const n=
+    nearestAnt();
 
 
-  if(amount!==0){
+  document.getElementById(
+    "catchButton"
+  ).style.display=
+    n.ant &&
+    n.distance<7
+    ? "block"
+    : "none";
 
-    player.x +=
-      Math.sin(player.yaw) *
-      moveSpeed *
-      amount;
-
-    player.z +=
-      -Math.cos(player.yaw) *
-      moveSpeed *
-      amount;
-
-  }
+}
 
 
-  /* forest boundaries */
+/* =========================================
+   COUNT
+========================================= */
 
-  player.x=
-    Math.max(
-      -70,
-      Math.min(
-        70,
-        player.x
-      )
+function updateCount(){
+
+  document.getElementById(
+    "antCount"
+  ).textContent=
+    antsCaught+
+    " / 15";
+
+}
+
+
+/* =========================================
+   MESSAGE
+========================================= */
+
+let messageTimer;
+
+function showMessage(text){
+
+  const box=
+    document.getElementById(
+      "message"
     );
 
+  box.textContent=text;
 
-  player.z=
-    Math.max(
-      -70,
-      Math.min(
-        70,
-        player.z
-      )
+  box.style.display="block";
+
+  clearTimeout(
+    messageTimer
+  );
+
+  messageTimer=
+    setTimeout(
+      function(){
+
+        box.style.display="none";
+
+      },
+      1600
     );
 
 }
 
 
-/* =====================================================
-   UPDATE CATCH BUTTON
-===================================================== */
+/* =========================================
+   CONTROLS
+========================================= */
 
-function updateCatchButton(){
+function holdButton(
+  id,
+  key
+){
 
-  const nearest=
-    nearestAnt();
+  const button=
+    document.getElementById(id);
 
 
-  if(
-    ne
-      
+  button.addEventListener(
+    "pointerdown",
+    function(e){
+
+      e.preventDefault();
+
+      keys[key]=true;
+
+      button.setPointerCapture(
+        e.pointerId
+      );
+
+    }
+  );
+
+
+  button.addEventListener(
+    "pointerup",
+    function(e){
+
+      e.preventDefault();
+
+      keys[key]=false;
+
+    }
+  );
+
+
+  button.addEventListener(
+    "pointercancel",
+    function(){
+
+      keys[key]=false;
+
+    }
+  );
+
+
+  button.addEventListener(
+    "lostpointercapture",
+    function(){
+
+      keys[key]=false;
+
+    }
+  );
+
+}
+
+
+holdButton(
+  "forward",
+  "forward"
+);
+
+holdButton(
+  "back",
+  "back"
+);
+
+holdButton(
+  "left",
+  "left"
+);
+
+holdButton(
+  "right",
+  "right"
+);
+
+
+/* =========================================
+   KEYBOARD
+========================================= */
+
+addEventListener(
+  "keydown",
+  function(e){
+
+    if(e.key==="ArrowUp")
+      keys.forward=true;
+
+    if(e.key==="ArrowDown")
+      keys.back=true;
+
+    if(e.key==="ArrowLeft")
+      keys.left=true;
+
+    if(e.key==="ArrowRight")
+      keys.right=true;
+
+  }
+);
+
+
+addEventListener(
+  "keyup",
+  function(e){
+
+    if(e.key==="ArrowUp")
+      keys.forward=false;
+
+    if(e.key==="ArrowDown")
+      keys.back=false;
+
+    if(e.key==="ArrowLeft")
+      keys.left=false;
+
+    if(e.key==="ArrowRight")
+      keys.right=false;
+
+  }
+);
+
+
+/* =========================================
+   RENDER
+========================================= */
+
+let lastTime=0;
+
+
+function gameLoop(time){
+
+  const dt=
+    Math.min(
+      .04,
+      (time-lastTime)/1000
+    );
+
+  lastTime=time;
+
+
+  if(playing){
+
+    updatePlayer(dt);
+
+    updateAnimals(dt);
+
+    updateCatchButton();
+
+    drawGround();
+
+
+    /*
+      Draw distant objects first.
+      This gives the scene a
+      perspective/3D appearance.
+    */
+
+    const things=[];
+
+
+    for(
+      const tree of trees
+    ){
+
+      things.push({
+        depth:
+          Math.hypot(
+            tree.x-player.x,
+            tree.z-player.z
+          ),
+        draw:
+          function(){
+            drawTree(tree);
+          }
+      });
+
+    }
+
+
+    for(
+      const ant of ants
+    ){
+
+      if(ant.alive){
+
+        things.push({
+          depth:
+            Math.hypot(
+              ant.x-player.x,
+              ant.z-player.z
+            ),
+          draw:
+            function(){
+              drawAnt(ant);
+            }
+        });
+
+      }
+
+    }
+
+
+    for(
+      const animal of animals
+    ){
+
+      things.push({
+        depth:
+          Math.hypot(
+            animal.x-player.x,
+            animal.z-player.z
+          ),
+        draw:
+          function(){
+            drawAnimal(animal);
+          }
+      });
+
+    }
+
+
+    things.sort(
+      (a,b)=>
+        b.depth-a.depth
+    );
+
+
+    for(
+      const thing of things
+    ){
+
+      thing.draw();
+
+    }
+
+
+    drawPlayer();
+
+  }
+
+
+  requestAnimationFrame(
+    gameLoop
+  );
+
+}
+
+
+/* =========================================
+   THE IMPORTANT PLAY BUTTON
+========================================= */
+
+document
+.getElementById("playButton")
+.addEventListener(
+  "click",
+  function(){
+
+    /*
+      This directly starts the game.
+      No external library.
+      No loading screen.
+    */
+
+    createWorld();
+
+    playing=true;
+
+
+    document.getElementById(
+      "start"
+    ).style.display="none";
+
+
+    document.getElementById(
+      "hud"
+    ).style.display="flex";
+
+
+    document.getElementById(
+      "controls"
+    ).style.display="block";
+
+
+    showMessage(
+      "Find and catch all 15 ants!"
+    );
+
+  }
+);
+
+
+/* =========================================
+   PLAY AGAIN
+========================================= */
+
+document
+.getElementById("againButton")
+.addEventListener(
+  "click",
+  function(){
+
+    document.getElementById
