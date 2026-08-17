@@ -2,328 +2,1514 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Mini World</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+<title>Mini World 3D</title>
+
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#6ec9e8;font-family:Arial,sans-serif;touch-action:none}
-canvas{width:100%;height:100%;display:block}
-#hud{position:fixed;top:10px;left:10px;right:10px;z-index:4;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-.box{background:#0009;color:white;padding:8px 12px;border-radius:14px;font-weight:bold;text-shadow:0 2px 3px #000}
-#task{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:4;background:#000b;color:white;padding:9px 15px;border-radius:16px;text-align:center;font-weight:bold;max-width:90%;pointer-events:none}
-#controls{position:fixed;left:12px;bottom:12px;width:225px;height:160px;z-index:5}
-.ctrl{position:absolute;width:72px;height:52px;border:2px solid #fff7;border-radius:15px;background:#17251ddd;color:white;font-size:11px;font-weight:bold;touch-action:none}
-.ctrl:active{background:#4b8b4c;transform:scale(.95)}
-#forward{left:77px;top:0}#back{left:77px;bottom:0}#left{left:0;top:54px}#right{right:0;top:54px}
-#interact{position:fixed;right:15px;bottom:18px;z-index:5;width:105px;height:62px;border:0;border-radius:18px;background:#f4d35e;color:#173b1b;font-weight:bold;font-size:15px;display:none}
-#message{position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:6;background:#000d;color:white;padding:11px 17px;border-radius:16px;font-weight:bold;display:none;text-align:center;max-width:90%}
-#start{position:fixed;inset:0;z-index:20;background:linear-gradient(#59c6ea,#4d9950);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
-#start h1{font-size:clamp(38px,9vw,65px);margin:8px}
-#start p{font-size:18px;line-height:1.5;max-width:560px}
-#play{border:0;border-radius:18px;padding:17px 34px;background:#f4d35e;color:#173b1b;font-size:21px;font-weight:bold}
-#done{position:fixed;inset:0;z-index:30;background:#000d;color:white;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:25px}
-#again{border:0;border-radius:16px;padding:14px 26px;font-size:19px;font-weight:bold}
+*{
+  box-sizing:border-box;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#65c8ea;
+  touch-action:none;
+  font-family:Arial,sans-serif;
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+#start,#complete{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  color:white;
+  background:linear-gradient(#55c6ea,#4d9848);
+  padding:25px;
+}
+
+#complete{
+  display:none;
+}
+
+#start h1,#complete h1{
+  font-size:clamp(38px,9vw,68px);
+  margin:8px;
+}
+
+#start p,#complete p{
+  max-width:600px;
+  font-size:18px;
+  line-height:1.5;
+}
+
+.bigButton{
+  border:0;
+  border-radius:18px;
+  padding:17px 32px;
+  font-size:21px;
+  font-weight:bold;
+  background:#f4d35e;
+  color:#173b1b;
+  cursor:pointer;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+#hud{
+  position:fixed;
+  top:10px;
+  left:10px;
+  right:10px;
+  z-index:5;
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none;
+}
+
+.panel{
+  background:#000b;
+  color:white;
+  padding:9px 13px;
+  border-radius:14px;
+  font-weight:bold;
+}
+
+#task{
+  position:fixed;
+  top:58px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:5;
+  color:white;
+  background:#000b;
+  padding:10px 15px;
+  border-radius:15px;
+  font-weight:bold;
+  text-align:center;
+  max-width:90%;
+  pointer-events:none;
+}
+
+#controls{
+  position:fixed;
+  left:12px;
+  bottom:13px;
+  width:230px;
+  height:165px;
+  z-index:10;
+}
+
+.moveButton{
+  position:absolute;
+  width:75px;
+  height:55px;
+  border:2px solid #ffffff88;
+  border-radius:16px;
+  background:#17251ddd;
+  color:white;
+  font-size:11px;
+  font-weight:bold;
+  cursor:pointer;
+
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+  touch-action:none;
+}
+
+.moveButton:active{
+  transform:scale(.94);
+  background:#4d8c4e;
+}
+
+#forward{
+  left:78px;
+  top:0;
+}
+
+#back{
+  left:78px;
+  bottom:0;
+}
+
+#left{
+  left:0;
+  top:55px;
+}
+
+#right{
+  right:0;
+  top:55px;
+}
+
+#action{
+  position:fixed;
+  right:15px;
+  bottom:20px;
+  z-index:10;
+  display:none;
+
+  border:0;
+  border-radius:18px;
+  padding:18px 22px;
+  background:#f4d35e;
+  color:#173b1b;
+  font-size:17px;
+  font-weight:bold;
+
+  -webkit-user-select:none;
+  user-select:none;
+  touch-action:none;
+}
+
+#message{
+  position:fixed;
+  left:50%;
+  bottom:100px;
+  transform:translateX(-50%);
+  z-index:12;
+  display:none;
+  background:#000d;
+  color:white;
+  padding:11px 17px;
+  border-radius:16px;
+  font-weight:bold;
+  text-align:center;
+}
 </style>
+
+<script type="importmap">
+{
+  "imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js"
+  }
+}
+</script>
+
 </head>
+
 <body>
-<canvas id="game"></canvas>
-
-<div id="hud">
-  <div class="box">MINI WORLD</div>
-  <div class="box">LEVEL <span id="level">1</span> / 5</div>
-</div>
-<div id="task">TASK: Find the glowing crystal.</div>
-
-<div id="controls">
-  <button class="ctrl" id="forward">FORWARD</button>
-  <button class="ctrl" id="back">BACK</button>
-  <button class="ctrl" id="left">TURN LEFT</button>
-  <button class="ctrl" id="right">TURN RIGHT</button>
-</div>
-
-<button id="interact">DO TASK</button>
-<div id="message"></div>
 
 <div id="start">
-  <div style="font-size:72px">🌎</div>
-  <h1>Mini World</h1>
-  <p>Explore a real adventure world. Complete the task in each biome to unlock the next one. There are no level buttons — you discover the way forward by playing.</p>
-  <button id="play">START ADVENTURE</button>
+
+  <div style="font-size:80px">🌎</div>
+
+  <h1>Mini World 3D</h1>
+
+  <p>
+    Explore five different 3D worlds.
+    Complete the task in each world to unlock the next one.
+    You cannot simply skip to another world.
+  </p>
+
+  <button class="bigButton" id="startButton">
+    START ADVENTURE
+  </button>
+
 </div>
 
-<div id="done">
-  <div style="font-size:75px">🏆</div>
+
+<div id="complete">
+
+  <div style="font-size:80px">🏆</div>
+
   <h1>MINI WORLD COMPLETE!</h1>
-  <p>You completed all five worlds and every task.</p>
-  <button id="again">PLAY AGAIN</button>
+
+  <p>
+    You completed all five worlds and every task!
+  </p>
+
+  <button class="bigButton" id="againButton">
+    PLAY AGAIN
+  </button>
+
 </div>
 
-<script>
-"use strict";
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const levelEl=document.getElementById("level");
-const taskEl=document.getElementById("task");
-const interact=document.getElementById("interact");
-const message=document.getElementById("message");
-const start=document.getElementById("start");
-const done=document.getElementById("done");
+<div id="hud">
 
-let W=innerWidth,H=innerHeight,dpr=1;
-function resize(){
-  W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+"px";canvas.style.height=H+"px";
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  <div class="panel">
+    MINI WORLD 3D
+  </div>
+
+  <div class="panel">
+    WORLD <span id="worldNumber">1</span> / 5
+  </div>
+
+</div>
+
+
+<div id="task">
+  Find the glowing crystal.
+</div>
+
+
+<div id="controls">
+
+  <button class="moveButton" id="forward">
+    FORWARD
+  </button>
+
+  <button class="moveButton" id="back">
+    BACK
+  </button>
+
+  <button class="moveButton" id="left">
+    TURN LEFT
+  </button>
+
+  <button class="moveButton" id="right">
+    TURN RIGHT
+  </button>
+
+</div>
+
+
+<button id="action">
+  COMPLETE TASK
+</button>
+
+
+<div id="message"></div>
+
+
+<script type="module">
+
+import * as THREE from "three";
+
+
+/* =========================
+   BASIC VARIABLES
+========================= */
+
+const startScreen=
+document.getElementById("start");
+
+const completeScreen=
+document.getElementById("complete");
+
+const startButton=
+document.getElementById("startButton");
+
+const againButton=
+document.getElementById("againButton");
+
+const worldNumber=
+document.getElementById("worldNumber");
+
+const taskText=
+document.getElementById("task");
+
+const actionButton=
+document.getElementById("action");
+
+const message=
+document.getElementById("message");
+
+
+let scene;
+let camera;
+let renderer;
+let clock;
+
+let player;
+
+let running=false;
+
+let currentWorld=1;
+
+let taskObject;
+
+let taskReady=false;
+
+
+/* =========================
+   INPUT
+========================= */
+
+const input={
+  forward:false,
+  back:false,
+  left:false,
+  right:false
+};
+
+
+function setupHoldButton(id,key){
+
+  const button=
+  document.getElementById(id);
+
+
+  function press(event){
+
+    event.preventDefault();
+
+    input[key]=true;
+
+  }
+
+
+  function release(event){
+
+    event.preventDefault();
+
+    input[key]=false;
+
+  }
+
+
+  button.addEventListener(
+    "pointerdown",
+    press
+  );
+
+
+  button.addEventListener(
+    "pointerup",
+    release
+  );
+
+
+  button.addEventListener(
+    "pointercancel",
+    release
+  );
+
+
+  button.addEventListener(
+    "pointerleave",
+    release
+  );
+
 }
-addEventListener("resize",resize);resize();
 
-const player={x:0,y:0,a:0,speed:90};
-const input={f:false,b:false,l:false,r:false};
-let running=false,last=0,level=1,taskDone=false,nearTask=false;
 
-/* Five worlds. A completed task unlocks the next biome. */
+setupHoldButton(
+  "forward",
+  "forward"
+);
+
+setupHoldButton(
+  "back",
+  "back"
+);
+
+setupHoldButton(
+  "left",
+  "left"
+);
+
+setupHoldButton(
+  "right",
+  "right"
+);
+
+
+/* Keyboard controls also work on computers. */
+
+window.addEventListener(
+  "keydown",
+  event=>{
+
+    if(event.key==="ArrowUp")
+      input.forward=true;
+
+    if(event.key==="ArrowDown")
+      input.back=true;
+
+    if(event.key==="ArrowLeft")
+      input.left=true;
+
+    if(event.key==="ArrowRight")
+      input.right=true;
+
+  }
+);
+
+
+window.addEventListener(
+  "keyup",
+  event=>{
+
+    if(event.key==="ArrowUp")
+      input.forward=false;
+
+    if(event.key==="ArrowDown")
+      input.back=false;
+
+    if(event.key==="ArrowLeft")
+      input.left=false;
+
+    if(event.key==="ArrowRight")
+      input.right=false;
+
+  }
+);
+
+
+/* =========================
+   WORLDS
+========================= */
+
 const worlds=[
-  {name:"Meadow",sky:"#69c9eb",ground:"#5ca346",tree:"#28763b",task:"Find the glowing crystal and press DO TASK.",object:"crystal"},
-  {name:"Forest",sky:"#5faecb",ground:"#376f3b",tree:"#17582d",task:"Find the ancient tree and press DO TASK.",object:"tree"},
-  {name:"Desert",sky:"#e6c277",ground:"#d3a04b",tree:"#4f8743",task:"Find the desert shrine and press DO TASK.",object:"shrine"},
-  {name:"Snow Valley",sky:"#a9d9ea",ground:"#e5eeee",tree:"#286342",task:"Find the frozen beacon and press DO TASK.",object:"beacon"},
-  {name:"Island",sky:"#55c8e8",ground:"#d5bb69",tree:"#26803e",task:"Find the treasure chest and press DO TASK.",object:"chest"}
+
+  {
+    name:"Meadow",
+    sky:0x65c8ea,
+    ground:0x5ba34b,
+    task:"Find the glowing crystal."
+  },
+
+  {
+    name:"Forest",
+    sky:0x72b9d2,
+    ground:0x326d38,
+    task:"Find the ancient tree."
+  },
+
+  {
+    name:"Desert",
+    sky:0xe7c37c,
+    ground:0xd3a24d,
+    task:"Find the desert shrine."
+  },
+
+  {
+    name:"Snow Valley",
+    sky:0xa8d9ed,
+    ground:0xe8eeee,
+    task:"Find the frozen beacon."
+  },
+
+  {
+    name:"Island",
+    sky:0x58c9e8,
+    ground:0xd6bd6c,
+    task:"Find the treasure chest."
+  }
+
 ];
 
-let taskObject={x:0,y:0};
-let worldSeed=7001;
 
-function rand(){
-  worldSeed=(worldSeed*1664525+1013904223)>>>0;
-  return worldSeed/4294967296;
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(text){
+
+  message.textContent=text;
+
+  message.style.display=
+    "block";
+
+  clearTimeout(
+    showMessage.timer
+  );
+
+  showMessage.timer=
+    setTimeout(
+      ()=>{
+        message.style.display=
+          "none";
+      },
+      1800
+    );
+
 }
 
-function setWorld(n){
-  level=n;
-  taskDone=false;
-  nearTask=false;
-  player.x=0;player.y=0;player.a=0;
-  const angle=rand()*Math.PI*2;
-  const distance=250;
-  taskObject={x:Math.cos(angle)*distance,y:Math.sin(angle)*distance};
-  levelEl.textContent=level;
-  taskEl.textContent="TASK: "+worlds[level-1].task;
-  interact.style.display="none";
-  showMessage("Entering "+worlds[level-1].name);
+
+/* =========================
+   CREATE SCENE
+========================= */
+
+function createScene(){
+
+  scene=
+    new THREE.Scene();
+
+
+  scene.background=
+    new THREE.Color(
+      worlds[currentWorld-1].sky
+    );
+
+
+  scene.fog=
+    new THREE.Fog(
+      worlds[currentWorld-1].sky,
+      25,
+      170
+    );
+
+
+  camera=
+    new THREE.PerspectiveCamera(
+      72,
+      innerWidth/innerHeight,
+      0.1,
+      250
+    );
+
+
+  renderer=
+    new THREE.WebGLRenderer({
+      antialias:true
+    });
+
+
+  renderer.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio,
+      1.5
+    )
+  );
+
+
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
+
+
+  renderer.shadowMap.enabled=true;
+
+
+  document.body.appendChild(
+    renderer.domElement
+  );
+
+
+  /* Lighting */
+
+  const skyLight=
+    new THREE.HemisphereLight(
+      0xffffff,
+      0x35552e,
+      2.3
+    );
+
+  scene.add(skyLight);
+
+
+  const sun=
+    new THREE.DirectionalLight(
+      0xffffff,
+      2.8
+    );
+
+  sun.position.set(
+    30,
+    60,
+    20
+  );
+
+  sun.castShadow=true;
+
+  scene.add(sun);
+
+
+  /* Ground */
+
+  const ground=
+    new THREE.Mesh(
+
+      new THREE.PlaneGeometry(
+        500,
+        500
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:
+          worlds[currentWorld-1].ground
+      })
+
+    );
+
+
+  ground.rotation.x=
+    -Math.PI/2;
+
+
+  ground.receiveShadow=true;
+
+
+  scene.add(ground);
+
+
+  /* Player */
+
+  player=
+    new THREE.Group();
+
+
+  player.position.set(
+    0,
+    1.2,
+    0
+  );
+
+
+  scene.add(player);
+
+
+  /*
+    Camera is actually inside the
+    3D world at the player's position.
+  */
+
+  camera.position.set(
+    0,
+    0,
+    0
+  );
+
+
+  player.add(camera);
+
+
+  createPlayerArms();
+
+
+  createWorld();
+
+
 }
 
-function bindHold(id,key){
-  const el=document.getElementById(id);
-  const down=e=>{e.preventDefault();input[key]=true};
-  const up=e=>{e.preventDefault();input[key]=false};
-  el.addEventListener("pointerdown",down);
-  el.addEventListener("pointerup",up);
-  el.addEventListener("pointercancel",up);
-  el.addEventListener("pointerleave",up);
+
+/* =========================
+   PLAYER ARMS
+========================= */
+
+function createPlayerArms(){
+
+  const material=
+    new THREE.MeshStandardMaterial({
+      color:0x4c9b43
+    });
+
+
+  const leftArm=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .08,
+        .12,
+        1.2,
+        8
+      ),
+      material
+    );
+
+
+  leftArm.rotation.z=
+    -.8;
+
+  leftArm.position.set(
+    -.5,
+    -.35,
+    -.7
+  );
+
+
+  camera.add(leftArm);
+
+
+  const rightArm=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .08,
+        .12,
+        1.2,
+        8
+      ),
+      material
+    );
+
+
+  rightArm.rotation.z=
+    .8;
+
+  rightArm.position.set(
+    .5,
+    -.35,
+    -.7
+  );
+
+
+  camera.add(rightArm);
+
 }
-bindHold("forward","f");bindHold("back","b");bindHold("left","l");bindHold("right","r");
 
-addEventListener("keydown",e=>{
-  if(e.key==="ArrowUp")input.f=true;
-  if(e.key==="ArrowDown")input.b=true;
-  if(e.key==="ArrowLeft")input.l=true;
-  if(e.key==="ArrowRight")input.r=true;
-});
-addEventListener("keyup",e=>{
-  if(e.key==="ArrowUp")input.f=false;
-  if(e.key==="ArrowDown")input.b=false;
-  if(e.key==="ArrowLeft")input.l=false;
-  if(e.key==="ArrowRight")input.r=false;
-});
 
-function showMessage(t){
-  message.textContent=t;message.style.display="block";
-  clearTimeout(showMessage.timer);
-  showMessage.timer=setTimeout(()=>message.style.display="none",1800);
+/* =========================
+   TREE
+========================= */
+
+function makeTree(
+  x,
+  z,
+  scale=1
+){
+
+  const tree=
+    new THREE.Group();
+
+
+  const trunk=
+    new THREE.Mesh(
+
+      new THREE.CylinderGeometry(
+        .25*scale,
+        .35*scale,
+        3*scale,
+        8
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:0x68452b
+      })
+
+    );
+
+
+  trunk.position.y=
+    1.5*scale;
+
+
+  trunk.castShadow=true;
+
+  tree.add(trunk);
+
+
+  const leaves=
+    new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        1.4*scale,
+        12,
+        10
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:
+          worlds[currentWorld-1].name===
+          "Snow Valley"
+          ?0x376f49
+          :0x28783b
+      })
+
+    );
+
+
+  leaves.position.y=
+    3.1*scale;
+
+
+  leaves.castShadow=true;
+
+  tree.add(leaves);
+
+
+  tree.position.set(
+    x,
+    0,
+    z
+  );
+
+
+  scene.add(tree);
+
 }
 
-/* Perspective projection creates the 3D-looking world without external libraries. */
-function project(X,Y,height=0){
-  const dx=X-player.x,dy=Y-player.y;
-  const c=Math.cos(player.a),s=Math.sin(player.a);
-  const forward=dx*c+dy*s;
-  const side=-dx*s+dy*c;
-  if(forward<15)return null;
-  const scale=600/forward;
-  return {x:W/2+side*scale,y:H*.55-height*scale,scale,depth:forward};
+
+/* =========================
+   ROCK
+========================= */
+
+function makeRock(x,z){
+
+  const rock=
+    new THREE.Mesh(
+
+      new THREE.DodecahedronGeometry(
+        .8+Math.random()*.6,
+        0
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:0x737b73
+      })
+
+    );
+
+
+  rock.position.set(
+    x,
+    .45,
+    z
+  );
+
+
+  rock.castShadow=true;
+
+  scene.add(rock);
+
 }
 
-function drawSky(){
-  const w=worlds[level-1];
-  const g=ctx.createLinearGradient(0,0,0,H*.55);
-  g.addColorStop(0,w.sky);g.addColorStop(1,"#d9eef2");
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-}
 
-function drawGround(){
-  const w=worlds[level-1];
-  ctx.fillStyle=w.ground;ctx.fillRect(0,H*.55,W,H*.45);
-  ctx.strokeStyle=w.ground;ctx.globalAlpha=.55;
-  for(let i=0;i<14;i++){
-    const y=H*.55+Math.pow(i/13,1.7)*H*.45;
-    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+/* =========================
+   SPECIAL TASK OBJECT
+========================= */
+
+function createTaskObject(){
+
+  const world=
+    worlds[currentWorld-1];
+
+
+  taskObject=
+    new THREE.Group();
+
+
+  if(world.name==="Meadow"){
+
+    const crystal=
+      new THREE.Mesh(
+
+        new THREE.OctahedronGeometry(
+          1.3
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0x7ff6ff,
+          emissive:0x2288aa,
+          emissiveIntensity:1
+        })
+
+      );
+
+
+    crystal.position.y=
+      1.3;
+
+    taskObject.add(crystal);
+
   }
-  ctx.globalAlpha=1;
-}
 
-function drawTree(X,Y,S){
-  const p=project(X,Y);if(!p)return;
-  const s=S*p.scale;if(s<2)return;
-  const w=worlds[level-1];
-  ctx.fillStyle="#203d2088";ctx.beginPath();ctx.ellipse(p.x,p.y+3,s,s*.2,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#66442b";ctx.fillRect(p.x-s*.14,p.y-s*3,s*.28,s*3);
-  ctx.fillStyle=w.tree;
-  ctx.beginPath();ctx.arc(p.x,p.y-s*3.3,s*1.05,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(p.x-s*.7,p.y-s*2.8,s*.72,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(p.x+s*.7,p.y-s*2.8,s*.72,0,Math.PI*2);ctx.fill();
-}
 
-function drawRock(X,Y,S){
-  const p=project(X,Y);if(!p)return;
-  const s=S*p.scale;if(s<2)return;
-  ctx.fillStyle=level===4?"#aebec2":"#777b72";
-  ctx.beginPath();ctx.ellipse(p.x,p.y,s,s*.52,0,0,Math.PI*2);ctx.fill();
-}
+  if(world.name==="Forest"){
 
-function drawSpecial(){
-  const w=worlds[level-1];
-  const p=project(taskObject.x,taskObject.y,25);
-  if(!p)return;
-  const s=Math.max(4,42*p.scale);
+    const trunk=
+      new THREE.Mesh(
 
-  /* Glowing task marker */
-  ctx.globalAlpha=.28;
-  ctx.fillStyle="#fff";
-  ctx.beginPath();ctx.arc(p.x,p.y,s*1.8,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=1;
+        new THREE.CylinderGeometry(
+          1.1,
+          1.4,
+          6,
+          10
+        ),
 
-  if(w.object==="crystal"){
-    ctx.fillStyle="#9ef6ff";
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y-s*1.8);ctx.lineTo(p.x+s,p.y+s*.7);
-    ctx.lineTo(p.x,p.y+s*1.4);ctx.lineTo(p.x-s,p.y+s*.7);ctx.closePath();ctx.fill();
-  }else if(w.object==="tree"){
-    drawTree(taskObject.x,taskObject.y,52);
-  }else if(w.object==="shrine"){
-    ctx.fillStyle="#9b6b34";ctx.fillRect(p.x-s,p.y-s,s*2,s*1.6);
-    ctx.fillStyle="#e8d18a";ctx.fillRect(p.x-s*1.3,p.y-s*1.2,s*2.6,s*.25);
-    ctx.fillRect(p.x-s*.9,p.y-s*1.8,s*.25,s*1.8);
-    ctx.fillRect(p.x+s*.65,p.y-s*1.8,s*.25,s*1.8);
-  }else if(w.object==="beacon"){
-    ctx.fillStyle="#d9ffff";ctx.fillRect(p.x-s*.35,p.y-s*2,s*.7,s*2.4);
-    ctx.fillStyle="#8ff6ff";ctx.beginPath();ctx.arc(p.x,p.y-s*2,s*.55,0,Math.PI*2);ctx.fill();
-  }else{
-    ctx.fillStyle="#70452b";ctx.fillRect(p.x-s,p.y-s*.7,s*2,s*1.2);
-    ctx.fillStyle="#d4a843";ctx.fillRect(p.x-s*.75,p.y-s*.45,s*1.5,s*.2);
-    ctx.fillStyle="#e6c45d";ctx.fillRect(p.x-s*.1,p.y-s*.1,s*.2,s*.35);
+        new THREE.MeshStandardMaterial({
+          color:0x55351f
+        })
+
+      );
+
+
+    trunk.position.y=3;
+
+    taskObject.add(trunk);
+
+
+    const leaves=
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          3,
+          12,
+          10
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0x175b2d
+        })
+
+      );
+
+
+    leaves.position.y=6;
+
+    taskObject.add(leaves);
+
   }
 
-  /* In-world floating task marker, not a UI level button. */
-  ctx.fillStyle="white";
-  ctx.font=Math.max(12,16*p.scale)+"px Arial";
-  ctx.textAlign="center";
-  ctx.fillText("TASK",p.x,p.y-s*2.3);
+
+  if(world.name==="Desert"){
+
+    const base=
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          3,
+          2,
+          3
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0x9a6934
+        })
+
+      );
+
+
+    base.position.y=1;
+
+    taskObject.add(base);
+
+
+    const roof=
+      new THREE.Mesh(
+
+        new THREE.ConeGeometry(
+          2.5,
+          1.5,
+          4
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0xe1c277
+        })
+
+      );
+
+
+    roof.position.y=2.75;
+
+    taskObject.add(roof);
+
+  }
+
+
+  if(world.name==="Snow Valley"){
+
+    const beacon=
+      new THREE.Mesh(
+
+        new THREE.CylinderGeometry(
+          .5,
+          .7,
+          4,
+          10
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0xd9ffff,
+          emissive:0x55ddff,
+          emissiveIntensity:1
+        })
+
+      );
+
+
+    beacon.position.y=2;
+
+    taskObject.add(beacon);
+
+  }
+
+
+  if(world.name==="Island"){
+
+    const chest=
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          2.4,
+          1.4,
+          1.5
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0x70452b
+        })
+
+      );
+
+
+    chest.position.y=.7;
+
+    taskObject.add(chest);
+
+
+    const gold=
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          1.5,
+          .2,
+          .2
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:0xf0c83e
+        })
+
+      );
+
+
+    gold.position.y=1.1;
+
+    taskObject.add(gold);
+
+  }
+
+
+  /* Put the task object far enough away to explore. */
+
+  const angle=
+    Math.random()*
+    Math.PI*2;
+
+
+  const distance=
+    35+Math.random()*25;
+
+
+  taskObject.position.set(
+    Math.cos(angle)*distance,
+    0,
+    Math.sin(angle)*distance
+  );
+
+
+  scene.add(taskObject);
+
 }
 
-function drawWorldObjects(){
-  const list=[];
-  /* Procedural scenery around the player. */
-  for(let ix=-9;ix<=9;ix++){
-    for(let iy=1;iy<=9;iy++){
-      const X=ix*150+(level*31);
-      const Y=iy*170+(ix%2)*60;
-      const dx=X-player.x,dy=Y-player.y;
-      const fw=dx*Math.cos(player.a)+dy*Math.sin(player.a);
-      if(fw>20)list.push({X,Y,fw,size:30+((Math.abs(ix)+iy)%3)*9});
-    }
-  }
-  list.sort((a,b)=>b.fw-a.fw);
-  for(const o of list){
-    if(level===3 && Math.abs(o.X+o.Y)%4===0){
-      /* Desert cactus */
-      const p=project(o.X,o.Y);if(!p)continue;
-      const s=o.size*p.scale;if(s<2)continue;
-      ctx.fillStyle="#4f8743";ctx.fillRect(p.x-s*.16,p.y-s*3,s*.32,s*3);
-      ctx.fillRect(p.x-s*.65,p.y-s*2.1,s*.5,s*.25);
-      ctx.fillRect(p.x+s*.15,p.y-s*1.5,s*.5,s*.25);
-    }else if(level===5 && Math.abs(o.X+o.Y)%4===0){
-      /* Island palm */
-      const p=project(o.X,o.Y);if(!p)continue;
-      const s=o.size*p.scale;if(s<2)continue;
-      ctx.strokeStyle="#76502e";ctx.lineWidth=Math.max(2,s*.18);
-      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-s*.15,p.y-s*3);ctx.stroke();
-      ctx.strokeStyle="#287a3c";ctx.lineWidth=Math.max(1,s*.12);
-      for(let k=0;k<6;k++){let a=k*Math.PI/3;ctx.beginPath();ctx.moveTo(p.x-s*.15,p.y-s*3);ctx.lineTo(p.x-s*.15+Math.cos(a)*s*1.4,p.y-s*3+Math.sin(a)*s*.7);ctx.stroke();}
+
+/* =========================
+   CREATE WORLD
+========================= */
+
+function createWorld(){
+
+  const world=
+    worlds[currentWorld-1];
+
+
+  scene.background=
+    new THREE.Color(
+      world.sky
+    );
+
+
+  scene.fog=
+    new THREE.Fog(
+      world.sky,
+      25,
+      170
+    );
+
+
+  /* Trees */
+
+  for(let i=0;i<75;i++){
+
+    const angle=
+      Math.random()*Math.PI*2;
+
+    const distance=
+      12+Math.random()*130;
+
+
+    if(world.name==="Desert"){
+
+      if(i%2===0){
+
+        makeTree(
+          Math.cos(angle)*distance,
+          Math.sin(angle)*distance,
+          .6
+        );
+
+      }else{
+
+        makeRock(
+          Math.cos(angle)*distance,
+          Math.sin(angle)*distance
+        );
+
+      }
+
     }else{
-      drawTree(o.X,o.Y,o.size);
+
+      makeTree(
+        Math.cos(angle)*distance,
+        Math.sin(angle)*distance,
+        .7+Math.random()*.7
+      );
+
     }
-  }
-  drawSpecial();
-}
 
-function update(dt){
-  if(input.l)player.a-=2.3*dt;
-  if(input.r)player.a+=2.3*dt;
-  const dir=(input.f?1:0)-(input.b?1:0);
-  if(dir){
-    player.x+=Math.cos(player.a)*player.speed*dir*dt;
-    player.y+=Math.sin(player.a)*player.speed*dir*dt;
   }
 
-  const dist=Math.hypot(taskObject.x-player.x,taskObject.y-player.y);
-  nearTask=dist<65 && !taskDone;
-  interact.style.display=nearTask?"block":"none";
+
+  createTaskObject();
+
 }
 
-function doTask(){
-  if(!nearTask || taskDone)return;
-  taskDone=true;
-  interact.style.display="none";
-  if(level<5){
-    showMessage("TASK COMPLETE! The next world is unlocked.");
-    setTimeout(()=>setWorld(level+1),1400);
+
+/* =========================
+   RESET WORLD
+========================= */
+
+function loadWorld(number){
+
+  currentWorld=
+    number;
+
+
+  worldNumber.textContent=
+    currentWorld;
+
+
+  taskText.textContent=
+    worlds[currentWorld-1].task;
+
+
+  /* Remove old world objects */
+
+  while(scene.children.length>0){
+
+    scene.remove(
+      scene.children[
+        scene.children.length-1
+      ]
+    );
+
+  }
+
+
+  /* Recreate lighting and world */
+
+  createScene();
+
+
+  taskReady=false;
+
+  actionButton.style.display=
+    "none";
+
+
+  showMessage(
+    "Welcome to "+
+    worlds[currentWorld-1].name
+  );
+
+}
+
+
+/* =========================
+   TASK CHECK
+========================= */
+
+function updateTask(){
+
+  if(!taskObject)
+    return;
+
+
+  const distance=
+    player.position.distanceTo(
+      taskObject.position
+    );
+
+
+  if(
+    distance<5 &&
+    !taskReady
+  ){
+
+    taskReady=true;
+
+    actionButton.style.display=
+      "block";
+
+    showMessage(
+      "You found the task! Press COMPLETE TASK."
+    );
+
+  }
+
+
+  if(distance>=5){
+
+    taskReady=false;
+
+    actionButton.style.display=
+      "none";
+
+  }
+
+}
+
+
+/* =========================
+   COMPLETE TASK
+========================= */
+
+function completeTask(){
+
+  if(!taskReady)
+    return;
+
+
+  actionButton.style.display=
+    "none";
+
+
+  if(currentWorld<5){
+
+    showMessage(
+      "Task complete! Next world unlocked!"
+    );
+
+
+    setTimeout(
+      ()=>{
+        loadWorld(
+          currentWorld+1
+        );
+      },
+      1200
+    );
+
+
   }else{
-    showMessage("FINAL TASK COMPLETE!");
-    setTimeout(()=>{running=false;done.style.display="flex"},1200);
+
+    running=false;
+
+    completeScreen.style.display=
+      "flex";
+
   }
-}
-interact.addEventListener("pointerdown",e=>{e.preventDefault();doTask()});
 
-function draw(){
-  drawSky();drawGround();drawWorldObjects();
 }
 
-function loop(t){
-  if(!running)return;
-  const dt=Math.min(.05,(t-last)/1000);last=t;
-  update(dt);draw();
-  requestAnimationFrame(loop);
+
+actionButton.addEventListener(
+  "pointerdown",
+  event=>{
+    event.preventDefault();
+    completeTask();
+  }
+);
+
+
+/* =========================
+   MOVEMENT
+========================= */
+
+function updateMovement(dt){
+
+  const speed=7;
+
+
+  if(input.left){
+
+    player.rotation.y+=
+      2.2*dt;
+
+  }
+
+
+  if(input.right){
+
+    player.rotation.y-=
+      2.2*dt;
+
+  }
+
+
+  let movement=0;
+
+
+  if(input.forward)
+    movement+=1;
+
+
+  if(input.back)
+    movement-=1;
+
+
+  if(movement!==0){
+
+    const direction=
+      new THREE.Vector3(
+        0,
+        0,
+        -1
+      );
+
+
+    direction.applyQuaternion(
+      player.quaternion
+    );
+
+
+    player.position.addScaledVector(
+      direction,
+      movement*speed*dt
+    );
+
+  }
+
+
+  /* Keep player above ground. */
+
+  player.position.y=1.2;
+
 }
 
-document.getElementById("play").addEventListener("click",()=>{
-  start.style.display="none";
-  done.style.display="none";
-  setWorld(1);
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function animate(){
+
+  if(!running)
+    return;
+
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  const dt=
+    Math.min(
+      clock.getDelta(),
+      .05
+    );
+
+
+  updateMovement(dt);
+
+  updateTask();
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+
+/* =========================
+   START GAME
+========================= */
+
+function startGame(){
+
+  startScreen.style.display=
+    "none";
+
+  completeScreen.style.display=
+    "none";
+
+
+  if(!scene){
+
+    currentWorld=1;
+
+    createScene();
+
+  }
+
+
   running=true;
-  last=performance.now();
-  draw();
-  requestAnimationFrame(loop);
-});
 
-document.getElementById("again").addEventListener("click",()=>{
-  done.style.display="none";
-  setWorld(1);
-  running=true;
-  last=performance.now();
-  requestAnimationFrame(loop);
-});
+  clock.start();
+
+  animate();
+
+}
+
+
+startButton.addEventListener(
+  "click",
+  startGame
+);
+
+
+againButton.addEventListener(
+  "click",
+  ()=>{
+
+    currentWorld=1;
+
+    if(scene){
+
+      renderer.domElement.remove();
+
+    }
+
+    scene=null;
+
+    startGame();
+
+  }
+);
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+  "resize",
+  ()=>{
+
+    if(!camera || !renderer)
+      return;
+
+
+    camera.aspect=
+      innerWidth/
+      innerHeight;
+
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+      innerWidth,
+      innerHeight
+    );
+
+  }
+);
+
 </script>
+
 </body>
 </html>
