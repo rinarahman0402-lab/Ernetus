@@ -1,954 +1,329 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Mini World</title>
-
 <style>
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    touch-action:none;
-    font-family:Arial,sans-serif;
-    background:#69c7e8;
-}
-
-canvas{
-    display:block;
-    width:100%;
-    height:100%;
-}
-
-#hud{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    pointer-events:none;
-    color:white;
-    text-shadow:0 2px 4px #000;
-    text-align:center;
-}
-
-#name{
-    font-size:28px;
-    font-weight:bold;
-    margin-top:12px;
-}
-
-#biome{
-    display:inline-block;
-    margin-top:7px;
-    padding:7px 15px;
-    border-radius:18px;
-    background:#0009;
-    font-weight:bold;
-}
-
-#controls{
-    position:fixed;
-    left:15px;
-    bottom:15px;
-    width:230px;
-    height:175px;
-}
-
-button{
-    font-family:Arial,sans-serif;
-    font-weight:bold;
-}
-
-.move{
-    position:absolute;
-    width:72px;
-    height:55px;
-    border:2px solid #ffffff77;
-    border-radius:15px;
-    background:#18251ddd;
-    color:white;
-    font-size:13px;
-    touch-action:none;
-}
-
-.move:active{
-    background:#4a8054;
-    transform:scale(.95);
-}
-
-#up{
-    left:79px;
-    top:0;
-}
-
-#down{
-    left:79px;
-    bottom:0;
-}
-
-#turnLeft{
-    left:0;
-    top:60px;
-}
-
-#turnRight{
-    right:0;
-    top:60px;
-}
-
-#worldButtons{
-    position:fixed;
-    right:15px;
-    bottom:15px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-}
-
-.world{
-    width:125px;
-    height:43px;
-    border:0;
-    border-radius:13px;
-    background:#18251ddd;
-    color:white;
-    font-size:13px;
-}
-
-.world:active{
-    transform:scale(.95);
-}
-
-#start{
-    position:fixed;
-    inset:0;
-    z-index:20;
-    background:linear-gradient(#61c8ec,#4d9d57);
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    text-align:center;
-    padding:25px;
-}
-
-#start h1{
-    font-size:45px;
-    margin:10px 0;
-}
-
-#start p{
-    font-size:18px;
-    line-height:1.5;
-    max-width:520px;
-}
-
-#startButton{
-    margin-top:15px;
-    border:0;
-    border-radius:17px;
-    padding:17px 35px;
-    font-size:21px;
-    background:#52d47a;
-    color:#082512;
-}
-
-#message{
-    position:fixed;
-    left:50%;
-    bottom:205px;
-    transform:translateX(-50%);
-    background:#000c;
-    color:white;
-    padding:10px 17px;
-    border-radius:17px;
-    display:none;
-    font-weight:bold;
-    white-space:nowrap;
-}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#6ec9e8;font-family:Arial,sans-serif;touch-action:none}
+canvas{width:100%;height:100%;display:block}
+#hud{position:fixed;top:10px;left:10px;right:10px;z-index:4;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.box{background:#0009;color:white;padding:8px 12px;border-radius:14px;font-weight:bold;text-shadow:0 2px 3px #000}
+#task{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:4;background:#000b;color:white;padding:9px 15px;border-radius:16px;text-align:center;font-weight:bold;max-width:90%;pointer-events:none}
+#controls{position:fixed;left:12px;bottom:12px;width:225px;height:160px;z-index:5}
+.ctrl{position:absolute;width:72px;height:52px;border:2px solid #fff7;border-radius:15px;background:#17251ddd;color:white;font-size:11px;font-weight:bold;touch-action:none}
+.ctrl:active{background:#4b8b4c;transform:scale(.95)}
+#forward{left:77px;top:0}#back{left:77px;bottom:0}#left{left:0;top:54px}#right{right:0;top:54px}
+#interact{position:fixed;right:15px;bottom:18px;z-index:5;width:105px;height:62px;border:0;border-radius:18px;background:#f4d35e;color:#173b1b;font-weight:bold;font-size:15px;display:none}
+#message{position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:6;background:#000d;color:white;padding:11px 17px;border-radius:16px;font-weight:bold;display:none;text-align:center;max-width:90%}
+#start{position:fixed;inset:0;z-index:20;background:linear-gradient(#59c6ea,#4d9950);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
+#start h1{font-size:clamp(38px,9vw,65px);margin:8px}
+#start p{font-size:18px;line-height:1.5;max-width:560px}
+#play{border:0;border-radius:18px;padding:17px 34px;background:#f4d35e;color:#173b1b;font-size:21px;font-weight:bold}
+#done{position:fixed;inset:0;z-index:30;background:#000d;color:white;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:25px}
+#again{border:0;border-radius:16px;padding:14px 26px;font-size:19px;font-weight:bold}
 </style>
 </head>
-
 <body>
-
 <canvas id="game"></canvas>
 
 <div id="hud">
-    <div id="name">Mini World</div>
-    <div id="biome">Grassland</div>
+  <div class="box">MINI WORLD</div>
+  <div class="box">LEVEL <span id="level">1</span> / 5</div>
 </div>
+<div id="task">TASK: Find the glowing crystal.</div>
 
 <div id="controls">
-    <button class="move" id="up">FORWARD</button>
-    <button class="move" id="down">BACK</button>
-    <button class="move" id="turnLeft">TURN LEFT</button>
-    <button class="move" id="turnRight">TURN RIGHT</button>
+  <button class="ctrl" id="forward">FORWARD</button>
+  <button class="ctrl" id="back">BACK</button>
+  <button class="ctrl" id="left">TURN LEFT</button>
+  <button class="ctrl" id="right">TURN RIGHT</button>
 </div>
 
-<div id="worldButtons">
-    <button class="world" onclick="changeBiome('grass')">GRASSLAND</button>
-    <button class="world" onclick="changeBiome('forest')">FOREST</button>
-    <button class="world" onclick="changeBiome('desert')">DESERT</button>
-    <button class="world" onclick="changeBiome('snow')">SNOWLAND</button>
-    <button class="world" onclick="changeBiome('island')">ISLAND</button>
-</div>
-
+<button id="interact">DO TASK</button>
 <div id="message"></div>
 
 <div id="start">
-    <div style="font-size:75px;">Mini World</div>
-    <h1>Mini World</h1>
-    <p>
-        Explore a huge world with different biomes.
-        Travel through grasslands, forests, deserts,
-        snowy lands and islands.
-    </p>
-    <button id="startButton">START GAME</button>
+  <div style="font-size:72px">🌎</div>
+  <h1>Mini World</h1>
+  <p>Explore a real adventure world. Complete the task in each biome to unlock the next one. There are no level buttons — you discover the way forward by playing.</p>
+  <button id="play">START ADVENTURE</button>
+</div>
+
+<div id="done">
+  <div style="font-size:75px">🏆</div>
+  <h1>MINI WORLD COMPLETE!</h1>
+  <p>You completed all five worlds and every task.</p>
+  <button id="again">PLAY AGAIN</button>
 </div>
 
 <script>
 "use strict";
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const levelEl=document.getElementById("level");
+const taskEl=document.getElementById("task");
+const interact=document.getElementById("interact");
+const message=document.getElementById("message");
+const start=document.getElementById("start");
+const done=document.getElementById("done");
 
-let W=0;
-let H=0;
-
+let W=innerWidth,H=innerHeight,dpr=1;
 function resize(){
-    W=window.innerWidth;
-    H=window.innerHeight;
+  W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize);resize();
 
-    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+const player={x:0,y:0,a:0,speed:90};
+const input={f:false,b:false,l:false,r:false};
+let running=false,last=0,level=1,taskDone=false,nearTask=false;
 
-    canvas.width=Math.floor(W*dpr);
-    canvas.height=Math.floor(H*dpr);
+/* Five worlds. A completed task unlocks the next biome. */
+const worlds=[
+  {name:"Meadow",sky:"#69c9eb",ground:"#5ca346",tree:"#28763b",task:"Find the glowing crystal and press DO TASK.",object:"crystal"},
+  {name:"Forest",sky:"#5faecb",ground:"#376f3b",tree:"#17582d",task:"Find the ancient tree and press DO TASK.",object:"tree"},
+  {name:"Desert",sky:"#e6c277",ground:"#d3a04b",tree:"#4f8743",task:"Find the desert shrine and press DO TASK.",object:"shrine"},
+  {name:"Snow Valley",sky:"#a9d9ea",ground:"#e5eeee",tree:"#286342",task:"Find the frozen beacon and press DO TASK.",object:"beacon"},
+  {name:"Island",sky:"#55c8e8",ground:"#d5bb69",tree:"#26803e",task:"Find the treasure chest and press DO TASK.",object:"chest"}
+];
 
-    canvas.style.width=W+"px";
-    canvas.style.height=H+"px";
+let taskObject={x:0,y:0};
+let worldSeed=7001;
 
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+function rand(){
+  worldSeed=(worldSeed*1664525+1013904223)>>>0;
+  return worldSeed/4294967296;
 }
 
-window.addEventListener("resize",resize);
-resize();
-
-
-/* =========================
-   PLAYER
-========================= */
-
-const player={
-    x:0,
-    y:0,
-    angle:0,
-    speed:125
-};
-
-
-/* =========================
-   CONTROLS
-========================= */
-
-const controls={
-    forward:false,
-    back:false,
-    left:false,
-    right:false
-};
-
-function hold(id,name){
-
-    const b=document.getElementById(id);
-
-    b.addEventListener("pointerdown",e=>{
-        e.preventDefault();
-        controls[name]=true;
-        b.setPointerCapture(e.pointerId);
-    });
-
-    b.addEventListener("pointerup",()=>{
-        controls[name]=false;
-    });
-
-    b.addEventListener("pointercancel",()=>{
-        controls[name]=false;
-    });
-
-    b.addEventListener("lostpointercapture",()=>{
-        controls[name]=false;
-    });
+function setWorld(n){
+  level=n;
+  taskDone=false;
+  nearTask=false;
+  player.x=0;player.y=0;player.a=0;
+  const angle=rand()*Math.PI*2;
+  const distance=250;
+  taskObject={x:Math.cos(angle)*distance,y:Math.sin(angle)*distance};
+  levelEl.textContent=level;
+  taskEl.textContent="TASK: "+worlds[level-1].task;
+  interact.style.display="none";
+  showMessage("Entering "+worlds[level-1].name);
 }
 
-hold("up","forward");
-hold("down","back");
-hold("turnLeft","left");
-hold("turnRight","right");
-
-
-/* =========================
-   BIOMES
-========================= */
-
-let currentBiome="grass";
-
-const biomeData={
-    grass:{
-        name:"Grassland",
-        sky:"#71cbea",
-        ground:"#65a947",
-        ground2:"#4f9139",
-        tree:"#2f7c35",
-        trunk:"#69452c"
-    },
-
-    forest:{
-        name:"Forest",
-        sky:"#70b9dc",
-        ground:"#39753a",
-        ground2:"#2c6030",
-        tree:"#17582b",
-        trunk:"#4d3423"
-    },
-
-    desert:{
-        name:"Desert",
-        sky:"#e9c77a",
-        ground:"#d7a952",
-        ground2:"#c4933d",
-        tree:"#568c45",
-        trunk:"#72502c"
-    },
-
-    snow:{
-        name:"Snowland",
-        sky:"#9ed7ee",
-        ground:"#e8f1f3",
-        ground2:"#cbdde2",
-        tree:"#28633e",
-        trunk:"#5b4935"
-    },
-
-    island:{
-        name:"Island",
-        sky:"#54c6e7",
-        ground:"#d9bd68",
-        ground2:"#4caa4d",
-        tree:"#26803d",
-        trunk:"#67462c"
-    }
-};
-
-function changeBiome(name){
-
-    currentBiome=name;
-
-    document.getElementById("biome").textContent=
-        biomeData[name].name;
-
-    player.x=0;
-    player.y=0;
-
-    showMessage(
-        "Exploring "+biomeData[name].name
-    );
+function bindHold(id,key){
+  const el=document.getElementById(id);
+  const down=e=>{e.preventDefault();input[key]=true};
+  const up=e=>{e.preventDefault();input[key]=false};
+  el.addEventListener("pointerdown",down);
+  el.addEventListener("pointerup",up);
+  el.addEventListener("pointercancel",up);
+  el.addEventListener("pointerleave",up);
 }
-
-
-/* =========================
-   WORLD OBJECTS
-========================= */
-
-let objects=[];
-
-let seed=93741;
-
-function random(){
-
-    seed=(seed*1664525+1013904223)>>>0;
-
-    return seed/4294967296;
-}
-
-function makeWorld(){
-
-    objects=[];
-
-    for(let i=0;i<180;i++){
-
-        const a=random()*Math.PI*2;
-        const d=120+random()*1200;
-
-        objects.push({
-            x:Math.cos(a)*d,
-            y:Math.sin(a)*d,
-            size:20+random()*45,
-            type:random()
-        });
-    }
-}
-
-makeWorld();
-
-
-/* =========================
-   CAMERA PROJECTION
-========================= */
-
-function project(x,y){
-
-    const dx=x-player.x;
-    const dy=y-player.y;
-
-    const c=Math.cos(player.angle);
-    const s=Math.sin(player.angle);
-
-    const forward=dx*c+dy*s;
-    const side=-dx*s+dy*c;
-
-    if(forward<8)return null;
-
-    const scale=520/forward;
-
-    return{
-        x:W/2+side*scale,
-        y:H*.52,
-        scale:scale,
-        depth:forward
-    };
-}
-
-
-/* =========================
-   SKY
-========================= */
-
-function drawSky(){
-
-    const b=biomeData[currentBiome];
-
-    const g=ctx.createLinearGradient(
-        0,0,0,H*.55
-    );
-
-    g.addColorStop(0,b.sky);
-    g.addColorStop(1,"#d7edf2");
-
-    ctx.fillStyle=g;
-
-    ctx.fillRect(0,0,W,H);
-}
-
-
-/* =========================
-   GROUND
-========================= */
-
-function drawGround(){
-
-    const b=biomeData[currentBiome];
-
-    ctx.fillStyle=b.ground;
-
-    ctx.fillRect(
-        0,
-        H*.52,
-        W,
-        H*.48
-    );
-
-    ctx.globalAlpha=.25;
-
-    ctx.strokeStyle=b.ground2;
-
-    for(let i=0;i<12;i++){
-
-        const y=
-            H*.52+
-            Math.pow(i/11,1.7)*H*.48;
-
-        ctx.beginPath();
-
-        ctx.moveTo(0,y);
-        ctx.lineTo(W,y);
-
-        ctx.stroke();
-    }
-
-    ctx.globalAlpha=1;
-}
-
-
-/* =========================
-   TREE
-========================= */
-
-function drawTree(o){
-
-    const p=project(o.x,o.y);
-
-    if(!p)return;
-
-    if(p.x<-200||p.x>W+200)return;
-
-    const b=biomeData[currentBiome];
-
-    const s=o.size*p.scale;
-
-    if(s<2)return;
-
-    /*
-       Shadow
-    */
-
-    ctx.fillStyle="#16351a66";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        p.x,
-        p.y+4,
-        s*.9,
-        s*.22,
-        0,0,Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    /*
-       Trunk
-    */
-
-    ctx.fillStyle=b.trunk;
-
-    ctx.fillRect(
-        p.x-s*.16,
-        p.y-s*3,
-        s*.32,
-        s*3
-    );
-
-
-    /*
-       Leaves
-    */
-
-    ctx.fillStyle=b.tree;
-
-    ctx.beginPath();
-
-    ctx.arc(
-        p.x,
-        p.y-s*3.4,
-        s*1.05,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-    ctx.beginPath();
-
-    ctx.arc(
-        p.x-s*.7,
-        p.y-s*2.8,
-        s*.75,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-    ctx.beginPath();
-
-    ctx.arc(
-        p.x+s*.7,
-        p.y-s*2.8,
-        s*.75,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-}
-
-
-/* =========================
-   ROCK
-========================= */
-
-function drawRock(o){
-
-    const p=project(o.x,o.y);
-
-    if(!p)return;
-
-    const s=o.size*p.scale;
-
-    if(s<2)return;
-
-    let color="#777";
-
-    if(currentBiome==="desert"){
-        color="#a47743";
-    }
-
-    if(currentBiome==="snow"){
-        color="#9caeb2";
-    }
-
-    ctx.fillStyle=color;
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        p.x,
-        p.y,
-        s,
-        s*.55,
-        0,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-}
-
-
-/* =========================
-   CACTUS
-========================= */
-
-function drawCactus(o){
-
-    const p=project(o.x,o.y);
-
-    if(!p)return;
-
-    const s=o.size*p.scale;
-
-    if(s<2)return;
-
-    ctx.fillStyle="#4d873d";
-
-    ctx.fillRect(
-        p.x-s*.18,
-        p.y-s*3,
-        s*.36,
-        s*3
-    );
-
-    ctx.fillRect(
-        p.x-s*.65,
-        p.y-s*2.1,
-        s*.5,
-        s*.28
-    );
-
-    ctx.fillRect(
-        p.x+s*.2,
-        p.y-s*1.6,
-        s*.5,
-        s*.28
-    );
-}
-
-
-/* =========================
-   SNOW TREE
-========================= */
-
-function drawSnowTree(o){
-
-    const p=project(o.x,o.y);
-
-    if(!p)return;
-
-    const s=o.size*p.scale;
-
-    if(s<2)return;
-
-    ctx.fillStyle="#665442";
-
-    ctx.fillRect(
-        p.x-s*.12,
-        p.y-s*3,
-        s*.24,
-        s*3
-    );
-
-    ctx.fillStyle="#f4f7f8";
-
-    for(let i=0;i<3;i++){
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            p.x,
-            p.y-s*(4-i*.7)
-        );
-
-        ctx.lineTo(
-            p.x-s*(1.1-i*.2),
-            p.y-s*(2.7-i*.5)
-        );
-
-        ctx.lineTo(
-            p.x+s*(1.1-i*.2),
-            p.y-s*(2.7-i*.5)
-        );
-
-        ctx.closePath();
-
-        ctx.fill();
-    }
-}
-
-
-/* =========================
-   ISLAND PALM
-========================= */
-
-function drawPalm(o){
-
-    const p=project(o.x,o.y);
-
-    if(!p)return;
-
-    const s=o.size*p.scale;
-
-    if(s<2)return;
-
-    ctx.strokeStyle="#75502d";
-    ctx.lineWidth=Math.max(2,s*.18);
-
-    ctx.beginPath();
-
-    ctx.moveTo(p.x,p.y);
-    ctx.lineTo(
-        p.x-s*.15,
-        p.y-s*3
-    );
-
-    ctx.stroke();
-
-    ctx.strokeStyle="#28783b";
-    ctx.lineWidth=Math.max(1,s*.12);
-
-    for(let i=0;i<6;i++){
-
-        const a=
-            i*Math.PI/3;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            p.x-s*.15,
-            p.y-s*3
-        );
-
-        ctx.lineTo(
-            p.x-s*.15+
-            Math.cos(a)*s*1.3,
-            p.y-s*3+
-            Math.sin(a)*s*.7
-        );
-
-        ctx.stroke();
-    }
-}
-
-
-/* =========================
-   DRAW WORLD
-========================= */
-
-function drawObjects(){
-
-    const visible=[];
-
-    for(const o of objects){
-
-        const dx=o.x-player.x;
-        const dy=o.y-player.y;
-
-        const c=Math.cos(player.angle);
-        const s=Math.sin(player.angle);
-
-        const depth=dx*c+dy*s;
-
-        if(depth>8){
-
-            visible.push({
-                depth:depth,
-                object:o
-            });
-        }
-    }
-
-    visible.sort(
-        (a,b)=>b.depth-a.depth
-    );
-
-    for(const v of visible){
-
-        const o=v.object;
-
-        if(currentBiome==="desert" &&
-           o.type<.25){
-
-            drawCactus(o);
-
-        }else if(currentBiome==="snow" &&
-                 o.type<.55){
-
-            drawSnowTree(o);
-
-        }else if(currentBiome==="island" &&
-                 o.type<.45){
-
-            drawPalm(o);
-
-        }else if(o.type<.72){
-
-            drawTree(o);
-
-        }else{
-
-            drawRock(o);
-        }
-    }
-}
-
-
-/* =========================
-   MOVEMENT
-========================= */
-
-function update(dt){
-
-    /*
-       Correct controls:
-       FORWARD = forward
-       BACK = backward
-       LEFT = left turn
-       RIGHT = right turn
-    */
-
-    if(controls.left){
-        player.angle-=2.4*dt;
-    }
-
-    if(controls.right){
-        player.angle+=2.4*dt;
-    }
-
-    let direction=0;
-
-    if(controls.forward){
-        direction+=1;
-    }
-
-    if(controls.back){
-        direction-=1;
-    }
-
-    if(direction!==0){
-
-        player.x+=
-            Math.cos(player.angle)*
-            player.speed*
-            direction*
-            dt;
-
-        player.y+=
-            Math.sin(player.angle)*
-            player.speed*
-            direction*
-            dt;
-    }
-}
-
-
-/* =========================
-   MESSAGE
-========================= */
-
-let messageTimer=0;
-
-function showMessage(text){
-
-    const m=document.getElementById("message");
-
-    m.textContent=text;
-    m.style.display="block";
-
-    clearTimeout(messageTimer);
-
-    messageTimer=setTimeout(()=>{
-        m.style.display="none";
-    },1500);
-}
-
-
-/* =========================
-   GAME LOOP
-========================= */
-
-let running=false;
-let last=performance.now();
-
-function loop(now){
-
-    if(!running)return;
-
-    const dt=Math.min(
-        (now-last)/1000,
-        .05
-    );
-
-    last=now;
-
-    update(dt);
-
-    drawSky();
-    drawGround();
-    drawObjects();
-
-    requestAnimationFrame(loop);
-}
-
-
-/* =========================
-   START
-========================= */
-
-document.getElementById(
-    "startButton"
-).addEventListener("click",()=>{
-
-    document.getElementById(
-        "start"
-    ).style.display="none";
-
-    running=true;
-    last=performance.now();
-
-    requestAnimationFrame(loop);
+bindHold("forward","f");bindHold("back","b");bindHold("left","l");bindHold("right","r");
+
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")input.f=true;
+  if(e.key==="ArrowDown")input.b=true;
+  if(e.key==="ArrowLeft")input.l=true;
+  if(e.key==="ArrowRight")input.r=true;
+});
+addEventListener("keyup",e=>{
+  if(e.key==="ArrowUp")input.f=false;
+  if(e.key==="ArrowDown")input.b=false;
+  if(e.key==="ArrowLeft")input.l=false;
+  if(e.key==="ArrowRight")input.r=false;
 });
 
-</script>
+function showMessage(t){
+  message.textContent=t;message.style.display="block";
+  clearTimeout(showMessage.timer);
+  showMessage.timer=setTimeout(()=>message.style.display="none",1800);
+}
 
+/* Perspective projection creates the 3D-looking world without external libraries. */
+function project(X,Y,height=0){
+  const dx=X-player.x,dy=Y-player.y;
+  const c=Math.cos(player.a),s=Math.sin(player.a);
+  const forward=dx*c+dy*s;
+  const side=-dx*s+dy*c;
+  if(forward<15)return null;
+  const scale=600/forward;
+  return {x:W/2+side*scale,y:H*.55-height*scale,scale,depth:forward};
+}
+
+function drawSky(){
+  const w=worlds[level-1];
+  const g=ctx.createLinearGradient(0,0,0,H*.55);
+  g.addColorStop(0,w.sky);g.addColorStop(1,"#d9eef2");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+function drawGround(){
+  const w=worlds[level-1];
+  ctx.fillStyle=w.ground;ctx.fillRect(0,H*.55,W,H*.45);
+  ctx.strokeStyle=w.ground;ctx.globalAlpha=.55;
+  for(let i=0;i<14;i++){
+    const y=H*.55+Math.pow(i/13,1.7)*H*.45;
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawTree(X,Y,S){
+  const p=project(X,Y);if(!p)return;
+  const s=S*p.scale;if(s<2)return;
+  const w=worlds[level-1];
+  ctx.fillStyle="#203d2088";ctx.beginPath();ctx.ellipse(p.x,p.y+3,s,s*.2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#66442b";ctx.fillRect(p.x-s*.14,p.y-s*3,s*.28,s*3);
+  ctx.fillStyle=w.tree;
+  ctx.beginPath();ctx.arc(p.x,p.y-s*3.3,s*1.05,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(p.x-s*.7,p.y-s*2.8,s*.72,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(p.x+s*.7,p.y-s*2.8,s*.72,0,Math.PI*2);ctx.fill();
+}
+
+function drawRock(X,Y,S){
+  const p=project(X,Y);if(!p)return;
+  const s=S*p.scale;if(s<2)return;
+  ctx.fillStyle=level===4?"#aebec2":"#777b72";
+  ctx.beginPath();ctx.ellipse(p.x,p.y,s,s*.52,0,0,Math.PI*2);ctx.fill();
+}
+
+function drawSpecial(){
+  const w=worlds[level-1];
+  const p=project(taskObject.x,taskObject.y,25);
+  if(!p)return;
+  const s=Math.max(4,42*p.scale);
+
+  /* Glowing task marker */
+  ctx.globalAlpha=.28;
+  ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.arc(p.x,p.y,s*1.8,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+
+  if(w.object==="crystal"){
+    ctx.fillStyle="#9ef6ff";
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y-s*1.8);ctx.lineTo(p.x+s,p.y+s*.7);
+    ctx.lineTo(p.x,p.y+s*1.4);ctx.lineTo(p.x-s,p.y+s*.7);ctx.closePath();ctx.fill();
+  }else if(w.object==="tree"){
+    drawTree(taskObject.x,taskObject.y,52);
+  }else if(w.object==="shrine"){
+    ctx.fillStyle="#9b6b34";ctx.fillRect(p.x-s,p.y-s,s*2,s*1.6);
+    ctx.fillStyle="#e8d18a";ctx.fillRect(p.x-s*1.3,p.y-s*1.2,s*2.6,s*.25);
+    ctx.fillRect(p.x-s*.9,p.y-s*1.8,s*.25,s*1.8);
+    ctx.fillRect(p.x+s*.65,p.y-s*1.8,s*.25,s*1.8);
+  }else if(w.object==="beacon"){
+    ctx.fillStyle="#d9ffff";ctx.fillRect(p.x-s*.35,p.y-s*2,s*.7,s*2.4);
+    ctx.fillStyle="#8ff6ff";ctx.beginPath();ctx.arc(p.x,p.y-s*2,s*.55,0,Math.PI*2);ctx.fill();
+  }else{
+    ctx.fillStyle="#70452b";ctx.fillRect(p.x-s,p.y-s*.7,s*2,s*1.2);
+    ctx.fillStyle="#d4a843";ctx.fillRect(p.x-s*.75,p.y-s*.45,s*1.5,s*.2);
+    ctx.fillStyle="#e6c45d";ctx.fillRect(p.x-s*.1,p.y-s*.1,s*.2,s*.35);
+  }
+
+  /* In-world floating task marker, not a UI level button. */
+  ctx.fillStyle="white";
+  ctx.font=Math.max(12,16*p.scale)+"px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("TASK",p.x,p.y-s*2.3);
+}
+
+function drawWorldObjects(){
+  const list=[];
+  /* Procedural scenery around the player. */
+  for(let ix=-9;ix<=9;ix++){
+    for(let iy=1;iy<=9;iy++){
+      const X=ix*150+(level*31);
+      const Y=iy*170+(ix%2)*60;
+      const dx=X-player.x,dy=Y-player.y;
+      const fw=dx*Math.cos(player.a)+dy*Math.sin(player.a);
+      if(fw>20)list.push({X,Y,fw,size:30+((Math.abs(ix)+iy)%3)*9});
+    }
+  }
+  list.sort((a,b)=>b.fw-a.fw);
+  for(const o of list){
+    if(level===3 && Math.abs(o.X+o.Y)%4===0){
+      /* Desert cactus */
+      const p=project(o.X,o.Y);if(!p)continue;
+      const s=o.size*p.scale;if(s<2)continue;
+      ctx.fillStyle="#4f8743";ctx.fillRect(p.x-s*.16,p.y-s*3,s*.32,s*3);
+      ctx.fillRect(p.x-s*.65,p.y-s*2.1,s*.5,s*.25);
+      ctx.fillRect(p.x+s*.15,p.y-s*1.5,s*.5,s*.25);
+    }else if(level===5 && Math.abs(o.X+o.Y)%4===0){
+      /* Island palm */
+      const p=project(o.X,o.Y);if(!p)continue;
+      const s=o.size*p.scale;if(s<2)continue;
+      ctx.strokeStyle="#76502e";ctx.lineWidth=Math.max(2,s*.18);
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-s*.15,p.y-s*3);ctx.stroke();
+      ctx.strokeStyle="#287a3c";ctx.lineWidth=Math.max(1,s*.12);
+      for(let k=0;k<6;k++){let a=k*Math.PI/3;ctx.beginPath();ctx.moveTo(p.x-s*.15,p.y-s*3);ctx.lineTo(p.x-s*.15+Math.cos(a)*s*1.4,p.y-s*3+Math.sin(a)*s*.7);ctx.stroke();}
+    }else{
+      drawTree(o.X,o.Y,o.size);
+    }
+  }
+  drawSpecial();
+}
+
+function update(dt){
+  if(input.l)player.a-=2.3*dt;
+  if(input.r)player.a+=2.3*dt;
+  const dir=(input.f?1:0)-(input.b?1:0);
+  if(dir){
+    player.x+=Math.cos(player.a)*player.speed*dir*dt;
+    player.y+=Math.sin(player.a)*player.speed*dir*dt;
+  }
+
+  const dist=Math.hypot(taskObject.x-player.x,taskObject.y-player.y);
+  nearTask=dist<65 && !taskDone;
+  interact.style.display=nearTask?"block":"none";
+}
+
+function doTask(){
+  if(!nearTask || taskDone)return;
+  taskDone=true;
+  interact.style.display="none";
+  if(level<5){
+    showMessage("TASK COMPLETE! The next world is unlocked.");
+    setTimeout(()=>setWorld(level+1),1400);
+  }else{
+    showMessage("FINAL TASK COMPLETE!");
+    setTimeout(()=>{running=false;done.style.display="flex"},1200);
+  }
+}
+interact.addEventListener("pointerdown",e=>{e.preventDefault();doTask()});
+
+function draw(){
+  drawSky();drawGround();drawWorldObjects();
+}
+
+function loop(t){
+  if(!running)return;
+  const dt=Math.min(.05,(t-last)/1000);last=t;
+  update(dt);draw();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("play").addEventListener("click",()=>{
+  start.style.display="none";
+  done.style.display="none";
+  setWorld(1);
+  running=true;
+  last=performance.now();
+  draw();
+  requestAnimationFrame(loop);
+});
+
+document.getElementById("again").addEventListener("click",()=>{
+  done.style.display="none";
+  setWorld(1);
+  running=true;
+  last=performance.now();
+  requestAnimationFrame(loop);
+});
+</script>
 </body>
 </html>
-```
