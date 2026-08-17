@@ -1,155 +1,459 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
 <title>Mantis Adventure 3D</title>
 
 <style>
+*{
+    box-sizing:border-box;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+}
+
 html,body{
- margin:0;width:100%;height:100%;overflow:hidden;
- background:#87ceeb;font-family:Arial,sans-serif;touch-action:none
-}
-canvas{display:block}
-
-#start,#win{
- position:fixed;inset:0;z-index:20;
- display:flex;flex-direction:column;
- align-items:center;justify-content:center;
- text-align:center;color:white;
- background:linear-gradient(#55bde8,#3f873f);
- padding:25px
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#72cbea;
+    touch-action:none;
+    font-family:Arial,sans-serif;
 }
 
-#win{display:none}
-
-h1{font-size:clamp(36px,9vw,68px);margin:8px}
-p{font-size:18px;max-width:600px;line-height:1.45}
-
-button{
- border:0;border-radius:17px;
- padding:16px 28px;
- font-weight:bold;font-size:19px;
- background:#f4d35e;color:#183719
+canvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
 }
+
+/* ---------- GAME UI ---------- */
 
 #hud{
- position:fixed;top:10px;left:10px;right:10px;
- z-index:5;display:flex;
- justify-content:space-between;
- pointer-events:none
+    position:fixed;
+    top:10px;
+    left:10px;
+    right:10px;
+    z-index:10;
+
+    display:flex;
+    justify-content:space-between;
+
+    pointer-events:none;
 }
 
-.box{
- background:#000b;color:#fff;
- padding:9px 13px;
- border-radius:14px;
- font-weight:bold
+.hudBox{
+    background:rgba(0,0,0,.72);
+    color:white;
+    padding:9px 13px;
+    border-radius:14px;
+    font-weight:bold;
+
+    -webkit-user-select:none;
+    user-select:none;
 }
 
 #task{
- position:fixed;top:58px;left:50%;
- transform:translateX(-50%);
- z-index:5;background:#000b;color:#fff;
- padding:9px 14px;border-radius:14px;
- font-weight:bold;text-align:center;
- max-width:90%;pointer-events:none
+    position:fixed;
+    top:58px;
+    left:50%;
+    transform:translateX(-50%);
+
+    z-index:10;
+
+    background:rgba(0,0,0,.72);
+    color:white;
+
+    padding:9px 15px;
+    border-radius:15px;
+
+    font-weight:bold;
+    text-align:center;
+
+    max-width:90%;
+
+    pointer-events:none;
+    -webkit-user-select:none;
+    user-select:none;
 }
+
+/* ---------- START SCREEN ---------- */
+
+#startScreen,
+#winScreen{
+
+    position:fixed;
+    inset:0;
+
+    z-index:50;
+
+    display:flex;
+    flex-direction:column;
+
+    align-items:center;
+    justify-content:center;
+
+    text-align:center;
+
+    color:white;
+
+    background:
+        linear-gradient(
+            #55c5e8,
+            #438842
+        );
+
+    padding:25px;
+}
+
+#winScreen{
+    display:none;
+}
+
+.title{
+    font-size:clamp(38px,9vw,68px);
+    margin:10px;
+}
+
+.description{
+    max-width:600px;
+    font-size:18px;
+    line-height:1.5;
+}
+
+.bigButton{
+
+    border:none;
+
+    border-radius:18px;
+
+    padding:17px 32px;
+
+    background:#f4d35e;
+    color:#173b1b;
+
+    font-size:21px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    -webkit-user-select:none;
+    user-select:none;
+
+    touch-action:manipulation;
+}
+
+/* ---------- MOVEMENT CONTROLS ---------- */
 
 #controls{
- position:fixed;left:12px;bottom:13px;
- width:225px;height:160px;z-index:6
+
+    position:fixed;
+
+    left:12px;
+    bottom:13px;
+
+    width:240px;
+    height:170px;
+
+    z-index:20;
+
+    pointer-events:none;
 }
 
-.c{
- position:absolute;width:72px;height:52px;
- border:2px solid #fff8;
- border-radius:15px;
- background:#17251ddd;color:white;
- font-size:11px;font-weight:bold
+.moveButton{
+
+    position:absolute;
+
+    width:78px;
+    height:56px;
+
+    padding:0;
+    margin:0;
+
+    border:2px solid rgba(255,255,255,.65);
+
+    border-radius:16px;
+
+    background:rgba(20,35,30,.88);
+
+    color:white;
+
+    font-family:Arial,sans-serif;
+    font-size:11px;
+    font-weight:bold;
+
+    text-align:center;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    cursor:pointer;
+
+    pointer-events:auto;
+
+    /*
+       THIS prevents the browser from
+       treating the words as selectable text.
+    */
+
+    -webkit-user-select:none;
+    user-select:none;
+
+    -webkit-touch-callout:none;
+
+    touch-action:none;
+
+    outline:none;
 }
 
-.c:active{
- transform:scale(.95);
- background:#4b8d4b
+.moveButton:active{
+
+    background:rgba(75,140,75,.95);
+
+    transform:scale(.94);
 }
 
-#f{left:77px;top:0}
-#b{left:77px;bottom:0}
-#l{left:0;top:54px}
-#r{right:0;top:54px}
+/* The text is INSIDE these buttons */
 
-#catch{
- position:fixed;right:14px;bottom:18px;
- z-index:7;display:none
+#forward{
+    left:81px;
+    top:0;
 }
 
-#msg{
- position:fixed;bottom:95px;left:50%;
- transform:translateX(-50%);
- z-index:8;background:#000d;color:#fff;
- padding:10px 16px;border-radius:15px;
- display:none;font-weight:bold
+#back{
+    left:81px;
+    bottom:0;
+}
+
+#left{
+    left:0;
+    top:57px;
+}
+
+#right{
+    right:0;
+    top:57px;
+}
+
+/* ---------- CATCH BUTTON ---------- */
+
+#catchButton{
+
+    position:fixed;
+
+    right:15px;
+    bottom:20px;
+
+    z-index:20;
+
+    display:none;
+
+    min-width:125px;
+    height:62px;
+
+    border:none;
+    border-radius:18px;
+
+    background:#f4d35e;
+    color:#173b1b;
+
+    font-size:16px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    -webkit-user-select:none;
+    user-select:none;
+
+    touch-action:none;
+}
+
+/* ---------- MESSAGE ---------- */
+
+#message{
+
+    position:fixed;
+
+    left:50%;
+    bottom:100px;
+
+    transform:translateX(-50%);
+
+    z-index:30;
+
+    display:none;
+
+    background:rgba(0,0,0,.82);
+
+    color:white;
+
+    padding:11px 17px;
+
+    border-radius:16px;
+
+    font-weight:bold;
+
+    text-align:center;
+
+    max-width:90%;
+
+    pointer-events:none;
+
+    -webkit-user-select:none;
+    user-select:none;
 }
 </style>
+
+<script type="importmap">
+{
+    "imports":{
+        "three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js"
+    }
+}
+</script>
+
 </head>
 
 <body>
 
-<div id="start">
-<div style="font-size:80px">🦗</div>
-<h1>Mantis Adventure 3D</h1>
-<p>
-Explore a giant 3D forest from the mantis's point of view.
-Catch 15 ants while giant animals roam the world.
-</p>
-<button id="play">PLAY GAME</button>
+<!-- =========================
+     START SCREEN
+========================= -->
+
+<div id="startScreen">
+
+    <div style="font-size:80px">🦗</div>
+
+    <h1 class="title">
+        Mantis Adventure 3D
+    </h1>
+
+    <p class="description">
+        Explore the giant forest from the mantis's point of view.
+        Find and catch all 15 ants.
+    </p>
+
+    <button
+        class="bigButton"
+        id="playButton">
+        PLAY GAME
+    </button>
+
 </div>
 
-<div id="win">
-<div style="font-size:80px">🦗</div>
-<h1>15 ANTS CAUGHT!</h1>
-<p>You completed Mantis Adventure.</p>
-<button id="again">PLAY AGAIN</button>
+
+<!-- =========================
+     WIN SCREEN
+========================= -->
+
+<div id="winScreen">
+
+    <div style="font-size:80px">🦗</div>
+
+    <h1 class="title">
+        YOU CAUGHT ALL 15 ANTS!
+    </h1>
+
+    <p class="description">
+        You completed Mantis Adventure.
+    </p>
+
+    <button
+        class="bigButton"
+        id="againButton">
+        PLAY AGAIN
+    </button>
+
 </div>
+
+
+<!-- =========================
+     GAME HUD
+========================= -->
 
 <div id="hud">
-<div class="box">MANTIS ADVENTURE 3D</div>
-<div class="box">ANTS: <span id="score">0</span> / 15</div>
+
+    <div class="hudBox">
+        MANTIS ADVENTURE 3D
+    </div>
+
+    <div class="hudBox">
+        ANTS:
+        <span id="score">
+            0
+        </span>
+        / 15
+    </div>
+
 </div>
+
 
 <div id="task">
-Explore the forest and find the ants.
+    Explore the forest and find the ants.
 </div>
+
+
+<!-- =========================
+     MOVEMENT BUTTONS
+========================= -->
 
 <div id="controls">
-<button class="c" id="f">FORWARD</button>
-<button class="c" id="b">BACK</button>
-<button class="c" id="l">TURN LEFT</button>
-<button class="c" id="r">TURN RIGHT</button>
+
+    <button
+        type="button"
+        class="moveButton"
+        id="forward">
+        FORWARD
+    </button>
+
+    <button
+        type="button"
+        class="moveButton"
+        id="back">
+        BACK
+    </button>
+
+    <button
+        type="button"
+        class="moveButton"
+        id="left">
+        TURN LEFT
+    </button>
+
+    <button
+        type="button"
+        class="moveButton"
+        id="right">
+        TURN RIGHT
+    </button>
+
 </div>
 
-<button id="catch">CATCH ANT</button>
 
-<div id="msg"></div>
+<button
+    type="button"
+    id="catchButton">
+    CATCH ANT
+</button>
 
-<script type="importmap">
-{
-  "imports":{
-    "three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js"
-  }
-}
-</script>
+
+<div id="message"></div>
+
 
 <script type="module">
 
 import * as THREE from "three";
 
-const start=document.getElementById("start");
-const win=document.getElementById("win");
-const scoreEl=document.getElementById("score");
-const catchBtn=document.getElementById("catch");
-const msg=document.getElementById("msg");
+
+/* =====================================
+   VARIABLES
+===================================== */
 
 let scene;
 let camera;
@@ -157,868 +461,1014 @@ let renderer;
 let clock;
 
 let player;
+
 let ants=[];
 let animals=[];
 
-let score=0;
 let running=false;
+let score=0;
 
 const input={
- f:false,
- b:false,
- l:false,
- r:false
+    forward:false,
+    back:false,
+    left:false,
+    right:false
 };
 
-function say(text){
 
- msg.textContent=text;
- msg.style.display="block";
+/* =====================================
+   UI
+===================================== */
 
- clearTimeout(say.timer);
+const startScreen=
+document.getElementById("startScreen");
 
- say.timer=setTimeout(()=>{
-  msg.style.display="none";
- },1300);
+const winScreen=
+document.getElementById("winScreen");
 
-}
+const scoreDisplay=
+document.getElementById("score");
 
-function hold(id,key){
+const catchButton=
+document.getElementById("catchButton");
 
- const element=document.getElementById(id);
-
- const down=e=>{
-  e.preventDefault();
-  input[key]=true;
- };
-
- const up=e=>{
-  e.preventDefault();
-  input[key]=false;
- };
-
- element.addEventListener("pointerdown",down);
-
- ["pointerup","pointercancel","pointerleave"]
- .forEach(type=>{
-  element.addEventListener(type,up);
- });
-
-}
-
-hold("f","f");
-hold("b","b");
-hold("l","l");
-hold("r","r");
+const message=
+document.getElementById("message");
 
 
-/* =========================
-   3D MANTIS
-========================= */
+function showMessage(text){
 
-function makeMantis(){
+    message.textContent=text;
 
- const g=new THREE.Group();
+    message.style.display="block";
 
- const body=new THREE.Mesh(
-  new THREE.CapsuleGeometry(.25,.8,6,10),
-  new THREE.MeshStandardMaterial({
-   color:0x3f9b42
-  })
- );
+    clearTimeout(showMessage.timer);
 
- body.rotation.x=Math.PI/2;
+    showMessage.timer=
+    setTimeout(()=>{
 
- g.add(body);
+        message.style.display="none";
 
-
- const head=new THREE.Mesh(
-  new THREE.SphereGeometry(.25,12,8),
-  new THREE.MeshStandardMaterial({
-   color:0x72bd45
-  })
- );
-
- head.position.z=-.55;
-
- g.add(head);
-
-
- const eyeMat=new THREE.MeshStandardMaterial({
-  color:0x111111
- });
-
- for(const side of[-1,1]){
-
-  const eye=new THREE.Mesh(
-   new THREE.SphereGeometry(.055,8,6),
-   eyeMat
-  );
-
-  eye.position.set(
-   side*.1,
-   -.05,
-   -.75
-  );
-
-  g.add(eye);
-
- }
-
-
- /* Mantis legs */
-
- const legMat=new THREE.MeshStandardMaterial({
-  color:0x357c36
- });
-
- for(const side of[-1,1]){
-
-  for(let i=0;i<3;i++){
-
-   const leg=new THREE.Mesh(
-    new THREE.CylinderGeometry(
-     .035,.045,.75,6
-    ),
-    legMat
-   );
-
-   leg.rotation.z=
-    side*(.7+i*.08);
-
-   leg.position.set(
-    side*(.18+i*.04),
-    -.1+i*.08,
-    .05+i*.18
-   );
-
-   g.add(leg);
-
-  }
-
- }
-
- return g;
+    },1500);
 }
 
 
-/* =========================
-   3D TREES
-========================= */
+/* =====================================
+   TOUCH CONTROLS
 
-function makeTree(x,z,scale=1){
+   These are BUTTONS, not selectable text.
+===================================== */
 
- const g=new THREE.Group();
+function setupButton(id,key){
 
- const trunk=new THREE.Mesh(
-  new THREE.CylinderGeometry(
-   .22*scale,
-   .32*scale,
-   3*scale,
-   8
-  ),
-  new THREE.MeshStandardMaterial({
-   color:0x68452b
-  })
- );
+    const button=
+    document.getElementById(id);
 
- trunk.position.y=1.5*scale;
 
- g.add(trunk);
+    function start(event){
 
+        event.preventDefault();
 
- const leafMaterial=
-  new THREE.MeshStandardMaterial({
-   color:0x26743b
-  });
-
-
- const positions=[
-  [0,3.3,0],
-  [-.8,2.9,.1],
-  [.8,2.9,-.1]
- ];
-
-
- for(const p of positions){
-
-  const leaf=new THREE.Mesh(
-   new THREE.SphereGeometry(
-    1.1*scale,10,8
-   ),
-   leafMaterial
-  );
-
-  leaf.position.set(
-   p[0]*scale,
-   p[1]*scale,
-   p[2]*scale
-  );
-
-  g.add(leaf);
-
- }
-
- g.position.set(x,0,z);
-
- scene.add(g);
-
-}
-
-
-/* =========================
-   3D ANT
-========================= */
-
-function makeAnt(x,z){
-
- const g=new THREE.Group();
-
- const material=
-  new THREE.MeshStandardMaterial({
-   color:0x21150f
-  });
-
-
- for(const p of[
-  [-.22,0,0],
-  [0,0,0],
-  [.22,0,0]
- ]){
-
-  const part=new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .12,8,6
-   ),
-   material
-  );
-
-  part.position.set(
-   p[0],
-   .16,
-   p[2]
-  );
-
-  g.add(part);
-
- }
-
-
- const legMaterial=
-  new THREE.MeshStandardMaterial({
-   color:0x2b1a12
-  });
-
-
- for(const side of[-1,1]){
-
-  for(let i=0;i<3;i++){
-
-   const leg=new THREE.Mesh(
-    new THREE.CylinderGeometry(
-     .018,.018,.35,5
-    ),
-    legMaterial
-   );
-
-   leg.rotation.z=side*.9;
-
-   leg.position.set(
-    side*.13,
-    .12,
-    (i-1)*.16
-   );
-
-   g.add(leg);
-
-  }
-
- }
-
-
- g.position.set(x,.02,z);
-
- g.userData.caught=false;
-
- scene.add(g);
-
- ants.push(g);
-
-}
-
-
-/* =========================
-   GIANT ANIMALS
-========================= */
-
-function makeAnimal(x,z,type){
-
- const g=new THREE.Group();
-
- const size=
-  type==="elephant"
-  ?1.9
-  :1.2;
-
-
- const material=
-  new THREE.MeshStandardMaterial({
-   color:
-    type==="elephant"
-    ?0x777b79
-    :0x7a4d2d
-  });
-
-
- const body=new THREE.Mesh(
-  new THREE.SphereGeometry(
-   size,14,10
-  ),
-  material
- );
-
- body.scale.set(
-  1.35,.8,1.9
- );
-
- body.position.y=size*.85;
-
- g.add(body);
-
-
- const head=new THREE.Mesh(
-  new THREE.SphereGeometry(
-   size*.75,12,8
-  ),
-  material
- );
-
- head.position.set(
-  0,
-  size*1.05,
-  -size*1.65
- );
-
- g.add(head);
-
-
- for(const sx of[-1,1]){
-
-  for(const sz of[-1,1]){
-
-   const leg=new THREE.Mesh(
-    new THREE.CylinderGeometry(
-     .18*size,
-     .22*size,
-     .9*size,
-     7
-    ),
-    material
-   );
-
-   leg.position.set(
-    sx*.75*size,
-    .45*size,
-    sz*1.05*size
-   );
-
-   g.add(leg);
-
-  }
-
- }
-
-
- g.position.set(x,0,z);
-
- g.userData.phase=Math.random()*6.28;
- g.userData.speed=.35+Math.random()*.3;
-
- scene.add(g);
-
- animals.push(g);
-
-}
-
-
-/* =========================
-   CREATE WORLD
-========================= */
-
-function setup(){
-
- scene=new THREE.Scene();
-
- scene.background=
-  new THREE.Color(0x72cbea);
-
- scene.fog=
-  new THREE.Fog(
-   0x72cbea,
-   25,
-   150
-  );
-
-
- camera=new THREE.PerspectiveCamera(
-  75,
-  innerWidth/innerHeight,
-  .05,
-  250
- );
-
-
- renderer=
-  new THREE.WebGLRenderer({
-   antialias:true
-  });
-
- renderer.setPixelRatio(
-  Math.min(devicePixelRatio,1.5)
- );
-
- renderer.setSize(
-  innerWidth,
-  innerHeight
- );
-
- document.body.appendChild(
-  renderer.domElement
- );
-
-
- /* Lighting */
-
- const hemisphere=
-  new THREE.HemisphereLight(
-   0xbfefff,
-   0x385b30,
-   2.2
-  );
-
- scene.add(hemisphere);
-
-
- const sun=
-  new THREE.DirectionalLight(
-   0xffffff,
-   2.4
-  );
-
- sun.position.set(
-  20,40,10
- );
-
- scene.add(sun);
-
-
- /* Huge 3D ground */
-
- const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(
-   500,500
-  ),
-  new THREE.MeshStandardMaterial({
-   color:0x4f9a45
-  })
- );
-
- ground.rotation.x=-Math.PI/2;
-
- scene.add(ground);
-
-
- /* Forest */
-
- for(let i=0;i<85;i++){
-
-  const angle=
-   Math.random()*Math.PI*2;
-
-  const distance=
-   10+Math.random()*125;
-
-  makeTree(
-   Math.cos(angle)*distance,
-   Math.sin(angle)*distance,
-   .7+Math.random()*.9
-  );
-
- }
-
-
- /* Player */
-
- player=makeMantis();
-
- player.position.set(
-  0,.65,0
- );
-
- scene.add(player);
-
-
- /*
-   The camera is attached to the mantis.
-   This creates the first-person view.
- */
-
- camera.position.set(
-  0,
-  .18,
-  -.82
- );
-
- player.add(camera);
-
-
- /* 15 ants */
-
- for(let i=0;i<15;i++){
-
-  const angle=
-   Math.random()*Math.PI*2;
-
-  const distance=
-   12+Math.random()*95;
-
-  makeAnt(
-   Math.cos(angle)*distance,
-   Math.sin(angle)*distance
-  );
-
- }
-
-
- /* Giant animals */
-
- makeAnimal(
-  18,
-  -25,
-  "deer"
- );
-
- makeAnimal(
-  -30,
-  -55,
-  "deer"
- );
-
- makeAnimal(
-  35,
-  -75,
-  "elephant"
- );
-
-
- clock=new THREE.Clock();
-
-}
-
-
-/* =========================
-   RESET GAME
-========================= */
-
-function reset(){
-
- score=0;
-
- scoreEl.textContent="0";
-
-
- ants.forEach(a=>{
-
-  const angle=
-   Math.random()*Math.PI*2;
-
-  const distance=
-   12+Math.random()*95;
-
-  a.position.set(
-   Math.cos(angle)*distance,
-   .02,
-   Math.sin(angle)*distance
-  );
-
-  a.userData.caught=false;
-
-  a.visible=true;
-
- });
-
-
- player.position.set(
-  0,.65,0
- );
-
- player.rotation.y=0;
-
-}
-
-
-/* =========================
-   GAME UPDATE
-========================= */
-
-function update(dt){
-
- const speed=6;
-
-
- if(input.l)
-  player.rotation.y+=2.1*dt;
-
- if(input.r)
-  player.rotation.y-=2.1*dt;
-
-
- let movement=0;
-
- if(input.f)
-  movement+=1;
-
- if(input.b)
-  movement-=1;
-
-
- if(movement){
-
-  const forward=
-   new THREE.Vector3(
-    0,0,-1
-   );
-
-  forward.applyQuaternion(
-   player.quaternion
-  );
-
-  player.position.addScaledVector(
-   forward,
-   movement*speed*dt
-  );
-
- }
-
-
- player.position.y=.65;
-
-
- /* Animals move */
-
- animals.forEach(animal=>{
-
-  animal.position.x+=
-   Math.sin(
-    clock.elapsedTime*.35+
-    animal.userData.phase
-   )*
-   animal.userData.speed*
-   dt;
-
-  animal.position.z+=
-   Math.cos(
-    clock.elapsedTime*.3+
-    animal.userData.phase
-   )*
-   animal.userData.speed*
-   dt;
-
- });
-
-
- /* Find nearest ant */
-
- let nearest=null;
- let nearestDistance=999;
-
-
- ants.forEach(ant=>{
-
-  if(!ant.visible)
-   return;
-
-
-  const dx=
-   ant.position.x-
-   player.position.x;
-
-  const dz=
-   ant.position.z-
-   player.position.z;
-
-
-  const distance=
-   Math.hypot(dx,dz);
-
-
-  if(distance<nearestDistance){
-
-   nearestDistance=distance;
-   nearest=ant;
-
-  }
-
- });
-
-
- if(
-  nearest &&
-  nearestDistance<2.4
- ){
-
-  catchBtn.style.display="block";
-
-
-  catchBtn.onclick=()=>{
-
-   const distance=
-    Math.hypot(
-     nearest.position.x-
-     player.position.x,
-
-     nearest.position.z-
-     player.position.z
-    );
-
-
-   if(
-    nearest.visible &&
-    distance<2.8
-   ){
-
-    nearest.visible=false;
-
-    score++;
-
-    scoreEl.textContent=
-     score;
-
-    say(
-     "Ant caught! "+
-     score+
-     " / 15"
-    );
-
-    catchBtn.style.display=
-     "none";
-
-
-    if(score===15){
-
-     running=false;
-
-     win.style.display=
-      "flex";
+        input[key]=true;
 
     }
 
-   }
 
-  };
+    function stop(event){
 
- }else{
+        event.preventDefault();
 
-  catchBtn.style.display=
-   "none";
+        input[key]=false;
 
- }
-
-}
+    }
 
 
-/* =========================
-   RENDER LOOP
-========================= */
+    button.addEventListener(
+        "pointerdown",
+        start
+    );
 
-function animate(){
 
- if(!running)
-  return;
+    button.addEventListener(
+        "pointerup",
+        stop
+    );
 
- requestAnimationFrame(
-  animate
- );
 
- const dt=
-  Math.min(
-   clock.getDelta(),
-   .05
-  );
+    button.addEventListener(
+        "pointercancel",
+        stop
+    );
 
- update(dt);
 
- renderer.render(
-  scene,
-  camera
- );
+    button.addEventListener(
+        "pointerleave",
+        stop
+    );
 
 }
 
 
-/* =========================
-   START
-========================= */
-
-function startGame(){
-
- start.style.display=
-  "none";
-
- win.style.display=
-  "none";
+setupButton("forward","forward");
+setupButton("back","back");
+setupButton("left","left");
+setupButton("right","right");
 
 
- if(!scene)
-  setup();
+/* =====================================
+   KEYBOARD CONTROLS
+===================================== */
 
+window.addEventListener(
+    "keydown",
+    event=>{
 
- reset();
+        if(event.key==="ArrowUp")
+            input.forward=true;
 
- running=true;
+        if(event.key==="ArrowDown")
+            input.back=true;
 
- clock.start();
+        if(event.key==="ArrowLeft")
+            input.left=true;
 
- animate();
+        if(event.key==="ArrowRight")
+            input.right=true;
 
-}
-
-
-document.getElementById(
- "play"
-).onclick=startGame;
-
-
-document.getElementById(
- "again"
-).onclick=startGame;
-
-
-/* Resize */
-
-addEventListener(
- "resize",
- ()=>{
-
-  if(!camera || !renderer)
-   return;
-
-
-  camera.aspect=
-   innerWidth/
-   innerHeight;
-
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(
-   innerWidth,
-   innerHeight
-  );
-
- }
+    }
 );
 
-</script>
 
-</body>
-  </html>q
+window.addEventListener(
+    "keyup",
+    event=>{
+
+        if(event.key==="ArrowUp")
+            input.forward=false;
+
+        if(event.key==="ArrowDown")
+            input.back=false;
+
+        if(event.key==="ArrowLeft")
+            input.left=false;
+
+        if(event.key==="ArrowRight")
+            input.right=false;
+
+    }
+);
+
+
+/* =====================================
+   MANTIS
+===================================== */
+
+function createMantis(){
+
+    const mantis=
+    new THREE.Group();
+
+
+    const green=
+    new THREE.MeshStandardMaterial({
+        color:0x3f9b42
+    });
+
+
+    const darkGreen=
+    new THREE.MeshStandardMaterial({
+        color:0x28652c
+    });
+
+
+    /* Body */
+
+    const body=
+    new THREE.Mesh(
+        new THREE.CapsuleGeometry(
+            .25,
+            .8,
+            6,
+            10
+        ),
+        green
+    );
+
+    body.rotation.x=
+    Math.PI/2;
+
+    mantis.add(body);
+
+
+    /* Head */
+
+    const head=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .27,
+            12,
+            10
+        ),
+        green
+    );
+
+    head.position.z=-.55;
+
+    mantis.add(head);
+
+
+    /* Eyes */
+
+    const eyeMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x111111
+    });
+
+
+    for(
+        const side of[-1,1]
+    ){
+
+        const eye=
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .06,
+                8,
+                6
+            ),
+            eyeMaterial
+        );
+
+        eye.position.set(
+            side*.1,
+            -.04,
+            -.76
+        );
+
+        mantis.add(eye);
+
+    }
+
+
+    /* Legs */
+
+    for(
+        const side of[-1,1]
+    ){
+
+        for(
+            let i=0;
+            i<3;
+            i++
+        ){
+
+            const leg=
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .035,
+                    .045,
+                    .8,
+                    6
+                ),
+                darkGreen
+            );
+
+            leg.rotation.z=
+            side*(.65+i*.1);
+
+            leg.position.set(
+                side*(.18+i*.04),
+                -.1,
+                .1+i*.18
+            );
+
+            mantis.add(leg);
+
+        }
+
+    }
+
+
+    return mantis;
+}
+
+
+/* =====================================
+   TREES
+===================================== */
+
+function createTree(
+    x,
+    z,
+    scale
+){
+
+    const tree=
+    new THREE.Group();
+
+
+    const trunk=
+    new THREE.Mesh(
+
+        new THREE.CylinderGeometry(
+            .25*scale,
+            .35*scale,
+            3*scale,
+            8
+        ),
+
+        new THREE.MeshStandardMaterial({
+            color:0x654327
+        })
+
+    );
+
+
+    trunk.position.y=
+    1.5*scale;
+
+    trunk.castShadow=true;
+
+    tree.add(trunk);
+
+
+    const leaves=
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            1.4*scale,
+            12,
+            10
+        ),
+
+        new THREE.MeshStandardMaterial({
+            color:0x26763a
+        })
+
+    );
+
+
+    leaves.position.y=
+    3.1*scale;
+
+    leaves.castShadow=true;
+
+    tree.add(leaves);
+
+
+    tree.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    scene.add(tree);
+}
+
+
+/* =====================================
+   ANT
+===================================== */
+
+function createAnt(x,z){
+
+    const ant=
+    new THREE.Group();
+
+
+    const antMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x20140e
+    });
+
+
+    /* Three body parts */
+
+    for(
+        const position of[
+            [-.22,.13,0],
+            [0,.13,0],
+            [.22,.13,0]
+        ]
+    ){
+
+        const part=
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .12,
+                8,
+                6
+            ),
+            antMaterial
+        );
+
+        part.position.set(
+            position[0],
+            position[1],
+            position[2]
+        );
+
+        ant.add(part);
+
+    }
+
+
+    /* Legs */
+
+    for(
+        const side of[-1,1]
+    ){
+
+        for(
+            let i=0;
+            i<3;
+            i++
+        ){
+
+            const leg=
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .018,
+                    .018,
+                    .35,
+                    5
+                ),
+                antMaterial
+            );
+
+            leg.rotation.z=
+            side*.9;
+
+            leg.position.set(
+                side*.13,
+                .12,
+                (i-1)*.16
+            );
+
+            ant.add(leg);
+
+        }
+
+    }
+
+
+    ant.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    ant.userData.caught=false;
+
+    scene.add(ant);
+
+    ants.push(ant);
+}
+
+
+/* =====================================
+   GIANT ANIMALS
+===================================== */
+
+function createAnimal(
+    x,
+    z,
+    type
+){
+
+    const animal=
+    new THREE.Group();
+
+
+    const size=
+    type==="elephant"
+    ?2
+    :1.3;
+
+
+    const material=
+    new THREE.MeshStandardMaterial({
+
+        color:
+        type==="elephant"
+        ?0x777777
+        :0x79502f
+
+    });
+
+
+    const body=
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            size,
+            14,
+            10
+        ),
+
+        material
+
+    );
+
+
+    body.scale.set(
+        1.35,
+        .8,
+        1.9
+    );
+
+
+    body.position.y=
+    size*.85;
+
+
+    body.castShadow=true;
+
+    animal.add(body);
+
+
+    const head=
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            size*.75,
+            12,
+            8
+        ),
+
+        material
+
+    );
+
+
+    head.position.set(
+        0,
+        size*1.05,
+        -size*1.65
+    );
+
+
+    head.castShadow=true;
+
+    animal.add(head);
+
+
+    /* Four legs */
+
+    for(
+        const side of[-1,1]
+    ){
+
+        for(
+            const frontBack of[-1,1]
+        ){
+
+            const leg=
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    .18*size,
+                    .22*size,
+                    .9*size,
+                    7
+                ),
+
+                material
+
+            );
+
+
+            leg.position.set(
+                side*.75*size,
+                .45*size,
+                frontBack*1.05*size
+            );
+
+
+            leg.castShadow=true;
+
+            animal.add(leg);
+
+        }
+
+    }
+
+
+    animal.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    animal.userData.phase=
+    Math.random()*6.28;
+
+
+    animal.userData.speed=
+    .3+Math.random()*.25;
+
+
+    scene.add(animal);
+
+    animals.push(animal);
+}
+
+
+/* =====================================
+   CREATE WORLD
+===================================== */
+
+function createWorld(){
+
+    scene=
+    new THREE.Scene();
+
+
+    scene.background=
+    new THREE.Color(
+        0x72cbea
+    );
+
+
+    scene.fog=
+    new THREE.Fog(
+        0x72cbea,
+        25,
+        150
+    );
+
+
+    camera=
+    new THREE.PerspectiveCamera(
+        75,
+        innerWidth/innerHeight,
+        .05,
+        250
+    );
+
+
+    renderer=
+    new THREE.WebGLRenderer({
+        antialias:true
+    });
+
+
+    renderer.setPixelRatio(
+        Math.min(
+            devicePixelRatio,
+            1.5
+        )
+    );
+
+
+    renderer.setSize(
+        innerWidth,
+        innerHeight
+    );
+
+
+    renderer.shadowMap.enabled=true;
+
+
+    /*
+       The canvas is behind the HTML
+       game controls.
+    */
+
+    renderer.domElement.style.position=
+    "fixed";
+
+    renderer.domElement.style.left="0";
+    renderer.domElement.style.top="0";
+    renderer.domElement.style.zIndex="0";
+
+
+    document.body.appendChild(
+        renderer.domElement
+    );
+
+
+    /* Lighting */
+
+    const light=
+    new THREE.HemisphereLight(
+        0xbfefff,
+        0x385b30,
+        2.2
+    );
+
+    scene.add(light);
+
+
+    const sun=
+    new THREE.DirectionalLight(
+        0xffffff,
+        2.5
+    );
+
+
+    sun.position.set(
+        25,
+        45,
+        15
+    );
+
+
+    sun.castShadow=true;
+
+    scene.add(sun);
+
+
+    /* Ground */
+
+    const ground=
+    new THREE.Mesh(
+
+        new THREE.PlaneGeometry(
+            500,
+            500
+        ),
+
+        new THREE.MeshStandardMaterial({
+            color:0x4e9946
+        })
+
+    );
+
+
+    ground.rotation.x=
+    -Math.PI/2;
+
+
+    ground.receiveShadow=true;
+
+    scene.add(ground);
+
+
+    /* Forest */
+
+    for(
+        let i=0;
+        i<90;
+        i++
+    ){
+
+        const angle=
+        Math.random()*Math.PI*2;
+
+
+        const distance=
+        10+Math.random()*125;
+
+
+        createTree(
+            Math.cos(angle)*distance,
+            Math.sin(angle)*distance,
+            .7+Math.random()*.9
+        );
+
+    }
+
+
+    /* Mantis */
+
+    player=
+    createMantis();
+
+
+    player.position.set(
+        0,
+        .7,
+        0
+    );
+
+
+    scene.add(player);
+
+
+    /*
+       First-person camera.
+    */
+
+    camera.position.set(
+        0,
+        .12,
+        -.78
+    );
+
+
+    player.add(camera);
+
+
+    /* 15 ants */
+
+    for(
+        let i=0;
+        i<15;
+        i++
+    ){
+
+        const angle=
+        Math.random()*Math.PI*2;
+
+
+        const distance=
+        12+Math.random()*95;
+
+
+        createAnt(
+            Math.cos(angle)*distance,
+            Math.sin(angle)*distance
+        );
+
+    }
+
+
+    /* Giant animals */
+
+    createAnimal(
+        20,
+        -25,
+        "deer"
+    );
+
+
+    createAnimal(
+        -30,
+        -55,
+        "deer"
+    );
+
+
+    createAnimal(
+        40,
+        -75,
+        "elephant"
+    );
+
+
+    clock=
+    new THREE.Clock();
+}
+
+
+/* =====================================
+   RESET
+===================================== */
+
+function resetGame(){
+
+    score=0;
+
+    scoreDisplay.textContent="0";
+
+
+    ants.forEach(
+        ant=>{
+
+            const angle=
+            Math.random()*Math.PI*2;
+
+
+            const distance=
+            12+Math.random()*95;
+
+
+            ant.position.set(
+                Math.cos(angle)*distance,
+                0,
+                Math.sin(angle)*distance
+            );
+
+
+            ant.visible=true;
+
+        }
+    );
+
+
+    player.position.set(
+        0,
+        .7,
+        0
+    );
+
+
+    player.rotation.set(
+        0,
+        0,
+        0
+    );
+
+}
+
+
+/* =====================================
+   UPDATE
+===================================== */
+
+function update(dt){
+
+    const speed=6;
+
+
+    /* Correct left/right */
+
+    if(input.left){
+
+        player.rotation.y+=
+        2.1*dt;
+
+    }
+
+
+    if(input.right){
+
+        player.rotation.y-=
+        2.1*dt;
+
+    }
+
+
+    let movement=0;
+
+
+    if(input.forward)
+        movement+=1;
+
+
+    if(input.back)
+        movement-=1;
+
+
+    if(movement!==0){
+
+        const direction=
+        new THREE.Vector3(
+            0,
+            0,
+            -1
+        );
+
+
+        direction.applyQuaternion(
+            player.quaternion
+        );
+
+
+        player.position.addScaledVector(
+            direction,
+            movement*speed*dt
+        );
+
+    }
+
+
+    player.position.y=.7;
+
+
+    /* Animals wander */
+
+    animals.forEach(
+        animal=>{
+
+            animal.position.x+=
+            Math.sin(
+                clock.elapsedTime*.35+
+                animal.userData.phase
+            )*
+            animal.userData.speed*
+            dt;
+
+
+            animal.position.z+=
+            Math.cos(
+                clock.elapsedTime*.3+
+                animal.userData.phase
+            )*
+            animal.userData.speed*
+            dt;
+
+        }
+    );
+
+
+    /* Find nearest ant */
+
+    let nearest=null;
+
+    let nearestDistance=999;
+
+
+    ants.forEach(
+        ant=>{
+
+            if(!ant.visible)
+                return;
+
+
+            const dx=
+            ant.position.x-
