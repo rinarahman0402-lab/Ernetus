@@ -1,0 +1,1621 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Animal Life Simulator</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:Arial,sans-serif;
+  background:#78c8e8;
+}
+
+canvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.screen{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:25px;
+  color:white;
+}
+
+#menu{
+  background:linear-gradient(
+    #70c9e9,
+    #6dbc57 55%,
+    #315c31
+  );
+}
+
+#gameOver{
+  display:none;
+  background:#17251de8;
+}
+
+.title{
+  font-size:clamp(38px,10vw,72px);
+  font-weight:900;
+  text-shadow:4px 4px #254c2a;
+}
+
+.subtitle{
+  max-width:650px;
+  font-size:18px;
+  line-height:1.5;
+}
+
+.animalButtons{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  max-width:700px;
+  margin-top:10px;
+}
+
+.animalButton{
+  border:0;
+  border-radius:18px;
+  padding:14px 17px;
+  background:#ffffffdd;
+  color:#17351d;
+  font-weight:900;
+  font-size:15px;
+}
+
+.animalButton:active{
+  transform:scale(.94);
+}
+
+.bigButton{
+  margin-top:20px;
+  border:0;
+  border-radius:20px;
+  padding:18px 35px;
+  background:#ffd447;
+  color:#18351d;
+  font-size:20px;
+  font-weight:900;
+}
+
+#hud{
+  display:none;
+  position:fixed;
+  z-index:20;
+  top:9px;
+  left:9px;
+  right:9px;
+  justify-content:space-between;
+  gap:7px;
+  pointer-events:none;
+}
+
+.info{
+  background:#142218dd;
+  color:white;
+  border-radius:13px;
+  padding:9px 11px;
+  font-size:11px;
+  font-weight:bold;
+}
+
+#objective{
+  display:none;
+  position:fixed;
+  z-index:20;
+  top:58px;
+  left:50%;
+  transform:translateX(-50%);
+  max-width:90%;
+  background:#142218dd;
+  color:white;
+  border-radius:14px;
+  padding:10px 14px;
+  text-align:center;
+  font-size:12px;
+  font-weight:bold;
+}
+
+#controls{
+  display:none;
+  position:fixed;
+  z-index:30;
+  left:10px;
+  bottom:10px;
+  width:285px;
+  height:185px;
+}
+
+.move{
+  position:absolute;
+  width:88px;
+  height:58px;
+  border:2px solid #ffffff66;
+  border-radius:17px;
+  background:#142218dd;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+}
+
+.move:active{
+  background:#438d48;
+  transform:scale(.93);
+}
+
+#forward{left:98px;top:0}
+#back{left:98px;bottom:0}
+#left{left:0;top:63px}
+#right{right:0;top:63px}
+
+#action{
+  display:none;
+  position:fixed;
+  z-index:30;
+  right:14px;
+  bottom:30px;
+  width:125px;
+  min-height:60px;
+  border:0;
+  border-radius:18px;
+  background:#ffd447;
+  color:#18351d;
+  font-size:12px;
+  font-weight:900;
+}
+
+#message{
+  display:none;
+  position:fixed;
+  z-index:40;
+  top:105px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#142218ee;
+  color:white;
+  padding:12px 18px;
+  border-radius:15px;
+  font-weight:bold;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- MENU -->
+
+<div id="menu" class="screen">
+
+  <div style="font-size:85px">🌍🐾</div>
+
+  <div class="title">
+    ANIMAL LIFE SIMULATOR
+  </div>
+
+  <p class="subtitle">
+    Choose an animal and survive in a huge 3D-style world.
+    Herbivores eat plants and escape predators.
+    Carnivores hunt herbivores.
+  </p>
+
+  <p><b>CHOOSE YOUR ANIMAL</b></p>
+
+  <div class="animalButtons">
+
+    <button class="animalButton" data-animal="deer">
+      🦌 Deer
+    </button>
+
+    <button class="animalButton" data-animal="zebra">
+      🦓 Zebra
+    </button>
+
+    <button class="animalButton" data-animal="rabbit">
+      🐇 Rabbit
+    </button>
+
+    <button class="animalButton" data-animal="elephant">
+      🐘 Elephant
+    </button>
+
+    <button class="animalButton" data-animal="lion">
+      🦁 Lion
+    </button>
+
+    <button class="animalButton" data-animal="tiger">
+      🐅 Tiger
+    </button>
+
+    <button class="animalButton" data-animal="wolf">
+      🐺 Wolf
+    </button>
+
+  </div>
+
+  <button
+    class="bigButton"
+    id="startButton"
+    type="button">
+    START GAME
+  </button>
+
+</div>
+
+
+<!-- HUD -->
+
+<div id="hud">
+
+  <div class="info">
+    ANIMAL:
+    <span id="animalName">---</span>
+  </div>
+
+  <div class="info">
+    HEALTH:
+    <span id="health">100</span>
+  </div>
+
+  <div class="info">
+    FOOD:
+    <span id="food">0</span>
+  </div>
+
+  <div class="info">
+    SCORE:
+    <span id="score">0</span>
+  </div>
+
+</div>
+
+
+<div id="objective"></div>
+
+
+<!-- CONTROLS -->
+
+<div id="controls">
+
+  <button class="move" id="forward">
+    MOVE FORWARD
+  </button>
+
+  <button class="move" id="back">
+    MOVE BACK
+  </button>
+
+  <button class="move" id="left">
+    TURN LEFT
+  </button>
+
+  <button class="move" id="right">
+    TURN RIGHT
+  </button>
+
+</div>
+
+
+<button
+  id="action"
+  type="button">
+  EAT
+</button>
+
+
+<div id="message"></div>
+
+
+<!-- GAME OVER -->
+
+<div id="gameOver" class="screen">
+
+  <div style="font-size:85px">🐾</div>
+
+  <div class="title">
+    GAME OVER
+  </div>
+
+  <p
+    class="subtitle"
+    id="gameOverText">
+  </p>
+
+  <button
+    class="bigButton"
+    id="againButton"
+    type="button">
+    PLAY AGAIN
+  </button>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   CANVAS
+===================================================== */
+
+const canvas =
+  document.getElementById("canvas");
+
+const ctx =
+  canvas.getContext("2d");
+
+let W=innerWidth;
+let H=innerHeight;
+
+function resize(){
+
+  W=innerWidth;
+  H=innerHeight;
+
+  const dpr =
+    Math.min(
+      devicePixelRatio || 1,
+      2
+    );
+
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
+
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
+
+  ctx.setTransform(
+    dpr,0,0,dpr,0,0
+  );
+}
+
+resize();
+
+addEventListener(
+  "resize",
+  resize
+);
+
+
+/* =====================================================
+   GAME STATE
+===================================================== */
+
+let playing=false;
+
+let selected=null;
+
+let animals=[];
+
+let plants=[];
+
+let rocks=[];
+
+let score=0;
+
+let food=0;
+
+let health=100;
+
+let lastTime=0;
+
+const player={
+  x:0,
+  z:30,
+  angle:0
+};
+
+const keys={
+  forward:false,
+  back:false,
+  left:false,
+  right:false
+};
+
+
+/* =====================================================
+   ANIMAL DATA
+===================================================== */
+
+const animalData={
+
+  deer:{
+    name:"Deer",
+    emoji:"🦌",
+    type:"herbivore",
+    speed:10,
+    size:1.4
+  },
+
+  zebra:{
+    name:"Zebra",
+    emoji:"🦓",
+    type:"herbivore",
+    speed:9,
+    size:1.5
+  },
+
+  rabbit:{
+    name:"Rabbit",
+    emoji:"🐇",
+    type:"herbivore",
+    speed:13,
+    size:.8
+  },
+
+  elephant:{
+    name:"Elephant",
+    emoji:"🐘",
+    type:"herbivore",
+    speed:6,
+    size:2.5
+  },
+
+  lion:{
+    name:"Lion",
+    emoji:"🦁",
+    type:"carnivore",
+    speed:11,
+    size:1.8
+  },
+
+  tiger:{
+    name:"Tiger",
+    emoji:"🐅",
+    type:"carnivore",
+    speed:12,
+    size:1.7
+  },
+
+  wolf:{
+    name:"Wolf",
+    emoji:"🐺",
+    type:"carnivore",
+    speed:13,
+    size:1.2
+  }
+
+};
+
+
+/* =====================================================
+   WORLD CREATION
+===================================================== */
+
+function createWorld(){
+
+  animals=[];
+  plants=[];
+  rocks=[];
+
+  player.x=0;
+  player.z=30;
+  player.angle=0;
+
+  health=100;
+  food=0;
+  score=0;
+
+  const type=
+    animalData[selected].type;
+
+
+  /* Plants */
+
+  for(let i=0;i<80;i++){
+
+    plants.push({
+
+      x:random(-110,110),
+
+      z:random(-120,90),
+
+      eaten:false,
+
+      size:random(.5,1.2)
+
+    });
+
+  }
+
+
+  /* Herbivores */
+
+  for(let i=0;i<18;i++){
+
+    animals.push({
+
+      species:
+        ["deer","zebra","rabbit"]
+        [Math.floor(random(0,3))],
+
+      type:"herbivore",
+
+      x:random(-105,105),
+
+      z:random(-115,80),
+
+      angle:random(0,Math.PI*2),
+
+      speed:random(2,5),
+
+      alive:true,
+
+      flee:false
+
+    });
+
+  }
+
+
+  /* Carnivores */
+
+  for(let i=0;i<8;i++){
+
+    animals.push({
+
+      species:
+        ["lion","tiger","wolf"]
+        [Math.floor(random(0,3))],
+
+      type:"carnivore",
+
+      x:random(-100,100),
+
+      z:random(-110,50),
+
+      angle:random(0,Math.PI*2),
+
+      speed:random(3,5),
+
+      alive:true,
+
+      flee:false
+
+    });
+
+  }
+
+
+  /* Rocks */
+
+  for(let i=0;i<50;i++){
+
+    rocks.push({
+
+      x:random(-110,110),
+
+      z:random(-120,100),
+
+      size:random(.5,1.5)
+
+    });
+
+  }
+
+
+  updateUI();
+
+}
+
+
+/* =====================================================
+   RANDOM
+===================================================== */
+
+function random(a,b){
+
+  return a+
+    Math.random()*(b-a);
+
+}
+
+
+/* =====================================================
+   PROJECTION
+===================================================== */
+
+function project(
+  x,
+  z,
+  size
+){
+
+  const dx=
+    x-player.x;
+
+  const dz=
+    z-player.z;
+
+  const sin=
+    Math.sin(
+      player.angle
+    );
+
+  const cos=
+    Math.cos(
+      player.angle
+    );
+
+  const forward=
+    -dx*sin-
+    dz*cos;
+
+  const side=
+    dx*cos-
+    dz*sin;
+
+  if(forward<=1)
+    return null;
+
+  const scale=
+    450/forward;
+
+  return{
+
+    x:
+      W/2+
+      side*scale,
+
+    y:
+      H*.50+
+      145*scale,
+
+    size:
+      Math.max(
+        2,
+        size*scale
+      ),
+
+    depth:forward
+
+  };
+
+}
+
+
+/* =====================================================
+   BACKGROUND
+===================================================== */
+
+function drawGround(){
+
+  const gradient=
+    ctx.createLinearGradient(
+      0,0,0,H
+    );
+
+  gradient.addColorStop(
+    0,
+    "#75cbea"
+  );
+
+  gradient.addColorStop(
+    .48,
+    "#62aa4c"
+  );
+
+  gradient.addColorStop(
+    1,
+    "#294d2b"
+  );
+
+  ctx.fillStyle=gradient;
+
+  ctx.fillRect(
+    0,0,W,H
+  );
+
+
+  ctx.strokeStyle=
+    "#ffffff18";
+
+  for(let i=0;i<14;i++){
+
+    const y=
+      H*.53+
+      i*i*8;
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,y);
+
+    ctx.lineTo(W,y);
+
+    ctx.stroke();
+
+  }
+
+}
+
+
+/* =====================================================
+   PLANTS
+===================================================== */
+
+function drawPlant(p){
+
+  if(p.eaten)
+    return;
+
+  const q=
+    project(
+      p.x,
+      p.z,
+      p.size
+    );
+
+  if(!q)
+    return;
+
+  const s=
+    Math.max(
+      4,
+      Math.min(
+        40,
+        q.size
+      )
+    );
+
+  ctx.strokeStyle="#2c7e32";
+  ctx.lineWidth=
+    Math.max(1,s*.13);
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    q.x,
+    q.y
+  );
+
+  ctx.lineTo(
+    q.x-s*.4,
+    q.y-s
+  );
+
+  ctx.moveTo(
+    q.x,
+    q.y
+  );
+
+  ctx.lineTo(
+    q.x+s*.4,
+    q.y-s
+  );
+
+  ctx.stroke();
+
+
+  ctx.fillStyle="#48a849";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    q.x-s*.35,
+    q.y-s*.8,
+    s*.45,
+    s*.2,
+    -.5,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =====================================================
+   ROCKS
+===================================================== */
+
+function drawRock(r){
+
+  const q=
+    project(
+      r.x,
+      r.z,
+      r.size
+    );
+
+  if(!q)
+    return;
+
+  const s=
+    Math.max(
+      4,
+      Math.min(
+        40,
+        q.size
+      )
+    );
+
+  ctx.fillStyle="#6a7067";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    q.x,
+    q.y,
+    s,
+    s*.55,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =====================================================
+   ANIMAL DRAWING
+===================================================== */
+
+function drawAnimal(a){
+
+  if(!a.alive)
+    return;
+
+  const data=
+    animalData[a.species];
+
+  const q=
+    project(
+      a.x,
+      a.z,
+      data.size
+    );
+
+  if(!q)
+    return;
+
+  const s=
+    Math.max(
+      8,
+      Math.min(
+        90,
+        q.size
+      )
+    );
+
+  ctx.save();
+
+  ctx.translate(
+    q.x,
+    q.y
+  );
+
+
+  /* body */
+
+  if(a.species==="deer"){
+    ctx.fillStyle="#8a5a2d";
+  }
+  else if(a.species==="zebra"){
+    ctx.fillStyle="#eeeeee";
+  }
+  else if(a.species==="rabbit"){
+    ctx.fillStyle="#c7b8a8";
+  }
+  else if(a.species==="elephant"){
+    ctx.fillStyle="#737b7d";
+  }
+  else if(a.species==="lion"){
+    ctx.fillStyle="#c88b35";
+  }
+  else if(a.species==="tiger"){
+    ctx.fillStyle="#d4772e";
+  }
+  else{
+    ctx.fillStyle="#777777";
+  }
+
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    0,
+    s,
+    s*.5,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* head */
+
+  ctx.beginPath();
+
+  ctx.arc(
+    s*.8,
+    -s*.25,
+    s*.48,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* legs */
+
+  ctx.fillRect(
+    -s*.6,
+    s*.3,
+    s*.15,
+    s*.65
+  );
+
+  ctx.fillRect(
+    -s*.15,
+    s*.3,
+    s*.15,
+    s*.65
+  );
+
+  ctx.fillRect(
+    s*.25,
+    s*.3,
+    s*.15,
+    s*.65
+  );
+
+
+  /* zebra stripes */
+
+  if(a.species==="zebra"){
+
+    ctx.strokeStyle="#222";
+    ctx.lineWidth=
+      Math.max(1,s*.08);
+
+    for(
+      let i=-.5;
+      i<.7;
+      i+=.25
+    ){
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        i*s,
+        -s*.4
+      );
+
+      ctx.lineTo(
+        i*s,
+        s*.4
+      );
+
+      ctx.stroke();
+
+    }
+
+  }
+
+
+  /* tiger stripes */
+
+  if(a.species==="tiger"){
+
+    ctx.strokeStyle="#4a260f";
+
+    ctx.lineWidth=
+      Math.max(1,s*.08);
+
+    for(
+      let i=-.5;
+      i<.6;
+      i+=.3
+    ){
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        i*s,
+        -s*.45
+      );
+
+      ctx.lineTo(
+        i*s+.15*s,
+        s*.35
+      );
+
+      ctx.stroke();
+
+    }
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =====================================================
+   PLAYER
+===================================================== */
+
+function drawPlayer(){
+
+  const data=
+    animalData[selected];
+
+  const s=
+    Math.max(
+      18,
+      Math.min(
+        55,
+        data.size*28
+      )
+    );
+
+  const x=W/2;
+  const y=H*.65;
+
+  ctx.save();
+
+  ctx.translate(
+    x,y
+  );
+
+
+  /* body */
+
+  let body="#8a5a2d";
+
+  if(selected==="zebra")
+    body="#eeeeee";
+
+  if(selected==="rabbit")
+    body="#c7b8a8";
+
+  if(selected==="elephant")
+    body="#737b7d";
+
+  if(selected==="lion")
+    body="#c88b35";
+
+  if(selected==="tiger")
+    body="#d4772e";
+
+  if(selected==="wolf")
+    body="#777777";
+
+
+  ctx.fillStyle=body;
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    10,
+    s,
+    s*.55,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* head */
+
+  ctx.beginPath();
+
+  ctx.arc(
+    s*.75,
+    -s*.15,
+    s*.5,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  /* legs */
+
+  ctx.fillRect(
+    -s*.6,
+    s*.3,
+    s*.17,
+    s*.7
+  );
+
+  ctx.fillRect(
+    -s*.15,
+    s*.3,
+    s*.17,
+    s*.7
+  );
+
+  ctx.fillRect(
+    s*.3,
+    s*.3,
+    s*.17,
+    s*.7
+  );
+
+
+  ctx.restore();
+
+}
+
+
+/* =====================================================
+   FIND NEAREST FOOD
+===================================================== */
+
+function nearestPlant(){
+
+  let best=null;
+  let distance=Infinity;
+
+  for(
+    const p of plants
+  ){
+
+    if(p.eaten)
+      continue;
+
+    const d=
+      Math.hypot(
+        p.x-player.x,
+        p.z-player.z
+      );
+
+    if(d<distance){
+
+      distance=d;
+      best=p;
+
+    }
+
+  }
+
+  return{
+    object:best,
+    distance:distance
+  };
+
+}
+
+
+/* =====================================================
+   FIND NEAREST HERBIVORE
+===================================================== */
+
+function nearestHerbivore(){
+
+  let best=null;
+  let distance=Infinity;
+
+  for(
+    const a of animals
+  ){
+
+    if(
+      !a.alive ||
+      a.type!=="herbivore"
+    )
+      continue;
+
+    const d=
+      Math.hypot(
+        a.x-player.x,
+        a.z-player.z
+      );
+
+    if(d<distance){
+
+      distance=d;
+      best=a;
+
+    }
+
+  }
+
+  return{
+    object:best,
+    distance:distance
+  };
+
+}
+
+
+/* =====================================================
+   ACTION BUTTON
+===================================================== */
+
+document
+  .getElementById("action")
+  .addEventListener(
+    "click",
+    function(){
+
+      if(!playing)
+        return;
+
+
+      const data=
+        animalData[selected];
+
+
+      /* HERBIVORE */
+
+      if(
+        data.type==="herbivore"
+      ){
+
+        const n=
+          nearestPlant();
+
+        if(
+          !n.object ||
+          n.distance>8
+        ){
+
+          showMessage(
+            "Move closer to a plant!"
+          );
+
+          return;
+
+        }
+
+
+        n.object.eaten=true;
+
+        food++;
+
+        health=
+          Math.min(
+            100,
+            health+8
+          );
+
+        score+=10;
+
+        showMessage(
+          "Plant eaten! +10"
+        );
+
+      }
+
+
+      /* CARNIVORE */
+
+      else{
+
+        const n=
+          nearestHerbivore();
+
+        if(
+          !n.object ||
+          n.distance>9
+        ){
+
+          showMessage(
+            "Move closer to a herbivore!"
+          );
+
+          return;
+
+        }
+
+
+        n.object.alive=false;
+
+        food++;
+
+        health=
+          Math.min(
+            100,
+            health+12
+          );
+
+        score+=25;
+
+        showMessage(
+          "Herbivore caught! +25"
+        );
+
+      }
+
+
+      updateUI();
+
+    }
+  );
+
+
+/* =====================================================
+   AI
+===================================================== */
+
+function updateAnimals(dt){
+
+  const playerType=
+    animalData[selected].type;
+
+
+  for(
+    const a of animals
+  ){
+
+    if(!a.alive)
+      continue;
+
+
+    const dx=
+      player.x-a.x;
+
+    const dz=
+      player.z-a.z;
+
+    const distance=
+      Math.hypot(dx,dz);
+
+
+    /*
+      Carnivores chase the player
+      when the player is a herbivore.
+    */
+
+    if(
+      playerType==="herbivore" &&
+      a.type==="carnivore" &&
+      distance<38
+    ){
+
+      const angle=
+        Math.atan2(
+          dx,
+          -dz
+        );
+
+      a.angle=angle;
+
+      a.x+=
+        Math.sin(angle)*
+        a.speed*
+        dt;
+
+      a.z+=
+        -Math.cos(angle)*
+        a.speed*
+        dt;
+
+    }
+
+
+    /*
+      Herbivores run away from
+      the player if the player
+      is a carnivore.
+    */
+
+    else if(
+      playerType==="carnivore" &&
+      a.type==="herbivore" &&
+      distance<28
+    ){
+
+      const angle=
+        Math.atan2(
+          -dx,
+          dz
+        );
+
+      a.angle=angle;
+
+      a.x+=
+        Math.sin(angle)*
+        (a.speed+3)*
+        dt;
+
+      a.z+=
+        -Math.cos(angle)*
+        (a.speed+3)*
+        dt;
+
+    }
+
+
+    else{
+
+      if(
+        Math.random()<.015
+      ){
+
+        a.angle=
+          random(
+            0,
+            Math.PI*2
+          );
+
+      }
+
+      a.x+=
+        Math.sin(a.angle)*
+        a.speed*
+        .35*
+        dt;
+
+      a.z+=
+        -Math.cos(a.angle)*
+        a.speed*
+        .35*
+        dt;
+
+    }
+
+
+    a.x=
+      Math.max(
+        -110,
+        Math.min(
+          110,
+          a.x
+        )
+      );
+
+    a.z=
+      Math.max(
+        -120,
+        Math.min(
+          90,
+          a.z
+        )
+      );
+
+
+    /*
+      Predator catches herbivore player.
+    */
+
+    if(
+      playerType==="herbivore" &&
+      a.type==="carnivore" &&
+      distance<2.5
+    ){
+
+      health-=
+        25*dt;
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   PLAYER MOVEMENT
+===================================================== */
+
+function updatePlayer(dt){
+
+  const data=
+    animalData[selected];
+
+  const speed=
+    data.speed*dt;
+
+  const turn=
+    2.6*dt;
+
+
+  /* Correct left/right */
+
+  if(keys.left)
+    player.angle-=turn;
+
+  if(keys.right)
+    player.angle+=turn;
+
+
+  if(keys.forward){
+
+    player.x+=
+      Math.sin(
+        player.angle
+      )*speed;
+
+    player.z+=
+      -Math.cos(
+        player.angle
+      )*speed;
+
+  }
+
+
+  if(keys.back){
+
+    player.x-=
+      Math.sin(
+        player.angle
+      )*speed;
+
+    player.z-=
+      -Math.cos(
+        player.angle
+      )*speed;
+
+  }
+
+
+  player.x=
+    Math.max(
+      -110,
+      Math.min(
+        110,
+        player.x
+      )
+    );
+
+  player.z=
+    Math.max(
+      -120,
+      Math.min(
+        90,
+        player.z
+      )
+    );
+
+}
+
+
+/* =====================================================
+   DRAW WORLD
+===================================================== */
+
+function drawWorld(){
+
+  drawGround();
+
+
+  const things=[];
+
+
+  for(
+    const p of plants
+  ){
+
+    if(!p.eaten){
+
+    
