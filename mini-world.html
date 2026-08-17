@@ -1,1476 +1,1599 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Mini World</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Mini World 3D</title>
 
 <style>
-*{
- box-sizing:border-box;
- user-select:none;
- -webkit-user-select:none;
- touch-action:none;
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html,body{
- margin:0;
- width:100%;
- height:100%;
- overflow:hidden;
- font-family:Arial,sans-serif;
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+  font-family: Arial, sans-serif;
+  touch-action: none;
 }
 
-canvas{
- position:fixed;
- inset:0;
- width:100%;
- height:100%;
+#game {
+  position: fixed;
+  inset: 0;
 }
 
-#start,#win{
- position:fixed;
- inset:0;
- z-index:50;
- display:flex;
- flex-direction:column;
- justify-content:center;
- align-items:center;
- text-align:center;
- padding:25px;
- color:white;
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-#start{
- background:linear-gradient(
-   #72ccec,
-   #78c75c 55%,
-   #315e31
- );
+.hidden {
+  display: none !important;
 }
 
-#win{
- display:none;
- background:#173d21ee;
+/* START SCREEN */
+
+#startScreen,
+#completeScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  background: linear-gradient(
+    #64c9ed,
+    #4b9b55
+  );
 }
 
-.title{
- font-size:clamp(42px,11vw,75px);
- font-weight:900;
- text-shadow:4px 4px #244b29;
+.panel {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  color: white;
 }
 
-.subtitle{
- max-width:650px;
- font-size:18px;
- line-height:1.5;
+.panel h1 {
+  font-size: clamp(40px, 11vw, 72px);
+  margin: 0 0 15px;
 }
 
-.bigButton{
- margin-top:20px;
- border:0;
- border-radius:20px;
- padding:18px 35px;
- background:#ffd447;
- color:#18351d;
- font-size:21px;
- font-weight:900;
+.panel p {
+  font-size: 19px;
+  line-height: 1.5;
 }
 
-.bigButton:active{
- transform:scale(.94);
+.bigButton {
+  position: static;
+  min-width: 240px;
+  min-height: 70px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 25px;
+  background: #ffd447;
+  color: #17351d;
+  font-size: 22px;
+  font-weight: bold;
 }
 
-#hud{
- display:none;
- position:fixed;
- z-index:20;
- top:10px;
- left:10px;
- right:10px;
- justify-content:space-between;
- gap:8px;
- pointer-events:none;
+/* HUD */
+
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
 }
 
-.info{
- background:#142218dd;
- color:white;
- padding:10px 13px;
- border-radius:14px;
- font-weight:bold;
- font-size:12px;
+.hudBox {
+  background: rgba(7,28,18,.88);
+  color: white;
+  padding: 11px 15px;
+  border-radius: 17px;
+  font-weight: bold;
+  font-size: 15px;
+  border: 2px solid rgba(255,255,255,.25);
 }
 
-#task{
- display:none;
- position:fixed;
- z-index:20;
- top:60px;
- left:50%;
- transform:translateX(-50%);
- background:#142218dd;
- color:white;
- padding:11px 17px;
- border-radius:14px;
- font-weight:bold;
- text-align:center;
+/* TASK */
+
+#taskBox {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+
+  width: min(88vw, 430px);
+
+  background: rgba(7,28,18,.92);
+  color: white;
+
+  border-radius: 18px;
+  padding: 12px 18px;
+
+  text-align: center;
+  font-size: 17px;
+  font-weight: bold;
+
+  pointer-events: none;
 }
 
-#controls{
- display:none;
- position:fixed;
- z-index:30;
- left:10px;
- bottom:10px;
- width:285px;
- height:185px;
+#taskProgress {
+  font-size: 13px;
+  opacity: .8;
+  margin-top: 5px;
 }
 
-.move{
- position:absolute;
- width:88px;
- height:58px;
- border:2px solid #ffffff66;
- border-radius:17px;
- background:#142218dd;
- color:white;
- font-size:10px;
- font-weight:900;
+/* CONTROLS */
+
+#controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 15px;
+  height: 225px;
+  z-index: 30;
+  pointer-events: none;
 }
 
-.move:active{
- background:#438e48;
- transform:scale(.93);
+.control {
+  position: absolute;
+
+  min-width: 118px;
+  min-height: 62px;
+
+  border-radius: 22px;
+
+  border: 3px solid rgba(255,255,255,.45);
+
+  background: rgba(7,30,18,.9);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: bold;
+
+  pointer-events: auto;
+
+  touch-action: manipulation;
+
+  user-select: none;
 }
 
-#forward{
- left:98px;
- top:0;
+.control:active {
+  background: #3d9650;
+  transform: scale(.94);
 }
 
-#back{
- left:98px;
- bottom:0;
+#forward {
+  left: 50%;
+  bottom: 145px;
+  transform: translateX(-50%);
 }
 
-#left{
- left:0;
- top:63px;
+#back {
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
 }
 
-#right{
- right:0;
- top:63px;
+#left {
+  left: 12px;
+  bottom: 74px;
 }
 
-#action{
- display:none;
- position:fixed;
- z-index:30;
- right:14px;
- bottom:30px;
- width:125px;
- min-height:60px;
- border:0;
- border-radius:18px;
- background:#ffd447;
- color:#18351d;
- font-weight:900;
+#right {
+  right: 12px;
+  bottom: 74px;
 }
 
-#message{
- display:none;
- position:fixed;
- z-index:40;
- top:105px;
- left:50%;
- transform:translateX(-50%);
- background:#142218ee;
- color:white;
- padding:12px 18px;
- border-radius:15px;
- font-weight:bold;
- text-align:center;
+#turnLeft {
+  left: 12px;
+  bottom: 3px;
+}
+
+#turnRight {
+  right: 12px;
+  bottom: 3px;
+}
+
+/* WORLD MESSAGE */
+
+#worldMessage {
+  position: fixed;
+  left: 50%;
+  bottom: 250px;
+  transform: translateX(-50%);
+
+  z-index: 25;
+
+  background: rgba(0,0,0,.7);
+  color: white;
+
+  padding: 10px 17px;
+  border-radius: 15px;
+
+  text-align: center;
+  font-weight: bold;
+
+  max-width: 90vw;
+
+  pointer-events: none;
+}
+
+/* LOADING */
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #07150d;
+  color: white;
+
+  font-size: 22px;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="canvas"></canvas>
+<div id="loading">
+  Loading Mini World 3D...
+</div>
 
-<!-- START SCREEN -->
+<div id="game"></div>
 
-<div id="start">
 
- <div style="font-size:90px">🌍</div>
+<!-- START -->
 
- <div class="title">
-  MINI WORLD
- </div>
+<div id="startScreen" class="hidden">
+  <div class="panel">
 
- <p class="subtitle">
-  Explore different worlds and biomes.
-  Complete tasks to unlock new areas!
- </p>
+    <h1>🌍 Mini World</h1>
 
- <p>
-  🌳 Forest &nbsp; 🏜️ Desert &nbsp;
-  ❄️ Snow &nbsp; 🌋 Volcano
- </p>
+    <p>
+      Explore different 3D worlds and complete tasks
+      to unlock new biomes.
+    </p>
 
- <button
-   type="button"
-   class="bigButton"
-   id="playButton">
-   PLAY GAME
- </button>
+    <p>
+      Your next world is unlocked by adventure —
+      not by pressing a level button.
+    </p>
 
+    <button id="playButton" class="bigButton">
+      PLAY GAME
+    </button>
+
+  </div>
+</div>
+
+
+<!-- COMPLETE -->
+
+<div id="completeScreen" class="hidden">
+  <div class="panel">
+
+    <h1>🏆 World Complete!</h1>
+
+    <p id="completeText">
+      You completed the world!
+    </p>
+
+    <button id="continueButton" class="bigButton">
+      CONTINUE
+    </button>
+
+  </div>
 </div>
 
 
 <!-- HUD -->
 
-<div id="hud">
+<div id="hud" class="hidden">
 
- <div class="info">
-  WORLD: <span id="worldName">FOREST</span>
- </div>
+  <div class="hudBox">
+    WORLD:
+    <span id="worldName">FOREST</span>
+  </div>
 
- <div class="info">
-  TASKS: <span id="taskCount">0 / 5</span>
- </div>
+  <div class="hudBox">
+    TASKS:
+    <span id="taskNumber">0</span> /
+    <span id="taskTotal">5</span>
+  </div>
 
 </div>
 
 
-<div id="task">
- TASK: Explore the forest
+<!-- TASK -->
+
+<div id="taskBox" class="hidden">
+
+  <div id="taskText">
+    Task
+  </div>
+
+  <div id="taskProgress">
+    0 / 1
+  </div>
+
+</div>
+
+
+<!-- MESSAGE -->
+
+<div id="worldMessage" class="hidden">
+  Explore!
 </div>
 
 
 <!-- CONTROLS -->
 
-<div id="controls">
+<div id="controls" class="hidden">
 
- <button
-   type="button"
-   class="move"
-   id="forward">
-   MOVE FORWARD
- </button>
+  <button class="control" id="forward">
+    MOVE<br>FORWARD
+  </button>
 
- <button
-   type="button"
-   class="move"
-   id="back">
-   MOVE BACK
- </button>
+  <button class="control" id="back">
+    MOVE<br>BACK
+  </button>
 
- <button
-   type="button"
-   class="move"
-   id="left">
-   TURN LEFT
- </button>
+  <button class="control" id="left">
+    MOVE<br>LEFT
+  </button>
 
- <button
-   type="button"
-   class="move"
-   id="right">
-   TURN RIGHT
- </button>
+  <button class="control" id="right">
+    MOVE<br>RIGHT
+  </button>
+
+  <button class="control" id="turnLeft">
+    TURN<br>LEFT
+  </button>
+
+  <button class="control" id="turnRight">
+    TURN<br>RIGHT
+  </button>
 
 </div>
 
 
-<button
- type="button"
- id="action">
- DO TASK
-</button>
+<!-- THREE.JS -->
 
-
-<div id="message"></div>
-
-
-<!-- WIN -->
-
-<div id="win">
-
- <div style="font-size:85px">🏆</div>
-
- <div class="title">
-  WORLD COMPLETE!
- </div>
-
- <p
-   class="subtitle"
-   id="winText">
-   You completed the world!
- </p>
-
- <button
-   type="button"
-   class="bigButton"
-   id="nextButton">
-   NEXT WORLD
- </button>
-
-</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
 
 
 <script>
 
-/* =====================================================
-   CANVAS
-===================================================== */
+/* =========================================================
+   MINI WORLD 3D
+========================================================= */
 
-const canvas =
- document.getElementById("canvas");
+let scene;
+let camera;
+let renderer;
+let clock;
 
-const ctx =
- canvas.getContext("2d");
+let player;
 
-let W=innerWidth;
-let H=innerHeight;
+let started = false;
 
-function resize(){
+let currentWorld = 0;
 
- W=innerWidth;
- H=innerHeight;
+let currentTask = 0;
 
- const dpr=
-  Math.min(
-   devicePixelRatio || 1,
-   2
-  );
+let taskAmount = 0;
 
- canvas.width=W*dpr;
- canvas.height=H*dpr;
+let taskTarget;
 
- canvas.style.width=W+"px";
- canvas.style.height=H+"px";
+let taskObjects = [];
 
- ctx.setTransform(
-  dpr,0,0,dpr,0,0
- );
-}
+let worldObjects = [];
 
-resize();
+const WORLD_SIZE = 260;
 
-window.addEventListener(
- "resize",
- resize
-);
+const PLAYER_SPEED = 0.16;
+
+const TURN_SPEED = 0.045;
 
 
-/* =====================================================
-   GAME STATE
-===================================================== */
-
-let playing=false;
-
-let worldIndex=0;
-
-let completedTasks=0;
-
-let currentTask=null;
-
-let objects=[];
-
-const player={
- x:0,
- z:35,
- angle:0
-};
-
-const keys={
- forward:false,
- back:false,
- left:false,
- right:false
-};
-
-
-/* =====================================================
+/* =========================================================
    WORLDS
-===================================================== */
+========================================================= */
 
-const worlds=[
+const worlds = [
 
- {
-  name:"FOREST",
-  sky:"#73c9e8",
-  ground:"#5da34c",
-  tree:"#237438",
-  tasks:[
-   "Find the giant tree",
-   "Find the blue flower",
-   "Explore the forest",
-   "Find the hidden stone",
-   "Reach the forest clearing"
-  ]
- },
+  {
+    name: "FOREST",
 
- {
-  name:"DESERT",
-  sky:"#f3c77b",
-  ground:"#d7a957",
-  tree:"#7b5b2b",
-  tasks:[
-   "Find the oasis",
-   "Find the ancient rock",
-   "Explore the dunes",
-   "Find the hidden cactus",
-   "Reach the desert ruins"
-  ]
- },
+    sky: 0x76cbea,
 
- {
-  name:"SNOW",
-  sky:"#b9dff1",
-  ground:"#e8f2f5",
-  tree:"#315a47",
-  tasks:[
-   "Find the frozen lake",
-   "Find the snow tree",
-   "Explore the snowy valley",
-   "Find the ice crystal",
-   "Reach the mountain"
-  ]
- },
+    ground: 0x3f913c,
 
- {
-  name:"VOLCANO",
-  sky:"#514b50",
-  ground:"#55372e",
-  tree:"#332b28",
-  tasks:[
-   "Find the lava rock",
-   "Find the black tree",
-   "Explore the volcano",
-   "Find the crystal",
-   "Reach the volcano entrance"
-  ]
- }
+    tasks: [
+
+      {
+        text: "Touch the glowing tree",
+        type: "tree",
+        amount: 1
+      },
+
+      {
+        text: "Collect 3 red berries",
+        type: "berries",
+        amount: 3
+      },
+
+      {
+        text: "Visit the forest pond",
+        type: "pond",
+        amount: 1
+      },
+
+      {
+        text: "Find the golden stone",
+        type: "gold",
+        amount: 1
+      },
+
+      {
+        text: "Reach the forest shrine",
+        type: "shrine",
+        amount: 1
+      }
+
+    ]
+  },
+
+
+  {
+    name: "DESERT",
+
+    sky: 0xe8b65c,
+
+    ground: 0xd7a84c,
+
+    tasks: [
+
+      {
+        text: "Find the giant cactus",
+        type: "cactus",
+        amount: 1
+      },
+
+      {
+        text: "Collect 3 blue crystals",
+        type: "crystals",
+        amount: 3
+      },
+
+      {
+        text: "Reach the desert oasis",
+        type: "oasis",
+        amount: 1
+      },
+
+      {
+        text: "Find the ancient statue",
+        type: "statue",
+        amount: 1
+      },
+
+      {
+        text: "Reach the desert temple",
+        type: "temple",
+        amount: 1
+      }
+
+    ]
+  },
+
+
+  {
+    name: "SNOW",
+
+    sky: 0x9bd8ed,
+
+    ground: 0xe9f5ff,
+
+    tasks: [
+
+      {
+        text: "Find the giant snow tree",
+        type: "snowtree",
+        amount: 1
+      },
+
+      {
+        text: "Collect 3 ice crystals",
+        type: "ice",
+        amount: 3
+      },
+
+      {
+        text: "Visit the frozen lake",
+        type: "lake",
+        amount: 1
+      },
+
+      {
+        text: "Find the ice statue",
+        type: "icestatue",
+        amount: 1
+      },
+
+      {
+        text: "Reach the snowy castle",
+        type: "castle",
+        amount: 1
+      }
+
+    ]
+  },
+
+
+  {
+    name: "JUNGLE",
+
+    sky: 0x65c8b0,
+
+    ground: 0x267d39,
+
+    tasks: [
+
+      {
+        text: "Find the giant jungle flower",
+        type: "flower",
+        amount: 1
+      },
+
+      {
+        text: "Collect 3 jungle fruits",
+        type: "fruit",
+        amount: 3
+      },
+
+      {
+        text: "Cross the jungle river",
+        type: "river",
+        amount: 1
+      },
+
+      {
+        text: "Find the ancient ruins",
+        type: "ruins",
+        amount: 1
+      },
+
+      {
+        text: "Reach the jungle temple",
+        type: "jungleTemple",
+        amount: 1
+      }
+
+    ]
+  },
+
+
+  {
+    name: "SWAMP",
+
+    sky: 0x6c927b,
+
+    ground: 0x314d36,
+
+    tasks: [
+
+      {
+        text: "Find the giant mushroom",
+        type: "mushroom",
+        amount: 1
+      },
+
+      {
+        text: "Collect 3 swamp gems",
+        type: "swampgem",
+        amount: 3
+      },
+
+      {
+        text: "Cross the swamp",
+        type: "swampwater",
+        amount: 1
+      },
+
+      {
+        text: "Find the hidden hut",
+        type: "hut",
+        amount: 1
+      },
+
+      {
+        text: "Reach the swamp crystal",
+        type: "swampcrystal",
+        amount: 1
+      }
+
+    ]
+  }
 
 ];
 
 
-/* =====================================================
-   RANDOM
-===================================================== */
+/* =========================================================
+   CONTROLS
+========================================================= */
 
-function random(a,b){
- return a+
-  Math.random()*(b-a);
-}
+const keys = {
 
+  forward: false,
+  back: false,
+  left: false,
+  right: false,
+  turnLeft: false,
+  turnRight: false
 
-/* =====================================================
-   CREATE WORLD
-===================================================== */
+};
 
-function createWorld(){
 
- objects=[];
+/* =========================================================
+   HTML
+========================================================= */
 
- player.x=0;
- player.z=35;
- player.angle=0;
+const loading =
+  document.getElementById("loading");
 
- completedTasks=0;
+const startScreen =
+  document.getElementById("startScreen");
 
- currentTask=
-  worlds[worldIndex].tasks[0];
+const completeScreen =
+  document.getElementById("completeScreen");
 
- /*
-  Create trees.
- */
+const hud =
+  document.getElementById("hud");
 
- for(let i=0;i<65;i++){
+const controls =
+  document.getElementById("controls");
 
-  objects.push({
+const taskBox =
+  document.getElementById("taskBox");
 
-   type:"tree",
+const taskText =
+  document.getElementById("taskText");
 
-   x:random(-100,100),
+const taskProgress =
+  document.getElementById("taskProgress");
 
-   z:random(-115,90),
+const worldMessage =
+  document.getElementById("worldMessage");
 
-   size:random(.7,1.6)
+const worldName =
+  document.getElementById("worldName");
 
-  });
- }
+const taskNumber =
+  document.getElementById("taskNumber");
 
+const taskTotal =
+  document.getElementById("taskTotal");
 
- /*
-  Create rocks.
- */
 
- for(let i=0;i<25;i++){
-
-  objects.push({
-
-   type:"rock",
-
-   x:random(-100,100),
-
-   z:random(-110,80),
-
-   size:random(.5,1.2)
-
-  });
- }
-
-
- /*
-  Create task objects.
- */
-
- for(let i=0;i<5;i++){
-
-  objects.push({
-
-   type:"task",
-
-   task:i,
-
-   x:random(-75,75),
-
-   z:random(-100,-15),
-
-   size:1.2,
-
-   completed:false
-
-  });
-
- }
-
- updateUI();
-
-}
-
-
-/* =====================================================
-   PROJECTION
-===================================================== */
-
-function project(x,z,size){
-
- const dx=x-player.x;
- const dz=z-player.z;
-
- const sin=
-  Math.sin(player.angle);
-
- const cos=
-  Math.cos(player.angle);
-
- const forward=
-  -dx*sin-dz*cos;
-
- const side=
-  dx*cos-dz*sin;
-
- if(forward<=1)
-  return null;
-
- const scale=
-  430/forward;
-
- return{
-
-  x:
-   W/2+
-   side*scale,
-
-  y:
-   H*.50+
-   140*scale,
-
-  size:
-   Math.max(
-    2,
-    size*scale
-   ),
-
-  depth:forward
-
- };
-
-}
-
-
-/* =====================================================
-   GROUND
-===================================================== */
-
-function drawGround(){
-
- const world=
-  worlds[worldIndex];
-
- const gradient=
-  ctx.createLinearGradient(
-   0,0,0,H
-  );
-
- gradient.addColorStop(
-  0,
-  world.sky
- );
-
- gradient.addColorStop(
-  .48,
-  world.ground
- );
-
- gradient.addColorStop(
-  1,
-  "#273b27"
- );
-
- ctx.fillStyle=gradient;
-
- ctx.fillRect(
-  0,0,W,H
- );
-
-
- ctx.strokeStyle=
-  "#ffffff20";
-
- for(let i=0;i<14;i++){
-
-  const y=
-   H*.53+i*i*8;
-
-  ctx.beginPath();
-
-  ctx.moveTo(0,y);
-  ctx.lineTo(W,y);
-
-  ctx.stroke();
-
- }
-
-}
-
-
-/* =====================================================
-   TREE
-===================================================== */
-
-function drawTree(o){
-
- const p=
-  project(
-   o.x,
-   o.z,
-   o.size
-  );
-
- if(!p)return;
-
- const world=
-  worlds[worldIndex];
-
- const s=
-  Math.max(
-   5,
-   Math.min(
-    100,
-    p.size
-   )
-  );
-
-
- ctx.fillStyle=
-  world.tree;
-
- ctx.fillRect(
-  p.x-s*.15,
-  p.y-s*2.2,
-  s*.3,
-  s*2.2
- );
-
-
- ctx.beginPath();
-
- ctx.arc(
-  p.x,
-  p.y-s*2.4,
-  s*1.2,
-  0,
-  Math.PI*2
- );
-
- ctx.fill();
-
-
- ctx.beginPath();
-
- ctx.arc(
-  p.x-s*.55,
-  p.y-s*2.75,
-  s*.75,
-  0,
-  Math.PI*2
- );
-
- ctx.fill();
-
-}
-
-
-/* =====================================================
-   ROCK
-===================================================== */
-
-function drawRock(o){
-
- const p=
-  project(
-   o.x,
-   o.z,
-   o.size
-  );
-
- if(!p)return;
-
- const s=
-  Math.max(
-   4,
-   Math.min(
-    45,
-    p.size
-   )
-  );
-
- ctx.fillStyle=
-  worldIndex===1
-  ? "#a77b43"
-  : worldIndex===2
-  ? "#cbd6dc"
-  : worldIndex===3
-  ? "#392e2b"
-  : "#59645a";
-
- ctx.beginPath();
-
- ctx.ellipse(
-  p.x,
-  p.y,
-  s,
-  s*.55,
-  0,
-  0,
-  Math.PI*2
- );
-
- ctx.fill();
-
-}
-
-
-/* =====================================================
-   TASK OBJECT
-===================================================== */
-
-function drawTask(o){
-
- if(o.completed)
-  return;
-
- const p=
-  project(
-   o.x,
-   o.z,
-   o.size
-  );
-
- if(!p)return;
-
- const s=
-  Math.max(
-   7,
-   Math.min(
-    50,
-    p.size
-   )
-  );
-
- ctx.fillStyle=
-  "#ffd447";
-
- ctx.beginPath();
-
- ctx.arc(
-  p.x,
-  p.y-s,
-  s*.6,
-  0,
-  Math.PI*2
- );
-
- ctx.fill();
-
- ctx.fillStyle="#ffffff";
-
- ctx.font=
-  "bold "+
-  Math.max(9,s*.45)+
-  "px Arial";
-
- ctx.textAlign="center";
-
- ctx.fillText(
-  "!",
-  p.x,
-  p.y-s*.8
- );
-
-}
-
-
-/* =====================================================
-   WORLD
-===================================================== */
-
-function drawWorld(){
-
- drawGround();
-
- const list=[];
-
- for(
-  const o of objects
- ){
-
-  list.push({
-
-   depth:
-    Math.hypot(
-     o.x-player.x,
-     o.z-player.z
-    ),
-
-   object:o
-
-  });
-
- }
-
- list.sort(
-  (a,b)=>
-   b.depth-a.depth
- );
-
- for(
-  const item of list
- ){
-
-  const o=
-   item.object;
-
-  if(o.type==="tree")
-   drawTree(o);
-
-  else if(o.type==="rock")
-   drawRock(o);
-
-  else
-   drawTask(o);
-
- }
-
-
- drawPlayer();
-
-}
-
-
-/* =====================================================
-   PLAYER
-===================================================== */
-
-function drawPlayer(){
-
- const x=W/2;
- const y=H*.65;
-
- ctx.save();
-
- ctx.translate(
-  x,y
- );
-
- ctx.fillStyle=
-  "#394c9b";
-
- ctx.beginPath();
-
- ctx.arc(
-  0,
-  -18,
-  13,
-  0,
-  Math.PI*2
- );
-
- ctx.fill();
-
- ctx.fillRect(
-  -11,
-  -5,
-  22,
-  35
- );
-
- ctx.fillStyle=
-  "#25336d";
-
- ctx.fillRect(
-  -18,
-  30,
-  12,
-  22
- );
-
- ctx.fillRect(
-  6,
-  30,
-  12,
-  22
- );
-
- ctx.restore();
-
-}
-
-
-/* =====================================================
-   MOVEMENT
-===================================================== */
-
-function updatePlayer(dt){
-
- const speed=
-  9*dt;
-
- const turn=
-  2.5*dt;
-
-
- /*
-   LEFT = TURN LEFT
-   RIGHT = TURN RIGHT
- */
-
- if(keys.left)
-  player.angle-=turn;
-
- if(keys.right)
-  player.angle+=turn;
-
-
- if(keys.forward){
-
-  player.x+=
-   Math.sin(
-    player.angle
-   )*speed;
-
-  player.z+=
-   -Math.cos(
-    player.angle
-   )*speed;
-
- }
-
-
- if(keys.back){
-
-  player.x-=
-   Math.sin(
-    player.angle
-   )*speed;
-
-  player.z-=
-   -Math.cos(
-    player.angle
-   )*speed;
-
- }
-
-
- player.x=
-  Math.max(
-   -105,
-   Math.min(
-    105,
-    player.x
-   )
-  );
-
- player.z=
-  Math.max(
-   -115,
-   Math.min(
-    90,
-    player.z
-   )
-  );
-
-}
-
-
-/* =====================================================
-   TASK
-===================================================== */
+/* =========================================================
+   START
+========================================================= */
 
 document
- .getElementById("action")
- .addEventListener(
-  "click",
-  function(){
+.getElementById("playButton")
+.addEventListener("click", startGame);
 
-   if(!playing)
-    return;
 
-   let nearest=null;
-   let distance=Infinity;
+document
+.getElementById("continueButton")
+.addEventListener("click", continueWorld);
 
-   for(
-    const o of objects
-   ){
 
-    if(
-     o.type!=="task" ||
-     o.completed
+/* =========================================================
+   START GAME
+========================================================= */
+
+function startGame() {
+
+  started = true;
+
+  startScreen.classList.add("hidden");
+
+  hud.classList.remove("hidden");
+
+  controls.classList.remove("hidden");
+
+  taskBox.classList.remove("hidden");
+
+  worldMessage.classList.remove("hidden");
+
+  loadWorld(currentWorld);
+
+}
+
+
+/* =========================================================
+   THREE.JS SETUP
+========================================================= */
+
+function setup3D() {
+
+  scene =
+    new THREE.Scene();
+
+  camera =
+    new THREE.PerspectiveCamera(
+
+      70,
+
+      window.innerWidth /
+      window.innerHeight,
+
+      0.1,
+
+      500
+
+    );
+
+
+  renderer =
+    new THREE.WebGLRenderer({
+
+      antialias: true,
+
+      powerPreference:
+        "high-performance"
+
+    });
+
+
+  renderer.setSize(
+
+    window.innerWidth,
+
+    window.innerHeight
+
+  );
+
+
+  renderer.setPixelRatio(
+
+    Math.min(
+      window.devicePixelRatio,
+      1.5
     )
-     continue;
 
-    const d=
-     Math.hypot(
-      o.x-player.x,
-      o.z-player.z
-     );
+  );
 
-    if(d<distance){
 
-     distance=d;
-     nearest=o;
+  renderer.shadowMap.enabled = true;
+
+  renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+
+  document
+    .getElementById("game")
+    .appendChild(renderer.domElement);
+
+
+  clock =
+    new THREE.Clock();
+
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+
+  animate();
+
+}
+
+
+/* =========================================================
+   LIGHT
+========================================================= */
+
+function createLights() {
+
+  const ambient =
+    new THREE.HemisphereLight(
+
+      0xffffff,
+
+      0x304030,
+
+      1.8
+
+    );
+
+  scene.add(ambient);
+
+
+  const sun =
+    new THREE.DirectionalLight(
+
+      0xffffff,
+
+      2.5
+
+    );
+
+
+  sun.position.set(
+
+    60,
+    100,
+    40
+
+  );
+
+
+  sun.castShadow = true;
+
+
+  sun.shadow.mapSize.width = 1024;
+
+  sun.shadow.mapSize.height = 1024;
+
+
+  scene.add(sun);
+
+}
+
+
+/* =========================================================
+   GROUND
+========================================================= */
+
+function createGround(world) {
+
+  const geometry =
+    new THREE.PlaneGeometry(
+
+      WORLD_SIZE,
+
+      WORLD_SIZE,
+
+      50,
+
+      50
+
+    );
+
+
+  const material =
+    new THREE.MeshStandardMaterial({
+
+      color:
+        world.ground,
+
+      roughness: 1
+
+    });
+
+
+  const ground =
+    new THREE.Mesh(
+
+      geometry,
+
+      material
+
+    );
+
+
+  ground.rotation.x =
+    -Math.PI / 2;
+
+
+  ground.receiveShadow = true;
+
+
+  scene.add(ground);
+
+  worldObjects.push(ground);
+
+}
+
+
+/* =========================================================
+   TREE
+========================================================= */
+
+function createTree(
+  x,
+  z,
+  giant = false
+) {
+
+  const group =
+    new THREE.Group();
+
+
+  const trunk =
+    new THREE.Mesh(
+
+      new THREE.CylinderGeometry(
+
+        giant ? 1.6 : .7,
+
+        giant ? 2 : 1,
+
+        giant ? 12 : 6,
+
+        10
+
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: 0x70462c
+
+      })
+
+    );
+
+
+  trunk.position.y =
+    giant ? 6 : 3;
+
+
+  trunk.castShadow = true;
+
+
+  group.add(trunk);
+
+
+  for (let i = 0; i < 4; i++) {
+
+    const leaves =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+
+          giant ? 4 : 2.3,
+
+          10,
+
+          8
+
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            giant
+              ? 0x0e6c25
+              : 0x217b2f
+
+        })
+
+      );
+
+
+    leaves.position.set(
+
+      THREE.MathUtils.randFloat(
+        -1.5,
+        1.5
+      ),
+
+      (giant ? 9 : 5) +
+      i * 1.2,
+
+      THREE.MathUtils.randFloat(
+        -1.5,
+        1.5
+      )
+
+    );
+
+
+    leaves.castShadow = true;
+
+    group.add(leaves);
+
+  }
+
+
+  group.position.set(
+    x,
+    0,
+    z
+  );
+
+
+  scene.add(group);
+
+  worldObjects.push(group);
+
+
+  return group;
+
+}
+
+
+/* =========================================================
+   ROCK
+========================================================= */
+
+function createRock(
+  x,
+  z,
+  color = 0x687068
+) {
+
+  const rock =
+    new THREE.Mesh(
+
+      new THREE.DodecahedronGeometry(
+
+        THREE.MathUtils.randFloat(
+          .7,
+          2
+        )
+
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: color,
+
+        roughness: 1
+
+      })
+
+    );
+
+
+  rock.position.set(
+
+    x,
+
+    .8,
+
+    z
+
+  );
+
+
+  rock.castShadow = true;
+
+
+  scene.add(rock);
+
+  worldObjects.push(rock);
+
+}
+
+
+/* =========================================================
+   WATER
+========================================================= */
+
+function createWater(
+  x,
+  z,
+  size,
+  color = 0x238fd1
+) {
+
+  const water =
+    new THREE.Mesh(
+
+      new THREE.CylinderGeometry(
+
+        size,
+        size,
+        .25,
+        32
+
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: color,
+
+        roughness: .15,
+
+        metalness: .1
+
+      })
+
+    );
+
+
+  water.position.set(
+
+    x,
+
+    .12,
+
+    z
+
+  );
+
+
+  scene.add(water);
+
+  worldObjects.push(water);
+
+  return water;
+
+}
+
+
+/* =========================================================
+   GLOWING OBJECT
+========================================================= */
+
+function createGlowObject(
+  x,
+  z,
+  color,
+  type,
+  size = 1
+) {
+
+  const object =
+    new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+
+        size,
+
+        16,
+
+        12
+
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: color,
+
+        emissive: color,
+
+        emissiveIntensity: .8
+
+      })
+
+    );
+
+
+  object.position.set(
+
+    x,
+
+    size,
+
+    z
+
+  );
+
+
+  object.userData.taskType =
+    type;
+
+
+  object.castShadow = true;
+
+
+  scene.add(object);
+
+
+  taskObjects.push(object);
+
+
+  return object;
+
+}
+
+
+/* =========================================================
+   CREATE RANDOM DECORATION
+========================================================= */
+
+function decorateWorld(world) {
+
+  for (let i = 0; i < 70; i++) {
+
+    const x =
+      THREE.MathUtils.randFloatSpread(
+        WORLD_SIZE - 20
+      );
+
+    const z =
+      THREE.MathUtils.randFloatSpread(
+        WORLD_SIZE - 20
+      );
+
+
+    if (
+      Math.abs(x) < 15 &&
+      Math.abs(z) < 15
+    ) {
+      continue;
+    }
+
+
+    if (
+      world.name === "FOREST" ||
+      world.name === "JUNGLE"
+    ) {
+
+      createTree(
+        x,
+        z,
+        false
+      );
 
     }
 
-   }
+    else if (
+      world.name === "DESERT"
+    ) {
 
+      createRock(
+        x,
+        z,
+        0xb98a43
+      );
 
-   if(!nearest)
-    return;
+    }
 
+    else if (
+      world.name === "SNOW"
+    ) {
 
-   if(distance>9){
+      createRock(
+        x,
+        z,
+        0xbfd1d8
+      );
 
-    showMessage(
-     "Move closer to the glowing task!"
-    );
+    }
 
-    return;
+    else {
 
-   }
+      createRock(
+        x,
+        z,
+        0x3b4d40
+      );
 
-
-   nearest.completed=true;
-
-   completedTasks++;
-
-   updateUI();
-
-   if(completedTasks>=5){
-
-    setTimeout(
-     completeWorld,
-     400
-    );
-
-   }else{
-
-    currentTask=
-     worlds[worldIndex]
-     .tasks[completedTasks];
-
-    updateUI();
-
-    showMessage(
-     "Task complete!"
-    );
-
-   }
+    }
 
   }
-);
-
-
-/* =====================================================
-   UPDATE UI
-===================================================== */
-
-function updateUI(){
-
- const world=
-  worlds[worldIndex];
-
- document.getElementById(
-  "worldName"
- ).textContent=
-  world.name;
-
- document.getElementById(
-  "taskCount"
- ).textContent=
-  completedTasks+
-  " / 5";
-
- document.getElementById(
-  "task"
- ).textContent=
-  "TASK: "+
-  currentTask;
 
 }
 
 
-/* =====================================================
-   MESSAGE
-===================================================== */
+/* =========================================================
+   SPECIAL OBJECTS
+========================================================= */
 
-let messageTimer=null;
+function createTaskObject(
+  type
+) {
 
-function showMessage(text){
+  let x =
+    THREE.MathUtils.randFloat(
+      -75,
+      75
+    );
 
- const box=
-  document.getElementById(
-   "message"
-  );
-
- box.textContent=text;
-
- box.style.display="block";
-
- clearTimeout(
-  messageTimer
- );
-
- messageTimer=
-  setTimeout(
-   function(){
-
-    box.style.display="none";
-
-   },
-   1800
-  );
-
-}
+  let z =
+    THREE.MathUtils.randFloat(
+      -75,
+      75
+    );
 
 
-/* =====================================================
-   COMPLETE WORLD
-===================================================== */
+  /* Keep task away from spawn */
 
-function completeWorld(){
+  while (
+    Math.hypot(x,z) < 25
+  ) {
 
- playing=false;
+    x =
+      THREE.MathUtils.randFloat(
+        -75,
+        75
+      );
 
- document.getElementById(
-  "win"
- ).style.display="flex";
-
- document.getElementById(
-  "winText"
- ).textContent=
-  worlds[worldIndex].name+
-  " complete! You unlocked the next world.";
-
-}
-
-
-/* =====================================================
-   NEXT WORLD
-===================================================== */
-
-document
- .getElementById("nextButton")
- .addEventListener(
-  "click",
-  function(){
-
-   worldIndex++;
-
-   if(
-    worldIndex>=worlds.length
-   ){
-
-    worldIndex=0;
-
-   }
-
-   createWorld();
-
-   document.getElementById(
-    "win"
-   ).style.display="none";
-
-   playing=true;
-
-   updateUI();
-
-   showMessage(
-    "Welcome to "+
-    worlds[worldIndex].name+
-    "!"
-   );
+    z =
+      THREE.MathUtils.randFloat(
+        -75,
+        75
+      );
 
   }
-);
 
 
-/* =====================================================
-   TOUCH CONTROLS
-===================================================== */
+  let object;
 
-function holdButton(
- id,
- key
-){
 
- const button=
-  document.getElementById(id);
+  /* TREE */
 
- button.addEventListener(
-  "pointerdown",
-  function(e){
+  if (type === "tree") {
 
-   e.preventDefault();
-
-   keys[key]=true;
-
-   button.setPointerCapture(
-    e.pointerId
-   );
+    object =
+      createTree(
+        x,
+        z,
+        true
+      );
 
   }
- );
-
- function stop(){
-
-  keys[key]=false;
-
- }
-
- button.addEventListener(
-  "pointerup",
-  stop
- );
-
- button.addEventListener(
-  "pointercancel",
-  stop
- );
-
- button.addEventListener(
-  "lostpointercapture",
-  stop
- );
-
-}
-
-holdButton(
- "forward",
- "forward"
-);
-
-holdButton(
- "back",
- "back"
-);
-
-holdButton(
- "left",
- "left"
-);
-
-holdButton(
- "right",
- "right"
-);
 
 
-/* =====================================================
-   KEYBOARD
-===================================================== */
+  /* BERRIES */
 
-window.addEventListener(
- "keydown",
- function(e){
+  else if (type === "berries") {
 
-  if(e.key==="ArrowUp")
-   keys.forward=true;
+    for (let i = 0; i < 3; i++) {
 
-  if(e.key==="ArrowDown")
-   keys.back=true;
+      object =
+        createGlowObject(
 
-  if(e.key==="ArrowLeft")
-   keys.left=true;
+          x + i * 2,
 
-  if(e.key==="ArrowRight")
-   keys.right=true;
+          z,
 
- }
-);
+          0xff3048,
 
-window.addEventListener(
- "keyup",
- function(e){
+          "berries",
 
-  if(e.key==="ArrowUp")
-   keys.forward=false;
+          .6
 
-  if(e.key==="ArrowDown")
-   keys.back=false;
+        );
 
-  if(e.key==="ArrowLeft")
-   keys.left=false;
+    }
 
-  if(e.key==="ArrowRight")
-   keys.right=false;
-
- }
-);
+  }
 
 
-/* =====================================================
-   PLAY GAME — FIXED
-===================================================== */
+  /* POND */
 
-function startGame(){
+  else if (type === "pond") {
 
- /*
-  This is deliberately a normal function.
-  The button calls it directly.
- */
+    object =
+      createWater(
+        x,
+        z,
+        7
+      );
 
- if(playing)
-  return;
+    object.userData.taskType =
+      "pond";
 
- worldIndex=0;
+    taskObjects.push(object);
 
- createWorld();
-
- playing=true;
-
- document.getElementById(
-  "start"
- ).style.display="none";
-
- document.getElementById(
-  "hud"
- ).style.display="flex";
-
- document.getElementById(
-  "task"
- ).style.display="block";
-
- document.getElementById(
-  "controls"
- ).style.display="block";
-
- document.getElementById(
-  "action"
- ).style.display="block";
-
- showMessage(
-  "Mini World started!"
- );
-
-}
+  }
 
 
-/*
- IMPORTANT:
- Both click AND pointerup call the same
- start function. This makes the button
- work reliably on phones and computers.
- */
+  /* GOLD */
 
-const playButton=
- document.getElementById(
-  "playButton"
- );
+  else if (type === "gold") {
 
-playButton.addEventListener(
- "click",
- startGame
-);
+    object =
+      createGlowObject(
 
-playButton.addEventListener(
- "pointerup",
- function(e){
+        x,
+        z,
 
-  e.preventDefault();
+        0xffd21f,
 
-  startGame();
+        "gold",
 
- }
-);
+        1.2
+
+      );
+
+  }
 
 
-/* =====================================================
-   GAME LOOP
-===================================================== */
+  /* SHRINE */
 
-let lastTime=0;
+  else if (type === "shrine") {
 
-function gameLoop(time){
+    object =
+      createShrine(
+        x,
+        z,
+        0x9b59ff,
+        "shrine"
+      );
 
- const dt=
-  Math.min(
-   .04,
-   lastTime
-    ? (time-lastTime)/1000
-    : 0
-  );
+  }
 
- lastTime=time;
 
- if(playing){
+  /* DESERT */
 
-  updatePlayer(dt);
+  else if (type === "cactus") {
 
-  drawWorld();
+    object =
+      createCactus(
+        x,
+        z
+      );
 
- }
+  }
 
- requestAnimationFrame(
-  gameLoop
- );
 
-}
+  else if (type === "crystals") {
 
-requestAnimationFrame(
- gameLoop
-);
+    for (let i = 0; i < 3; i++) {
 
-</script>
+      object =
+        createGlowObject(
 
-</body>
-</html>
-```
+          x + i * 2,
+
+          z,
+
+          0x38bfff,
+
+          "crystals",
+
+          .7
+
+        );
+
+    }
+
+  }
+
+
+  else if (type === "oasis") {
+
+    object =
+      createWater(
+        x,
+        z,
+        8,
+        0x29c7e8
+      );
+
+    object.userData.taskType =
+      "oasis";
+
+    taskObjects.push(object);
+
+  }
+
+
+  else if (type === "statue") {
+
+    object =
+      createStatue(
+        x,
+        z,
+        0xb58b50,
+        "statue"
+      );
+
+  }
+
+
+  else if (type === "temple") {
+
+    object =
+      createTemple(
+        x,
+        z,
+        0xc68c38,
+        "temple"
+      );
+
+  }
+
+
+  /* SNOW */
+
+  else if (type === "snowtree") {
+
+    object =
+      createTree(
+        x,
+        z,
+        true
+      );
+
+    object.scale.set(
+      1,
+      1,
+      1
+    );
+
+  }
+
+
+  else if (type === "ice") {
+
+    for (let i = 0; i < 3; i++) {
+
+      object =
+        createGlowObject(
+
+          x + i * 2,
+
+          z,
+
+          0x8eeaff,
+
+          "ice",
+
+          .8
+
+        );
+
+    }
+
+  }
+
+
+  else if (type === "lake") {
+
+    object =
+      createWater(
+        x,
+        z,
+        9,
+        0x7ed8ff
+      );
+
+    object.userData.taskType =
+      "lake";
+
+    taskObjects.push(object);
+
+  }
+
+
+  else if (type === "icestatue") {
+
+    object =
+      createStatue(
+        x,
+        z,
+        0xa9eaff,
+        "icestatue"
+      );
+
+  }
+
+
+  else if (type === "castle") {
+
+    object =
+      createTemple(
+    
