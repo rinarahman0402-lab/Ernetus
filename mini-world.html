@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Mini World 3D</title>
+<title>Mini World</title>
 
 <style>
 *{
@@ -19,8 +19,8 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#75c9ed;
   font-family:Arial,sans-serif;
+  background:#74c8ef;
 }
 
 canvas{
@@ -28,55 +28,55 @@ canvas{
   inset:0;
   width:100%;
   height:100%;
-  display:block;
 }
 
-#start,#complete,#error{
+#start,#levelComplete{
   position:fixed;
   inset:0;
-  z-index:100;
+  z-index:30;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   text-align:center;
   padding:25px;
   color:white;
 }
 
 #start{
-  background:linear-gradient(#58bfe8,#459b58);
+  background:linear-gradient(
+    #65c5ed 0%,
+    #83d06b 55%,
+    #39733b 100%
+  );
 }
 
-#complete{
+#levelComplete{
   display:none;
-  background:linear-gradient(#f6b84b,#dc664f);
+  background:#163b20dd;
 }
 
-#error{
-  display:none;
-  background:#17221d;
+.title{
+  font-size:clamp(42px,11vw,75px);
+  font-weight:900;
+  text-shadow:4px 4px 0 #20502b;
 }
 
-h1{
-  font-size:clamp(42px,10vw,72px);
-  margin:8px;
-}
-
-p{
+.subtitle{
   max-width:650px;
   font-size:18px;
   line-height:1.5;
 }
 
 .bigButton{
+  margin-top:22px;
   border:0;
   border-radius:20px;
-  padding:18px 30px;
-  background:#ffd34e;
-  color:#173b20;
+  padding:18px 32px;
+  background:#ffd447;
+  color:#17351d;
   font-size:20px;
-  font-weight:bold;
+  font-weight:900;
 }
 
 .bigButton:active{
@@ -84,1339 +84,1551 @@ p{
 }
 
 #hud{
-  position:fixed;
-  top:10px;
-  left:10px;
-  right:10px;
-  z-index:20;
   display:none;
+  position:fixed;
+  z-index:20;
+  top:9px;
+  left:9px;
+  right:9px;
   justify-content:space-between;
-  gap:8px;
+  gap:7px;
   pointer-events:none;
 }
 
-.hudBox{
-  background:#111c20dd;
+.info{
+  background:#102016dd;
   color:white;
   border-radius:14px;
   padding:9px 12px;
+  font-size:12px;
   font-weight:bold;
-  font-size:14px;
+}
+
+#taskBox{
+  position:fixed;
+  z-index:20;
+  top:58px;
+  right:9px;
+  width:190px;
+  background:#102016dd;
+  color:white;
+  border-radius:16px;
+  padding:12px;
+  font-size:12px;
+}
+
+#taskBox h3{
+  margin:0 0 8px;
+  font-size:15px;
+}
+
+.task{
+  margin:7px 0;
 }
 
 #controls{
-  position:fixed;
-  left:12px;
-  bottom:12px;
-  width:255px;
-  height:180px;
-  z-index:30;
   display:none;
+  position:fixed;
+  z-index:25;
+  left:10px;
+  bottom:10px;
+  width:285px;
+  height:185px;
 }
 
-.control{
+.moveButton{
   position:absolute;
-  width:82px;
+  width:88px;
   height:58px;
-  border:2px solid #ffffff99;
+  border:2px solid #ffffff77;
   border-radius:17px;
-  background:#13221ddd;
+  background:#102016dd;
   color:white;
   font-size:11px;
-  font-weight:bold;
+  font-weight:900;
 }
 
-.control:active{
-  background:#3f9250;
-  transform:scale(.94);
+.moveButton:active{
+  background:#3c8b43;
+  transform:scale(.93);
 }
 
-#forward{
-  left:86px;
+#up{
+  left:98px;
   top:0;
 }
 
-#back{
-  left:86px;
+#down{
+  left:98px;
   bottom:0;
 }
 
 #left{
   left:0;
-  top:61px;
+  top:63px;
 }
 
 #right{
   right:0;
-  top:61px;
+  top:63px;
 }
 
-#action{
+.actionButton{
   position:fixed;
+  z-index:25;
   right:14px;
-  bottom:25px;
-  z-index:30;
-  display:none;
+  bottom:30px;
+  width:125px;
+  min-height:58px;
   border:0;
   border-radius:18px;
-  padding:17px 20px;
-  background:#ffd34e;
-  color:#173b20;
-  font-weight:bold;
-  font-size:15px;
+  background:#ffd447;
+  color:#17351d;
+  font-size:12px;
+  font-weight:900;
 }
 
 #message{
-  position:fixed;
-  left:50%;
-  top:72px;
-  transform:translateX(-50%);
-  z-index:40;
   display:none;
-  max-width:90%;
-  padding:11px 17px;
-  border-radius:15px;
-  background:#111c20e8;
+  position:fixed;
+  z-index:40;
+  left:50%;
+  top:78px;
+  transform:translateX(-50%);
+  background:#102016ee;
   color:white;
+  padding:12px 18px;
+  border-radius:15px;
   font-weight:bold;
   text-align:center;
 }
 
-#taskPanel{
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  z-index:50;
-  display:none;
-  width:min(90%,500px);
-  padding:25px;
-  border-radius:22px;
-  background:#101a1eeF;
-  color:white;
-  text-align:center;
-}
-
-#taskPanel button{
-  margin-top:10px;
+#levelButton{
+  margin-top:15px;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="game"></canvas>
+<canvas id="canvas"></canvas>
+
+
+<!-- START -->
 
 <div id="start">
-  <div style="font-size:78px">🌎</div>
-  <h1>Mini World 3D</h1>
-  <p>
-    Explore four different 3D worlds.
-    Complete the task in each biome to unlock the next one.
+
+  <div style="font-size:90px">🌎</div>
+
+  <div class="title">
+    MINI WORLD
+  </div>
+
+  <p class="subtitle">
+    Explore a giant miniature world, complete tasks,
+    discover new biomes and unlock new areas.
   </p>
-  <button class="bigButton" id="play">
+
+  <p>
+    🌳 Forest &nbsp; 🏜️ Desert &nbsp; ❄️ Snow &nbsp; 🌊 Coast
+  </p>
+
+  <button class="bigButton" id="playButton">
     PLAY GAME
   </button>
+
 </div>
 
-<div id="complete">
-  <div style="font-size:78px">🏆</div>
-  <h1>MINI WORLD COMPLETE!</h1>
-  <p>
-    You explored every biome and completed every task!
-  </p>
-  <button class="bigButton" id="again">
-    PLAY AGAIN
-  </button>
-</div>
 
-<div id="error">
-  <div style="font-size:70px">⚠️</div>
-  <h1>3D COULD NOT START</h1>
-  <p>
-    Your browser could not create a WebGL 3D canvas.
-    Try opening the game directly in Chrome and reload the page.
-  </p>
-</div>
+<!-- HUD -->
 
 <div id="hud">
-  <div class="hudBox">
-    WORLD: <span id="worldText">FOREST</span>
+
+  <div class="info">
+    LEVEL:
+    <span id="level">1</span>
   </div>
 
-  <div class="hudBox">
-    <span id="taskText">0 / 5</span>
+  <div class="info">
+    TASK:
+    <span id="taskProgress">0 / 1</span>
   </div>
+
+  <div class="info">
+    COINS:
+    <span id="coins">0</span>
+  </div>
+
 </div>
+
+
+<!-- TASKS -->
+
+<div id="taskBox">
+
+  <h3>🌟 CURRENT TASK</h3>
+
+  <div id="taskText">
+    Find the forest crystal.
+  </div>
+
+</div>
+
+
+<!-- CONTROLS -->
 
 <div id="controls">
 
-  <button class="control" id="forward">
+  <button class="moveButton" id="up">
     MOVE FORWARD
   </button>
 
-  <button class="control" id="back">
+  <button class="moveButton" id="down">
     MOVE BACK
   </button>
 
-  <button class="control" id="left">
+  <button class="moveButton" id="left">
     TURN LEFT
   </button>
 
-  <button class="control" id="right">
+  <button class="moveButton" id="right">
     TURN RIGHT
   </button>
 
 </div>
 
-<button id="action">
-  DO TASK
+
+<button
+  class="actionButton"
+  id="actionButton">
+  INTERACT
 </button>
+
 
 <div id="message"></div>
 
-<div id="taskPanel">
-  <h2 id="panelTitle"></h2>
-  <p id="panelText"></p>
-  <button class="bigButton" id="closePanel">
-    START WORLD
+
+<!-- LEVEL COMPLETE -->
+
+<div id="levelComplete">
+
+  <div style="font-size:80px">⭐</div>
+
+  <div class="title">
+    LEVEL COMPLETE!
+  </div>
+
+  <p id="nextText" class="subtitle"></p>
+
+  <button
+    class="bigButton"
+    id="nextButton">
+    NEXT WORLD
   </button>
+
 </div>
 
 
 <script>
 
 /* =====================================================
-   MINI WORLD 3D
-   Native WebGL.
-   No external libraries.
+   CANVAS
 ===================================================== */
 
-const canvas=document.getElementById("game");
+const canvas=
+  document.getElementById("canvas");
 
-const gl=
-  canvas.getContext("webgl") ||
-  canvas.getContext("experimental-webgl");
+const ctx=
+  canvas.getContext("2d");
 
-if(!gl){
+let W=innerWidth;
+let H=innerHeight;
 
-  document.getElementById("start").style.display="none";
-  document.getElementById("error").style.display="flex";
+function resize(){
 
-}else{
+  W=innerWidth;
+  H=innerHeight;
 
-/* =====================================================
-   SHADERS
-===================================================== */
-
-const vertexShaderSource=`
-
-attribute vec3 aPosition;
-attribute vec3 aColor;
-
-uniform mat4 uProjection;
-uniform mat4 uView;
-uniform mat4 uModel;
-
-varying vec3 vColor;
-
-void main(){
-
-  gl_Position=
-    uProjection*
-    uView*
-    uModel*
-    vec4(aPosition,1.0);
-
-  vColor=aColor;
-}
-`;
-
-const fragmentShaderSource=`
-
-precision mediump float;
-
-varying vec3 vColor;
-
-void main(){
-
-  gl_FragColor=
-    vec4(vColor,1.0);
-
-}
-`;
-
-
-/* =====================================================
-   SHADER CREATION
-===================================================== */
-
-function makeShader(type,source){
-
-  const shader=gl.createShader(type);
-
-  gl.shaderSource(shader,source);
-
-  gl.compileShader(shader);
-
-  if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
-
-    console.log(
-      gl.getShaderInfoLog(shader)
+  const dpr=
+    Math.min(
+      devicePixelRatio || 1,
+      2
     );
 
-    return null;
-  }
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
 
-  return shader;
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
+
+  ctx.setTransform(
+    dpr,0,0,dpr,0,0
+  );
 }
 
+resize();
 
-const vertexShader=
-  makeShader(
-    gl.VERTEX_SHADER,
-    vertexShaderSource
-  );
-
-const fragmentShader=
-  makeShader(
-    gl.FRAGMENT_SHADER,
-    fragmentShaderSource
-  );
-
-
-const program=
-  gl.createProgram();
-
-gl.attachShader(
-  program,
-  vertexShader
+addEventListener(
+  "resize",
+  resize
 );
-
-gl.attachShader(
-  program,
-  fragmentShader
-);
-
-gl.linkProgram(program);
-
-if(!gl.getProgramParameter(
-  program,
-  gl.LINK_STATUS
-)){
-
-  document.getElementById("start").style.display="none";
-  document.getElementById("error").style.display="flex";
-
-}
-
-
-gl.useProgram(program);
-
-
-/* =====================================================
-   LOCATIONS
-===================================================== */
-
-const aPosition=
-  gl.getAttribLocation(
-    program,
-    "aPosition"
-  );
-
-const aColor=
-  gl.getAttribLocation(
-    program,
-    "aColor"
-  );
-
-const uProjection=
-  gl.getUniformLocation(
-    program,
-    "uProjection"
-  );
-
-const uView=
-  gl.getUniformLocation(
-    program,
-    "uView"
-  );
-
-const uModel=
-  gl.getUniformLocation(
-    program,
-    "uModel"
-  );
-
-
-/* =====================================================
-   CUBE GEOMETRY
-===================================================== */
-
-const cubeVertices=new Float32Array([
-
-  -1,-1,-1,
-   1,-1,-1,
-   1, 1,-1,
-  -1, 1,-1,
-
-  -1,-1, 1,
-   1,-1, 1,
-   1, 1, 1,
-  -1, 1, 1
-
-]);
-
-const cubeIndices=new Uint16Array([
-
-  0,1,2,
-  0,2,3,
-
-  4,6,5,
-  4,7,6,
-
-  0,4,5,
-  0,5,1,
-
-  3,2,6,
-  3,6,7,
-
-  0,3,7,
-  0,7,4,
-
-  1,5,6,
-  1,6,2
-
-]);
-
-
-const vertexBuffer=
-  gl.createBuffer();
-
-gl.bindBuffer(
-  gl.ARRAY_BUFFER,
-  vertexBuffer
-);
-
-gl.bufferData(
-  gl.ARRAY_BUFFER,
-  cubeVertices,
-  gl.STATIC_DRAW
-);
-
-
-const indexBuffer=
-  gl.createBuffer();
-
-gl.bindBuffer(
-  gl.ELEMENT_ARRAY_BUFFER,
-  indexBuffer
-);
-
-gl.bufferData(
-  gl.ELEMENT_ARRAY_BUFFER,
-  cubeIndices,
-  gl.STATIC_DRAW
-);
-
-
-/* =====================================================
-   MATH
-===================================================== */
-
-function identity(){
-
-  return new Float32Array([
-    1,0,0,0,
-    0,1,0,0,
-    0,0,1,0,
-    0,0,0,1
-  ]);
-
-}
-
-
-function multiply(a,b){
-
-  const out=
-    new Float32Array(16);
-
-  for(let c=0;c<4;c++){
-
-    for(let r=0;r<4;r++){
-
-      out[c*4+r]=
-        a[0*4+r]*b[c*4+0]+
-        a[1*4+r]*b[c*4+1]+
-        a[2*4+r]*b[c*4+2]+
-        a[3*4+r]*b[c*4+3];
-
-    }
-
-  }
-
-  return out;
-
-}
-
-
-function translation(x,y,z){
-
-  const m=identity();
-
-  m[12]=x;
-  m[13]=y;
-  m[14]=z;
-
-  return m;
-
-}
-
-
-function scale(x,y,z){
-
-  const m=identity();
-
-  m[0]=x;
-  m[5]=y;
-  m[10]=z;
-
-  return m;
-
-}
-
-
-function rotationY(a){
-
-  const c=Math.cos(a);
-  const s=Math.sin(a);
-
-  return new Float32Array([
-
-     c,0,-s,0,
-     0,1, 0,0,
-     s,0, c,0,
-     0,0, 0,1
-
-  ]);
-
-}
-
-
-function perspective(
-  fov,
-  aspect,
-  near,
-  far
-){
-
-  const f=
-    1/Math.tan(fov/2);
-
-  const nf=
-    1/(near-far);
-
-  return new Float32Array([
-
-    f/aspect,0,0,0,
-
-    0,f,0,0,
-
-    0,0,
-    (far+near)*nf,
-    -1,
-
-    0,0,
-    (2*far*near)*nf,
-    0
-
-  ]);
-
-}
-
-
-function lookAt(
-  eye,
-  center,
-  up
-){
-
-  let zx=
-    eye[0]-center[0];
-
-  let zy=
-    eye[1]-center[1];
-
-  let zz=
-    eye[2]-center[2];
-
-
-  let len=
-    Math.hypot(zx,zy,zz);
-
-  zx/=len;
-  zy/=len;
-  zz/=len;
-
-
-  let xx=
-    up[1]*zz-
-    up[2]*zy;
-
-  let xy=
-    up[2]*zx-
-    up[0]*zz;
-
-  let xz=
-    up[0]*zy-
-    up[1]*zx;
-
-
-  len=
-    Math.hypot(xx,xy,xz);
-
-  xx/=len;
-  xy/=len;
-  xz/=len;
-
-
-  const yx=
-    zy*xz-
-    zz*xy;
-
-  const yy=
-    zz*xx-
-    zx*xz;
-
-  const yz=
-    zx*xy-
-    zy*xx;
-
-
-  return new Float32Array([
-
-    xx,yx,zx,0,
-
-    xy,yy,zy,0,
-
-    xz,yz,zz,0,
-
-    -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
-    -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
-    -(zx*eye[0]+zy*eye[1]+zz*eye[2]),
-    1
-
-  ]);
-
-}
-
-
-/* =====================================================
-   WORLD DATA
-===================================================== */
-
-const worlds=[
-
-  {
-    name:"FOREST",
-    sky:[.32,.68,.86],
-    ground:[.16,.43,.16],
-    task:"Collect 5 berries.",
-    type:"berries",
-    goal:5
-  },
-
-  {
-    name:"DESERT",
-    sky:[.82,.62,.36],
-    ground:[.68,.47,.22],
-    task:"Activate 3 ancient water wells.",
-    type:"wells",
-    goal:3
-  },
-
-  {
-    name:"SNOW",
-    sky:[.62,.82,.92],
-    ground:[.82,.88,.91],
-    task:"Rescue 4 penguins.",
-    type:"penguins",
-    goal:4
-  },
-
-  {
-    name:"VOLCANO",
-    sky:[.42,.13,.08],
-    ground:[.18,.09,.07],
-    task:"Reach the safe cave before time runs out.",
-    type:"cave",
-    goal:1
-  }
-
-];
 
 
 /* =====================================================
    GAME STATE
 ===================================================== */
 
-let worldIndex=0;
-let running=false;
+let playing=false;
+
+let level=1;
+
+let coins=0;
+
+let taskDone=false;
+
+let currentBiome="forest";
 
 let player={
   x:0,
-  y:1.7,
-  z:12,
-  yaw:0
+  z:35,
+  angle:0
 };
 
-let objects=[];
-
-let progress=0;
-
-let volcanoTime=30;
-
-
-/* =====================================================
-   INPUT
-===================================================== */
-
-const input={
+const controls={
   forward:false,
   back:false,
   left:false,
   right:false
 };
 
-
-function bindHold(id,key){
-
-  const b=
-    document.getElementById(id);
-
-  b.addEventListener(
-    "pointerdown",
-    e=>{
-      e.preventDefault();
-      input[key]=true;
-    }
-  );
-
-  b.addEventListener(
-    "pointerup",
-    e=>{
-      e.preventDefault();
-      input[key]=false;
-    }
-  );
-
-  b.addEventListener(
-    "pointercancel",
-    ()=>{
-      input[key]=false;
-    }
-  );
-
-  b.addEventListener(
-    "pointerleave",
-    ()=>{
-      input[key]=false;
-    }
-  );
-
-}
+let objects=[];
 
 
-bindHold("forward","forward");
-bindHold("back","back");
-bindHold("left","left");
-bindHold("right","right");
+/* =====================================================
+   BIOMES
+===================================================== */
 
+const biomes=[
 
-window.addEventListener(
-  "keydown",
-  e=>{
+  {
+    name:"forest",
+    title:"🌳 Forest",
+    sky:"#75cbed",
+    ground:"#55a947"
+  },
 
-    if(e.key==="ArrowUp")
-      input.forward=true;
+  {
+    name:"desert",
+    title:"🏜️ Desert",
+    sky:"#f4c979",
+    ground:"#d7a54c"
+  },
 
-    if(e.key==="ArrowDown")
-      input.back=true;
+  {
+    name:"snow",
+    title:"❄️ Snow",
+    sky:"#a8d9ef",
+    ground:"#e7eef2"
+  },
 
-    if(e.key==="ArrowLeft")
-      input.left=true;
-
-    if(e.key==="ArrowRight")
-      input.right=true;
-
+  {
+    name:"coast",
+    title:"🌊 Coast",
+    sky:"#6bc7e7",
+    ground:"#d9c57b"
   }
-);
+
+];
 
 
-window.addEventListener(
-  "keyup",
-  e=>{
+/* =====================================================
+   TASKS
+===================================================== */
 
-    if(e.key==="ArrowUp")
-      input.forward=false;
+const tasks=[
 
-    if(e.key==="ArrowDown")
-      input.back=false;
+  {
+    text:"Find the forest crystal.",
+    object:"crystal"
+  },
 
-    if(e.key==="ArrowLeft")
-      input.left=false;
+  {
+    text:"Find the hidden mushroom.",
+    object:"mushroom"
+  },
 
-    if(e.key==="ArrowRight")
-      input.right=false;
+  {
+    text:"Reach the giant tree.",
+    object:"giantTree"
+  },
 
+  {
+    text:"Find the golden flower.",
+    object:"flower"
+  },
+
+  {
+    text:"Discover the tiny waterfall.",
+    object:"waterfall"
+  },
+
+  {
+    text:"Find the hidden cave.",
+    object:"cave"
+  },
+
+  {
+    text:"Reach the mountain stone.",
+    object:"stone"
+  },
+
+  {
+    text:"Find the treasure chest.",
+    object:"chest"
   }
-);
+
+];
+
+let taskIndex=0;
 
 
 /* =====================================================
-   UI
+   CREATE WORLD
 ===================================================== */
 
-const startScreen=
-  document.getElementById("start");
-
-const completeScreen=
-  document.getElementById("complete");
-
-const hud=
-  document.getElementById("hud");
-
-const controls=
-  document.getElementById("controls");
-
-const action=
-  document.getElementById("action");
-
-const worldText=
-  document.getElementById("worldText");
-
-const taskText=
-  document.getElementById("taskText");
-
-const message=
-  document.getElementById("message");
-
-const taskPanel=
-  document.getElementById("taskPanel");
-
-const panelTitle=
-  document.getElementById("panelTitle");
-
-const panelText=
-  document.getElementById("panelText");
-
-
-function showMessage(text){
-
-  message.textContent=text;
-
-  message.style.display="block";
-
-  clearTimeout(
-    window.messageTimer
-  );
-
-  window.messageTimer=
-    setTimeout(
-      ()=>{
-        message.style.display="none";
-      },
-      1800
-    );
-
-}
-
-
-/* =====================================================
-   OBJECT CREATION
-===================================================== */
-
-function addObject(
-  type,
-  x,
-  y,
-  z,
-  sx,
-  sy,
-  sz,
-  color
-){
-
-  objects.push({
-    type,
-    x,y,z,
-    sx,sy,sz,
-    color,
-    active:true,
-    rotation:Math.random()*6.28
-  });
-
-}
-
-
-/* =====================================================
-   BUILD WORLD
-===================================================== */
-
-function buildWorld(){
+function createWorld(){
 
   objects=[];
 
-  progress=0;
+  taskDone=false;
 
-  player.x=0;
-  player.y=1.7;
-  player.z=12;
-  player.yaw=0;
-
-
-  const w=
-    worlds[worldIndex];
-
-
-  /* ground */
-
-  addObject(
-    "ground",
-    0,-1.2,0,
-    60,1.2,60,
-    w.ground
-  );
-
-
-  /* -------------------------------------------------
-     FOREST
-  ------------------------------------------------- */
-
-  if(w.type==="berries"){
-
-    for(let i=0;i<28;i++){
-
-      const x=
-        (Math.random()-.5)*90;
-
-      const z=
-        (Math.random()-.5)*90;
-
-      addObject(
-        "tree",
-        x,3,z,
-        1.2,3.5,1.2,
-        [.28,.15,.07]
-      );
-
-    }
-
-
-    for(let i=0;i<5;i++){
-
-      addObject(
-        "berry",
-        (Math.random()-.5)*45,
-        .45,
-        -10-Math.random()*40,
-        .35,.35,.35,
-        [.85,.08,.12]
-      );
-
-    }
-
-  }
-
-
-  /* -------------------------------------------------
-     DESERT
-  ------------------------------------------------- */
-
-  if(w.type==="wells"){
-
-    for(let i=0;i<22;i++){
-
-      addObject(
-        "rock",
-        (Math.random()-.5)*90,
-        .8,
-        (Math.random()-.5)*90,
-        1.4,1.0,1.4,
-        [.35,.24,.12]
-      );
-
-    }
-
-
-    for(let i=0;i<3;i++){
-
-      addObject(
-        "well",
-        -15+i*15,
-        .7,
-        -20-i*10,
-        2,1.2,2,
-        [.55,.32,.12]
-      );
-
-    }
-
-  }
-
-
-  /* -------------------------------------------------
-     SNOW
-  ------------------------------------------------- */
-
-  if(w.type==="penguins"){
-
-    for(let i=0;i<25;i++){
-
-      addObject(
-        "snowrock",
-        (Math.random()-.5)*90,
-        .7,
-        (Math.random()-.5)*90,
-        1.3,1,1.3,
-        [.72,.82,.88]
-      );
-
-    }
-
-
-    for(let i=0;i<4;i++){
-
-      addObject(
-        "penguin",
-        -15+i*10,
-        .7,
-        -20-i*8,
-        .6,1.2,.6,
-        [.03,.04,.05]
-      );
-
-    }
-
-  }
-
-
-  /* -------------------------------------------------
-     VOLCANO
-  ------------------------------------------------- */
-
-  if(w.type==="cave"){
-
-    volcanoTime=30;
-
-
-    for(let i=0;i<30;i++){
-
-      addObject(
-        "lavaRock",
-        (Math.random()-.5)*90,
-        .7,
-        (Math.random()-.5)*90,
-        1.3,1.1,1.3,
-        [.16,.06,.04]
-      );
-
-    }
-
-
-    /* cave */
-
-    addObject(
-      "cave",
-      0,4,-45,
-      7,4,3,
-      [.08,.05,.04]
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   DRAW OBJECT
-===================================================== */
-
-function drawObject(o){
-
-  let model=
-    translation(
-      o.x,
-      o.y,
-      o.z
-    );
-
-
-  model=
-    multiply(
-      model,
-      rotationY(o.rotation)
-    );
-
-
-  model=
-    multiply(
-      model,
-      scale(
-        o.sx,
-        o.sy,
-        o.sz
-      )
-    );
-
-
-  let c=o.color;
+  const task=
+    tasks[taskIndex % tasks.length];
 
 
   /*
-     Give some objects slightly different
-     face colors so they visibly have
-     three-dimensional surfaces.
+    Main task object is placed
+    somewhere in the world.
   */
 
-  const colors=new Float32Array([
+  objects.push({
 
-    c[0],c[1],c[2],
-    c[0]*.85,c[1]*.85,c[2]*.85,
-    c[0]*1.08,c[1]*1.08,c[2]*1.08,
-    c[0]*.72,c[1]*.72,c[2]*.72,
+    type:task.object,
 
-    c[0],c[1],c[2],
-    c[0]*.9,c[1]*.9,c[2]*.9,
-    c[0]*.75,c[1]*.75,c[2]*.75,
-    c[0]*1.08,c[1]*1.08,c[2]*1.08
+    x:random(-70,70),
 
-  ]);
+    z:random(-100,-20),
+
+    found:false
+
+  });
 
 
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    vertexBuffer
-  );
+  /*
+    Trees / rocks / plants
+  */
 
-  gl.enableVertexAttribArray(
-    aPosition
-  );
+  for(let i=0;i<60;i++){
 
-  gl.vertexAttribPointer(
-    aPosition,
-    3,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
+    objects.push({
 
+      type:
+        currentBiome==="forest"
+        ? "tree"
+        : currentBiome==="desert"
+        ? "cactus"
+        : currentBiome==="snow"
+        ? "pine"
+        : "palm",
 
-  const colorBuffer=
-    gl.createBuffer();
+      x:random(-100,100),
 
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    colorBuffer
-  );
+      z:random(-110,80),
 
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    colors,
-    gl.STREAM_DRAW
-  );
+      size:random(.7,1.5)
+
+    });
+
+  }
 
 
-  gl.enableVertexAttribArray(
-    aColor
-  );
+  /*
+    Small rocks
+  */
 
-  gl.vertexAttribPointer(
-    aColor,
-    3,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
+  for(let i=0;i<35;i++){
 
+    objects.push({
 
-  gl.bindBuffer(
-    gl.ELEMENT_ARRAY_BUFFER,
-    indexBuffer
-  );
+      type:"rock",
 
+      x:random(-100,100),
 
-  gl.uniformMatrix4fv(
-    uModel,
-    false,
-    model
-  );
+      z:random(-110,80),
+
+      size:random(.4,.9)
+
+    });
+
+  }
 
 
-  gl.drawElements(
-    gl.TRIANGLES,
-    36,
-    gl.UNSIGNED_SHORT,
-    0
-  );
+  player.x=0;
+  player.z=35;
+  player.angle=0;
+
+
+  updateTaskUI();
 
 }
 
 
 /* =====================================================
-   COLLISION / DISTANCE
+   RANDOM
 ===================================================== */
 
-function distanceTo(o){
+function random(a,b){
 
-  return Math.hypot(
-    player.x-o.x,
-    player.z-o.z
-  );
+  return a+
+    Math.random()*(b-a);
 
 }
 
 
-function nearestTaskObject(){
+/* =====================================================
+   PROJECTION
+===================================================== */
 
-  let nearest=null;
-  let best=9999;
+function project(
+  x,
+  z,
+  size
+){
 
-  for(const o of objects){
+  const dx=
+    x-player.x;
 
-    if(!o.active)
-      continue;
+  const dz=
+    z-player.z;
 
-    if(
-      o.type==="berry" ||
-      o.type==="well" ||
-      o.type==="penguin" ||
-      o.type==="cave"
-    ){
 
-      const d=
-        distanceTo(o);
+  const sin=
+    Math.sin(player.angle);
 
-      if(d<best){
+  const cos=
+    Math.cos(player.angle);
 
-        best=d;
-        nearest=o;
 
-      }
+  const forward=
+    -dx*sin+
+    -dz*cos;
 
-    }
 
-  }
+  const side=
+    dx*cos+
+    -dz*sin;
+
+
+  if(forward<=1)
+    return null;
+
+
+  const scale=
+    440/forward;
+
 
   return {
-    object:nearest,
-    distance:best
+
+    x:
+      W/2+
+      side*scale,
+
+    y:
+      H*.49+
+      135*scale,
+
+    size:
+      Math.max(
+        2,
+        size*scale
+      ),
+
+    depth:forward
+
   };
 
 }
 
 
 /* =====================================================
-   TASK ACTION
+   DRAW GROUND
 ===================================================== */
 
-action.addEventListener(
-  "click",
-  ()=>{
+function drawGround(){
 
-    const found=
-      nearestTaskObject();
-
-
-    if(!found.object){
-
-      return;
-
-    }
+  const biome=
+    biomes.find(
+      b=>b.name===currentBiome
+    );
 
 
-    if(found.distance>5){
+  const gradient=
+    ctx.createLinearGradient(
+      0,0,
+      0,H
+    );
 
-      showMessage(
-        "Move closer first!"
+
+  gradient.addColorStop(
+    0,
+    biome.sky
+  );
+
+
+  gradient.addColorStop(
+    .5,
+    biome.ground
+  );
+
+
+  gradient.addColorStop(
+    1,
+    biome.ground
+  );
+
+
+  ctx.fillStyle=gradient;
+
+  ctx.fillRect(
+    0,0,W,H
+  );
+
+
+  /*
+    Perspective ground lines
+  */
+
+  ctx.strokeStyle=
+    "#ffffff22";
+
+  for(let i=0;i<13;i++){
+
+    const y=
+      H*.52+
+      i*i*8;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,y
+    );
+
+    ctx.lineTo(
+      W,y
+    );
+
+    ctx.stroke();
+
+  }
+
+}
+
+
+/* =====================================================
+   DRAW TREE
+===================================================== */
+
+function drawTree(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      o.size
+    );
+
+  if(!p)
+    return;
+
+
+  let trunk="#6c401d";
+  let leaves="#27853a";
+
+
+  if(o.type==="pine"){
+
+    leaves="#397c52";
+
+  }
+
+  if(o.type==="palm"){
+
+    leaves="#298c48";
+
+  }
+
+
+  ctx.fillStyle=trunk;
+
+  ctx.fillRect(
+
+    p.x-p.size*.16,
+
+    p.y-p.size*2.4,
+
+    p.size*.32,
+
+    p.size*2.4
+
+  );
+
+
+  ctx.fillStyle=leaves;
+
+
+  if(
+    o.type==="palm"
+  ){
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y-p.size*2.6,
+      p.size*.9,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+  else{
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y-p.size*2.6,
+      p.size*1.15,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x-p.size*.55,
+      p.y-p.size*2.9,
+      p.size*.8,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+}
+
+
+/* =====================================================
+   DRAW CACTUS
+===================================================== */
+
+function drawCactus(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      o.size
+    );
+
+  if(!p)
+    return;
+
+
+  ctx.strokeStyle="#2d8138";
+
+  ctx.lineWidth=
+    Math.max(
+      2,
+      p.size*.25
+    );
+
+  ctx.lineCap="round";
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    p.x,
+    p.y
+  );
+
+  ctx.lineTo(
+    p.x,
+    p.y-p.size*2
+  );
+
+  ctx.moveTo(
+    p.x,
+    p.y-p.size
+  );
+
+  ctx.lineTo(
+    p.x-p.size*.7,
+    p.y-p.size*1.3
+  );
+
+  ctx.stroke();
+
+}
+
+
+/* =====================================================
+   DRAW ROCK
+===================================================== */
+
+function drawRock(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      o.size
+    );
+
+  if(!p)
+    return;
+
+
+  ctx.fillStyle="#777b70";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    p.x,
+    p.y,
+    p.size,
+    p.size*.55,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =====================================================
+   DRAW SPECIAL OBJECT
+===================================================== */
+
+function drawSpecial(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      1.3
+    );
+
+  if(!p)
+    return;
+
+
+  const s=
+    Math.max(
+      7,
+      Math.min(
+        55,
+        p.size
+      )
+    );
+
+
+  ctx.save();
+
+  ctx.translate(
+    p.x,
+    p.y
+  );
+
+
+  if(o.type==="crystal"){
+
+    ctx.fillStyle="#61efff";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,-s*1.5
+    );
+
+    ctx.lineTo(
+      s*.8,0
+    );
+
+    ctx.lineTo(
+      0,s
+    );
+
+    ctx.lineTo(
+      -s*.8,0
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="mushroom"){
+
+    ctx.fillStyle="#fff1d0";
+
+    ctx.fillRect(
+      -s*.15,
+      0,
+      s*.3,
+      s
+    );
+
+    ctx.fillStyle="#d94b45";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      s,
+      Math.PI,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="giantTree"){
+
+    ctx.fillStyle="#633b1c";
+
+    ctx.fillRect(
+      -s*.35,
+      -s*2.5,
+      s*.7,
+      s*2.5
+    );
+
+    ctx.fillStyle="#1c7333";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      -s*2.8,
+      s*1.8,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="flower"){
+
+    ctx.strokeStyle="#39833d";
+
+    ctx.lineWidth=4;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,s
+    );
+
+    ctx.lineTo(
+      0,-s
+    );
+
+    ctx.stroke();
+
+    ctx.fillStyle="#ffd83d";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      -s,
+      s*.45,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="waterfall"){
+
+    ctx.fillStyle="#58bfe8";
+
+    ctx.fillRect(
+      -s*.7,
+      -s*2,
+      s*1.4,
+      s*2
+    );
+
+    ctx.fillStyle="#6f7775";
+
+    ctx.fillRect(
+      -s,
+      -s*2.2,
+      s*2,
+      s*.35
+    );
+
+  }
+
+
+  if(o.type==="cave"){
+
+    ctx.fillStyle="#303530";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      s*1.2,
+      Math.PI,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#080b09";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      s*.7,
+      Math.PI,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="stone"){
+
+    ctx.fillStyle="#aaa9a1";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -s,
+      s
+    );
+
+    ctx.lineTo(
+      -s*.6,
+      -s
+    );
+
+    ctx.lineTo(
+      s*.6,
+      -s*1.3
+    );
+
+    ctx.lineTo(
+      s,
+      s
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="chest"){
+
+    ctx.fillStyle="#8b541f";
+
+    ctx.fillRect(
+      -s,
+      -s*.5,
+      s*2,
+      s
+    );
+
+    ctx.fillStyle="#ffd447";
+
+    ctx.fillRect(
+      -s*.12,
+      -s*.5,
+      s*.24,
+      s
+    );
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =====================================================
+   PLAYER
+===================================================== */
+
+function drawPlayer(){
+
+  const x=W/2;
+  const y=H*.66;
+
+
+  ctx.save();
+
+  ctx.translate(
+    x,y
+  );
+
+
+  /*
+    Small 3D-looking character
+  */
+
+  ctx.fillStyle="#4b7fd1";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    15,
+    18,
+    25,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.fillStyle="#f2c59b";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -20,
+    17,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.fillStyle="#3c291d";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -28,
+    18,
+    Math.PI,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.strokeStyle="#273f75";
+
+  ctx.lineWidth=6;
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    -10,
+    35
+  );
+
+  ctx.lineTo(
+    -17,
+    55
+  );
+
+  ctx.moveTo(
+    10,
+    35
+  );
+
+  ctx.lineTo(
+    17,
+    55
+  );
+
+  ctx.stroke();
+
+
+  ctx.restore();
+
+}
+
+
+/* =====================================================
+   DRAW WORLD
+===================================================== */
+
+function drawWorld(){
+
+  drawGround();
+
+
+  const visible=[];
+
+
+  for(
+    const o of objects
+  ){
+
+    const dx=
+      o.x-player.x;
+
+    const dz=
+      o.z-player.z;
+
+
+    const depth=
+      Math.hypot(
+        dx,dz
       );
 
-      return;
 
-    }
+    visible.push({
+      object:o,
+      depth:depth
+    });
 
+  }
+
+
+  /*
+    Far objects first.
+    This makes the objects overlap
+    like a perspective world.
+  */
+
+  visible.sort(
+    (a,b)=>
+      b.depth-a.depth
+  );
+
+
+  for(
+    const item of visible
+  ){
 
     const o=
-      found.object;
+      item.object;
 
 
     if(
-      o.type==="berry"
+      o.type==="tree" ||
+      o.type==="pine" ||
+      o.type==="palm"
     ){
 
-      o.active=false;
-
-      progress++;
-
-      showMessage(
-        "Berry collected!"
-      );
+      drawTree(o);
 
     }
-
 
     else if(
-      o.type==="well"
+      o.type==="cactus"
     ){
 
-      o.active=false;
-
-      progress++;
-
-      showMessage(
-        "Water well activated!"
-      );
+      drawCactus(o);
 
     }
-
 
     else if(
-      o.type==="penguin"
+      o.type==="rock"
     ){
 
-      o.active=false;
+      drawRock(o);
 
-      progress++;
+    }
 
-      showMessage(
-        "Penguin rescued!"
+    else{
+
+      if(!o.found)
+        drawSpecial(o);
+
+    }
+
+  }
+
+
+  drawPlayer();
+
+}
+
+
+/* =====================================================
+   UPDATE PLAYER
+===================================================== */
+
+function updatePlayer(dt){
+
+  const speed=
+    10*dt;
+
+  const turn=
+    2.4*dt;
+
+
+  /*
+    LEFT REALLY TURNS LEFT
+  */
+
+  if(controls.left){
+
+    player.angle-=turn;
+
+  }
+
+
+  /*
+    RIGHT REALLY TURNS RIGHT
+  */
+
+  if(controls.right){
+
+    player.angle+=turn;
+
+  }
+
+
+  if(controls.forward){
+
+    player.x +=
+      Math.sin(player.angle)*
+      speed;
+
+    player.z +=
+      -Math.cos(player.angle)*
+      speed;
+
+  }
+
+
+  if(controls.back){
+
+    player.x -=
+      Math.sin(player.angle)*
+      speed;
+
+    player.z -=
+      -Math.cos(player.angle)*
+      speed;
+
+  }
+
+
+  player.x=
+    Math.max(
+      -100,
+      Math.min(
+        100,
+        player.x
+      )
+    );
+
+
+  player.z=
+    Math.max(
+      -110,
+      Math.min(
+        90,
+        player.z
+      )
+    );
+
+}
+
+
+/* =====================================================
+   INTERACTION
+===================================================== */
+
+document
+.getElementById("actionButton")
+.addEventListener(
+  "click",
+  function(){
+
+    if(!playing)
+      return;
+
+
+    const taskObject=
+      objects.find(
+        o=>
+          !o.found &&
+          o.type===
+          tasks[
+            taskIndex %
+            tasks.length
+          ].object
       );
 
+
+    if(!taskObject)
+      return;
+
+
+    const distance=
+      Math.hypot(
+        taskObject.x-player.x,
+        taskObject.z-player.z
+      );
+
+
+    if(distance>9){
+
+      showMessage(
+        "Move closer to the task object!"
+      );
+
+      return;
+
     }
 
 
-    else if(
-      o.type==="cave"
-    ){
+    taskObject.found=true;
 
-      if(worldIndex===3){
+    taskDone=true;
 
-        progress=1;
-
-        completeGame();
-
-        return;
-
-      }
-
-    }
+    coins+=25;
 
 
     updateTaskUI();
 
-  });
+
+    showMessage(
+      "Task complete! +25 coins"
+    );
+
+
+    setTimeout(
+      completeLevel,
+      500
+    );
+
+  }
+);
+
+
+/* =====================================================
+   LEVEL COMPLETE
+===================================================== */
+
+function completeLevel(){
+
+  playing=false;
+
+
+  document.getElementById(
+    "levelComplete"
+  ).style.display="flex";
+
+
+  const nextBiome=
+    biomes[
+      level % biomes.length
+    ];
+
+
+  document.getElementById(
+    "nextText"
+  ).textContent=
+    "You finished Level "+
+    level+
+    ". Next you can explore "+
+    nextBiome.title+"!";
+
+}
+
+
+/* =====================================================
+   NEXT WORLD
+===================================================== */
+
+document
+.getElementById("nextButton")
+.addEventListener(
+  "click",
+  function(){
+
+    level++;
+
+    taskIndex++;
+
+    currentBiome=
+      biomes[
+        (level-1) %
+        biomes.length
+      ].name;
+
+
+    document.getElementById(
+      "levelComplete"
+    ).style.display="none";
+
+
+    createWorld();
+
+    playing=true;
+
+
+    updateHUD();
+
+
+    showMessage(
+      "Welcome to "+
+      biomes[
+        (level-1) %
+        biomes.length
+      ].title
+    );
+
+  }
+);
 
 
 /* =====================================================
@@ -1425,65 +1637,46 @@ action.addEventListener(
 
 function updateTaskUI(){
 
-  const w=
-    worlds[worldIndex];
+  const task=
+    tasks[
+      taskIndex %
+      tasks.length
+    ];
 
 
-  if(w.type==="cave"){
-
-    taskText.textContent=
-      "TIME: "+
-      Math.ceil(volcanoTime)+
-      "s";
-
-  }else{
-
-    taskText.textContent=
-      progress+
-      " / "+
-      w.goal;
-
-  }
+  document.getElementById(
+    "taskText"
+  ).textContent=
+    task.text;
 
 
-  const found=
-    nearestTaskObject();
-
-
-  if(
-    found.object &&
-    found.distance<5
-  ){
-
-    action.style.display="block";
-
-  }else{
-
-    action.style.display="none";
-
-  }
+  document.getElementById(
+    "taskProgress"
+  ).textContent=
+    taskDone
+    ? "1 / 1"
+    : "0 / 1";
 
 }
 
 
 /* =====================================================
-   START WORLD
+   HUD
 ===================================================== */
 
-function startWorld(){
+function updateHUD(){
 
-  buildWorld();
+  document.getElementById(
+    "level"
+  ).textContent=
+    level;
 
-  worldText.textContent=
-    worlds[worldIndex].name;
 
-  panelTitle.textContent=
-    worlds[worldIndex].name;
+  document.getElementById(
+    "coins"
+  ).textContent=
+    coins;
 
-  panelText.textContent=
-    worlds[worldIndex].task;
-
-  taskPanel.style.display="block";
 
   updateTaskUI();
 
@@ -1491,18 +1684,42 @@ function startWorld(){
 
 
 /* =====================================================
-   CLOSE WORLD INTRO
+   MESSAGE
 ===================================================== */
 
-document.getElementById(
-  "closePanel"
-).addEventListener(
-  "click",
-  ()=>{
-
-    taskPanel.style.display="none";
-
-  });
+let messageTimer=null;
 
 
-/* ==========
+function showMessage(text){
+
+  const box=
+    document.getElementById(
+      "message"
+    );
+
+
+  box.textContent=text;
+
+  box.style.display="block";
+
+
+  clearTimeout(
+    messageTimer
+  );
+
+
+  messageTimer=
+    setTimeout(
+      function(){
+
+        box.style.display="none";
+
+      },
+      1800
+    );
+
+}
+
+
+/* =====================================================
+ 
