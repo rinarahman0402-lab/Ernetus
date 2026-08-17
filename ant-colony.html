@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-
-<title>Ant Colony: Rise of the Ants</title>
+<title>Ant Colony</title>
 
 <style>
 *{
@@ -21,7 +20,7 @@ html,body{
   height:100%;
   overflow:hidden;
   font-family:Arial,sans-serif;
-  background:#18100b;
+  background:#69b957;
 }
 
 canvas{
@@ -29,43 +28,54 @@ canvas{
   inset:0;
   width:100%;
   height:100%;
-  display:block;
 }
 
-.screen{
+#start,#levelScreen{
   position:fixed;
   inset:0;
-  z-index:20;
+  z-index:50;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   text-align:center;
   padding:25px;
   color:white;
+}
+
+#start{
   background:
-    radial-gradient(circle at 50% 35%,#6b3b1e,#21140c 65%,#100a06);
+    linear-gradient(
+      #75ccef 0%,
+      #78c65d 52%,
+      #4a7c35 100%
+    );
+}
+
+#levelScreen{
+  display:none;
+  background:#173b20ee;
 }
 
 .title{
-  font-size:clamp(38px,10vw,70px);
+  font-size:clamp(42px,11vw,75px);
   font-weight:900;
-  margin:8px;
+  text-shadow:4px 4px 0 #254d2b;
 }
 
 .subtitle{
   max-width:650px;
-  font-size:18px;
   line-height:1.5;
+  font-size:18px;
 }
 
 .bigButton{
-  margin-top:20px;
-  padding:17px 30px;
+  margin-top:22px;
   border:0;
-  border-radius:18px;
-  background:#e9b83f;
-  color:#211408;
+  border-radius:20px;
+  padding:18px 34px;
+  background:#ffd447;
+  color:#18351d;
   font-size:20px;
   font-weight:900;
 }
@@ -74,181 +84,141 @@ canvas{
   transform:scale(.94);
 }
 
-#start{
-  display:flex;
-}
-
-#gameUI{
+#hud{
   display:none;
-}
-
-#topBar{
   position:fixed;
-  top:8px;
-  left:8px;
-  right:8px;
-  z-index:10;
-  display:flex;
+  z-index:20;
+  top:9px;
+  left:9px;
+  right:9px;
+  justify-content:space-between;
   gap:7px;
-  justify-content:space-between;
-  flex-wrap:wrap;
-}
-
-.info{
-  background:#160d08dd;
-  color:white;
-  border:1px solid #ffffff33;
-  border-radius:12px;
-  padding:8px 11px;
-  font-weight:bold;
-  font-size:13px;
-}
-
-#tasks{
-  position:fixed;
-  top:65px;
-  right:8px;
-  z-index:10;
-  width:190px;
-  background:#160d08dd;
-  color:white;
-  border-radius:15px;
-  padding:12px;
-  font-size:13px;
-}
-
-#tasks h3{
-  margin:0 0 8px;
-}
-
-.task{
-  margin:7px 0;
-}
-
-#buttons{
-  position:fixed;
-  bottom:12px;
-  left:10px;
-  right:10px;
-  z-index:12;
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
   pointer-events:none;
 }
 
-.buttonGroup{
-  display:flex;
-  gap:8px;
-  pointer-events:auto;
+.info{
+  background:#142218dd;
+  color:white;
+  border-radius:14px;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:bold;
 }
 
-.gameButton{
-  border:2px solid #ffffff55;
-  border-radius:16px;
-  min-width:82px;
-  min-height:55px;
-  padding:9px;
-  background:#160d08dd;
+#task{
+  display:none;
+  position:fixed;
+  z-index:20;
+  top:58px;
+  left:9px;
+  right:9px;
+  margin:auto;
+  max-width:350px;
+  background:#142218dd;
+  color:white;
+  border-radius:15px;
+  padding:11px;
+  text-align:center;
+  font-size:13px;
+  font-weight:bold;
+}
+
+#controls{
+  display:none;
+  position:fixed;
+  z-index:30;
+  left:10px;
+  bottom:10px;
+  width:285px;
+  height:185px;
+}
+
+.move{
+  position:absolute;
+  width:88px;
+  height:58px;
+  border:2px solid #ffffff77;
+  border-radius:17px;
+  background:#142218dd;
   color:white;
   font-size:11px;
   font-weight:900;
 }
 
-.gameButton:active{
-  transform:scale(.92);
-  background:#704319;
+.move:active{
+  background:#4d9848;
+  transform:scale(.93);
+}
+
+#forward{
+  left:98px;
+  top:0;
+}
+
+#back{
+  left:98px;
+  bottom:0;
+}
+
+#left{
+  left:0;
+  top:63px;
+}
+
+#right{
+  right:0;
+  top:63px;
+}
+
+#action{
+  display:none;
+  position:fixed;
+  z-index:30;
+  right:14px;
+  bottom:30px;
+  width:125px;
+  min-height:60px;
+  border:0;
+  border-radius:18px;
+  background:#ffd447;
+  color:#17351d;
+  font-weight:900;
+  font-size:12px;
 }
 
 #message{
   display:none;
   position:fixed;
-  z-index:30;
-  left:50%;
-  top:52%;
-  transform:translate(-50%,-50%);
-  width:min(88%,430px);
-  background:#160d08ee;
-  color:white;
-  border-radius:20px;
-  padding:20px;
-  text-align:center;
-  font-size:17px;
-  font-weight:bold;
-}
-
-#antMenu{
-  display:none;
-  position:fixed;
   z-index:40;
   left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(92%,500px);
-  max-height:80vh;
-  overflow:auto;
-  background:#24150c;
+  top:105px;
+  transform:translateX(-50%);
+  background:#142218ee;
   color:white;
-  border:2px solid #e9b83f;
-  border-radius:22px;
-  padding:20px;
-}
-
-.antCard{
-  background:#ffffff12;
+  padding:12px 18px;
   border-radius:15px;
-  margin:9px 0;
-  padding:12px;
-}
-
-.locked{
-  opacity:.45;
-}
-
-.antName{
-  font-weight:900;
-  font-size:17px;
-}
-
-.small{
-  font-size:12px;
-  opacity:.85;
-  margin-top:4px;
-}
-
-#levelUp{
-  display:none;
-  position:fixed;
-  z-index:50;
-  inset:0;
-  align-items:center;
-  justify-content:center;
+  font-weight:bold;
   text-align:center;
-  background:#00000088;
-  color:white;
 }
 
-.levelBox{
-  background:#2b180c;
-  border:3px solid #e9b83f;
-  border-radius:25px;
-  padding:30px;
-  width:min(90%,450px);
+.antType{
+  font-weight:900;
 }
 
-#gameOver{
-  display:none;
+.gold{
+  color:#ffd447;
 }
 
-@media(max-width:600px){
-  #tasks{
-    width:160px;
-    font-size:11px;
-  }
+.fast{
+  color:#ff7043;
+}
 
-  .info{
-    font-size:11px;
-  }
+.flying{
+  color:#b9e9ff;
+}
+
+.goblin{
+  color:#c994ff;
 }
 </style>
 </head>
@@ -257,25 +227,27 @@ canvas{
 
 <canvas id="canvas"></canvas>
 
-
 <!-- START SCREEN -->
 
-<div id="start" class="screen">
+<div id="start">
 
-  <div style="font-size:85px">🐜</div>
+  <div style="font-size:90px">🐜</div>
 
   <div class="title">
     ANT COLONY
   </div>
 
-  <div style="font-size:24px;font-weight:bold">
-    RISE OF THE ANTS
-  </div>
-
   <p class="subtitle">
-    Build your colony, collect food, dig rooms,
-    grow your population and unlock powerful
-    new ant types.
+    Build your colony, collect food, complete jobs,
+    gain levels and unlock powerful new ant types!
+  </p>
+
+  <p>
+    🐜 Worker &nbsp;
+    ⚡ Flash &nbsp;
+    👑 Golden &nbsp;
+    🪽 Flying &nbsp;
+    👺 Goblin
   </p>
 
   <button class="bigButton" id="playButton">
@@ -285,146 +257,93 @@ canvas{
 </div>
 
 
-<!-- GAME UI -->
+<!-- HUD -->
 
-<div id="gameUI">
+<div id="hud">
 
-  <div id="topBar">
-
-    <div class="info">
-      LEVEL:
-      <span id="level">1</span>
-    </div>
-
-    <div class="info">
-      XP:
-      <span id="xp">0</span>
-      /
-      <span id="xpNeed">100</span>
-    </div>
-
-    <div class="info">
-      FOOD:
-      <span id="food">30</span>
-    </div>
-
-    <div class="info">
-      ANTS:
-      <span id="population">5</span>
-    </div>
-
+  <div class="info">
+    LEVEL:
+    <span id="level">1</span>
   </div>
 
-
-  <div id="tasks">
-
-    <h3>COLONY TASKS</h3>
-
-    <div class="task">
-      🍎 Collect food:
-      <b id="foodTask">0 / 10</b>
-    </div>
-
-    <div class="task">
-      🕳️ Dig tunnels:
-      <b id="digTask">0 / 3</b>
-    </div>
-
-    <div class="task">
-      🥚 Raise larvae:
-      <b id="larvaTask">0 / 5</b>
-    </div>
-
+  <div class="info">
+    FOOD:
+    <span id="food">0</span>
   </div>
 
+  <div class="info">
+    ANTS:
+    <span id="antCount">1</span>
+  </div>
 
-  <div id="buttons">
-
-    <div class="buttonGroup">
-
-      <button
-        class="gameButton"
-        id="foodButton">
-        COLLECT FOOD
-      </button>
-
-      <button
-        class="gameButton"
-        id="digButton">
-        DIG TUNNEL
-      </button>
-
-    </div>
-
-    <div class="buttonGroup">
-
-      <button
-        class="gameButton"
-        id="larvaButton">
-        RAISE LARVAE
-      </button>
-
-      <button
-        class="gameButton"
-        id="antsButton">
-        MY ANTS
-      </button>
-
-    </div>
-
+  <div class="info">
+    COINS:
+    <span id="coins">0</span>
   </div>
 
 </div>
 
 
-<!-- ANT MENU -->
+<!-- TASK -->
 
-<div id="antMenu">
+<div id="task"></div>
 
-  <h2>🐜 MY ANT TYPES</h2>
 
-  <div id="antList"></div>
+<!-- CONTROLS -->
 
-  <button
-    class="bigButton"
-    id="closeAnts">
-    CLOSE
+<div id="controls">
+
+  <button class="move" id="forward">
+    MOVE FORWARD
+  </button>
+
+  <button class="move" id="back">
+    MOVE BACK
+  </button>
+
+  <button class="move" id="left">
+    TURN LEFT
+  </button>
+
+  <button class="move" id="right">
+    TURN RIGHT
   </button>
 
 </div>
 
 
-<!-- MESSAGE -->
+<button id="action">
+  DO TASK
+</button>
+
 
 <div id="message"></div>
 
 
-<!-- LEVEL UP -->
+<!-- LEVEL SCREEN -->
 
-<div id="levelUp">
+<div id="levelScreen">
 
-  <div class="levelBox">
+  <div style="font-size:80px">🐜⭐</div>
 
-    <div style="font-size:70px">⭐</div>
-
-    <h1>
-      LEVEL UP!
-    </h1>
-
-    <p id="unlockText"></p>
-
-    <button
-      class="bigButton"
-      id="continueButton">
-      CONTINUE
-    </button>
-
+  <div class="title">
+    LEVEL COMPLETE!
   </div>
+
+  <p class="subtitle" id="levelMessage"></p>
+
+  <button class="bigButton" id="nextButton">
+    CONTINUE
+  </button>
 
 </div>
 
 
 <script>
+
+/* =====================================================
+   CANVAS
+===================================================== */
 
 const canvas =
   document.getElementById("canvas");
@@ -432,116 +351,8 @@ const canvas =
 const ctx =
   canvas.getContext("2d");
 
-
 let W=innerWidth;
 let H=innerHeight;
-
-let playing=false;
-
-let level=1;
-let xp=0;
-let xpNeed=100;
-let food=30;
-let population=5;
-
-let foodTask=0;
-let digTask=0;
-let larvaTask=0;
-
-let cameraX=0;
-let cameraY=0;
-
-let particles=[];
-
-
-/* =================================================
-   ANT TYPES
-================================================= */
-
-const antTypes=[
-
-  {
-    name:"Worker Ant",
-    emoji:"🐜",
-    unlock:1,
-    speed:1,
-    work:1,
-    description:
-      "Your normal hardworking ant."
-  },
-
-  {
-    name:"Flash Ant",
-    emoji:"⚡🐜",
-    unlock:2,
-    speed:3,
-    work:2,
-    description:
-      "Super fast and collects food quickly."
-  },
-
-  {
-    name:"Goblin Ant",
-    emoji:"👺🐜",
-    unlock:3,
-    speed:1.5,
-    work:4,
-    description:
-      "Stronger than normal ants and can do much more work."
-  },
-
-  {
-    name:"Golden Ant",
-    emoji:"🥇🐜",
-    unlock:5,
-    speed:2,
-    work:5,
-    description:
-      "A rare golden ant that produces bonus colony rewards."
-  },
-
-  {
-    name:"Flying Ant",
-    emoji:"🪽🐜",
-    unlock:7,
-    speed:4,
-    work:3,
-    description:
-      "Flies over obstacles and reaches distant food."
-  },
-
-  {
-    name:"Crystal Ant",
-    emoji:"💎🐜",
-    unlock:10,
-    speed:3,
-    work:7,
-    description:
-      "A powerful late-game ant with excellent work ability."
-  }
-
-];
-
-
-let unlockedAnts=["Worker Ant"];
-
-
-/* =================================================
-   COLONY OBJECTS
-================================================= */
-
-let tunnels=[];
-
-let foodObjects=[];
-
-let larvae=[];
-
-let colonyAnts=[];
-
-
-/* =================================================
-   RESIZE
-================================================= */
 
 function resize(){
 
@@ -550,26 +361,19 @@ function resize(){
 
   const dpr=
     Math.min(
-      window.devicePixelRatio||1,
+      devicePixelRatio || 1,
       2
     );
 
-  canvas.width=
-    W*dpr;
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
 
-  canvas.height=
-    H*dpr;
-
-  canvas.style.width=
-    W+"px";
-
-  canvas.style.height=
-    H+"px";
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
 
   ctx.setTransform(
     dpr,0,0,dpr,0,0
   );
-
 }
 
 resize();
@@ -580,108 +384,379 @@ addEventListener(
 );
 
 
-/* =================================================
-   WORLD CREATION
-================================================= */
+/* =====================================================
+   GAME STATE
+===================================================== */
 
-function createWorld(){
+let playing=false;
 
-  tunnels=[];
-  foodObjects=[];
-  larvae=[];
-  colonyAnts=[];
+let level=1;
 
-  for(let i=0;i<12;i++){
+let food=0;
 
-    tunnels.push({
+let coins=0;
 
-      x:
-        Math.random()*900-450,
+let antsUnlocked=1;
 
-      y:
-        Math.random()*500-250,
+let currentTask=null;
 
-      w:
-        80+Math.random()*100,
+let taskFinished=false;
 
-      h:
-        30+Math.random()*30
+let objects=[];
 
-    });
+let workers=[];
 
+let player={
+  x:0,
+  z:30,
+  angle:0
+};
+
+const controls={
+  forward:false,
+  back:false,
+  left:false,
+  right:false
+};
+
+
+/* =====================================================
+   ANT TYPES
+===================================================== */
+
+const antTypes=[
+
+  {
+    name:"Worker Ant",
+    emoji:"🐜",
+    level:1,
+    speed:1,
+    work:1
+  },
+
+  {
+    name:"Flash Ant",
+    emoji:"⚡",
+    level:3,
+    speed:3,
+    work:2
+  },
+
+  {
+    name:"Golden Ant",
+    emoji:"👑",
+    level:5,
+    speed:1.5,
+    work:4
+  },
+
+  {
+    name:"Flying Ant",
+    emoji:"🪽",
+    level:7,
+    speed:2,
+    work:3
+  },
+
+  {
+    name:"Goblin Ant",
+    emoji:"👺",
+    level:10,
+    speed:2.5,
+    work:5
   }
 
+];
 
-  for(let i=0;i<35;i++){
 
-    foodObjects.push({
+/* =====================================================
+   TASKS
+===================================================== */
 
-      x:
-        Math.random()*1100-550,
+const tasks=[
 
-      y:
-        Math.random()*650-325,
+  {
+    name:"Collect a berry",
+    object:"berry",
+    reward:10
+  },
 
-      collected:false
+  {
+    name:"Bring a leaf to the nest",
+    object:"leaf",
+    reward:12
+  },
 
-    });
+  {
+    name:"Find a mushroom",
+    object:"mushroom",
+    reward:15
+  },
 
+  {
+    name:"Collect a sugar crystal",
+    object:"sugar",
+    reward:20
+  },
+
+  {
+    name:"Find the hidden seed",
+    object:"seed",
+    reward:25
+  },
+
+  {
+    name:"Explore the giant flower",
+    object:"flower",
+    reward:30
+  },
+
+  {
+    name:"Find the lost food pile",
+    object:"foodpile",
+    reward:35
+  },
+
+  {
+    name:"Discover the secret tunnel",
+    object:"tunnel",
+    reward:40
   }
 
-
-  for(let i=0;i<10;i++){
-
-    larvae.push({
-
-      x:
-        Math.random()*250-125,
-
-      y:
-        Math.random()*180-90,
-
-      raised:false
-
-    });
-
-  }
+];
 
 
-  for(let i=0;i<population;i++){
+/* =====================================================
+   RANDOM
+===================================================== */
 
-    colonyAnts.push({
+function random(a,b){
 
-      x:
-        Math.random()*120-60,
-
-      y:
-        Math.random()*100-50,
-
-      type:"Worker Ant",
-
-      target:null
-
-    });
-
-  }
+  return a+
+    Math.random()*(b-a);
 
 }
 
 
-/* =================================================
-   DRAW WORLD
-================================================= */
+/* =====================================================
+   CREATE WORLD
+===================================================== */
 
-function drawWorld(){
+function createWorld(){
 
-  ctx.clearRect(
-    0,
-    0,
-    W,
-    H
-  );
+  objects=[];
+
+  workers=[];
+
+  taskFinished=false;
+
+  player.x=0;
+
+  player.z=30;
+
+  player.angle=0;
 
 
-  /* underground background */
+  currentTask=
+    tasks[
+      (level-1) %
+      tasks.length
+    ];
+
+
+  /* Task object */
+
+  objects.push({
+
+    type:currentTask.object,
+
+    x:random(-70,70),
+
+    z:random(-100,-20),
+
+    collected:false
+
+  });
+
+
+  /* Food */
+
+  for(let i=0;i<20;i++){
+
+    objects.push({
+
+      type:"food",
+
+      x:random(-90,90),
+
+      z:random(-100,70),
+
+      size:random(.5,1)
+
+    });
+
+  }
+
+
+  /* Grass / plants */
+
+  for(let i=0;i<70;i++){
+
+    objects.push({
+
+      type:"grass",
+
+      x:random(-100,100),
+
+      z:random(-110,80),
+
+      size:random(.4,1.3)
+
+    });
+
+  }
+
+
+  /* Colony workers */
+
+  for(
+    let i=0;
+    i<Math.min(
+      antsUnlocked,
+      12
+    );
+    i++
+  ){
+
+    workers.push({
+
+      x:random(-10,10),
+
+      z:random(15,35),
+
+      angle:random(
+        0,
+        Math.PI*2
+      ),
+
+      type:
+        getBestUnlockedAnt(),
+
+      timer:random(0,10)
+
+    });
+
+  }
+
+
+  updateUI();
+
+}
+
+
+/* =====================================================
+   BEST ANT
+===================================================== */
+
+function getBestUnlockedAnt(){
+
+  let best=
+    antTypes[0];
+
+
+  for(
+    const ant of antTypes
+  ){
+
+    if(
+      level>=ant.level
+    ){
+
+      best=ant;
+
+    }
+
+  }
+
+
+  return best;
+
+}
+
+
+/* =====================================================
+   PROJECTION
+===================================================== */
+
+function project(
+  x,
+  z,
+  size
+){
+
+  const dx=
+    x-player.x;
+
+  const dz=
+    z-player.z;
+
+
+  const sin=
+    Math.sin(
+      player.angle
+    );
+
+  const cos=
+    Math.cos(
+      player.angle
+    );
+
+
+  const forward=
+    -dx*sin+
+    -dz*cos;
+
+  const side=
+    dx*cos+
+    -dz*sin;
+
+
+  if(forward<=1)
+    return null;
+
+
+  const scale=
+    430/forward;
+
+
+  return {
+
+    x:
+      W/2+
+      side*scale,
+
+    y:
+      H*.50+
+      135*scale,
+
+    size:
+      Math.max(
+        2,
+        size*scale
+      ),
+
+    depth:forward
+
+  };
+
+}
+
+
+/* =====================================================
+   GROUND
+===================================================== */
+
+function drawGround(){
 
   const gradient=
     ctx.createLinearGradient(
@@ -689,15 +764,22 @@ function drawWorld(){
       0,H
     );
 
+
   gradient.addColorStop(
     0,
-    "#5b371e"
+    "#74ccee"
+  );
+
+  gradient.addColorStop(
+    .5,
+    "#6db34e"
   );
 
   gradient.addColorStop(
     1,
-    "#24140b"
+    "#355f2e"
   );
+
 
   ctx.fillStyle=gradient;
 
@@ -706,28 +788,341 @@ function drawWorld(){
   );
 
 
+  ctx.strokeStyle="#ffffff20";
+
+
+  for(
+    let i=0;
+    i<14;
+    i++
+  ){
+
+    const y=
+      H*.53+
+      i*i*8;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,y
+    );
+
+    ctx.lineTo(
+      W,y
+    );
+
+    ctx.stroke();
+
+  }
+
+}
+
+
+/* =====================================================
+   DRAW GRASS
+===================================================== */
+
+function drawGrass(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      o.size
+    );
+
+  if(!p)
+    return;
+
+
+  ctx.strokeStyle="#2d8135";
+
+  ctx.lineWidth=
+    Math.max(
+      1,
+      p.size*.13
+    );
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    p.x,
+    p.y
+  );
+
+  ctx.lineTo(
+    p.x-p.size*.5,
+    p.y-p.size
+  );
+
+  ctx.moveTo(
+    p.x,
+    p.y
+  );
+
+  ctx.lineTo(
+    p.x+p.size*.5,
+    p.y-p.size
+  );
+
+  ctx.stroke();
+
+}
+
+
+/* =====================================================
+   DRAW FOOD
+===================================================== */
+
+function drawFood(o){
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      o.size
+    );
+
+  if(!p)
+    return;
+
+
+  ctx.fillStyle="#d94d38";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    p.x,
+    p.y,
+    Math.max(
+      3,
+      p.size
+    ),
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+}
+
+
+/* =====================================================
+   DRAW TASK OBJECT
+===================================================== */
+
+function drawTaskObject(o){
+
+  if(o.collected)
+    return;
+
+
+  const p=
+    project(
+      o.x,
+      o.z,
+      1.5
+    );
+
+  if(!p)
+    return;
+
+
+  const s=
+    Math.max(
+      7,
+      Math.min(
+        55,
+        p.size
+      )
+    );
+
+
   ctx.save();
 
   ctx.translate(
-    W/2-cameraX,
-    H/2-cameraY
+    p.x,
+    p.y
   );
 
 
-  /* tunnel rooms */
+  if(o.type==="berry"){
 
-  for(const t of tunnels){
+    ctx.fillStyle="#d93653";
 
-    ctx.fillStyle=
-      "#8b542c";
+    ctx.beginPath();
+
+    ctx.arc(
+      -s*.4,
+      0,
+      s*.5,
+      0,
+      Math.PI*2
+    );
+
+    ctx.arc(
+      s*.4,
+      0,
+      s*.5,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="leaf"){
+
+    ctx.fillStyle="#2d9b42";
 
     ctx.beginPath();
 
     ctx.ellipse(
-      t.x,
-      t.y,
-      t.w,
-      t.h,
+      0,
+      0,
+      s*1.3,
+      s*.6,
+      -.5,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="mushroom"){
+
+    ctx.fillStyle="#f5e4c5";
+
+    ctx.fillRect(
+      -s*.18,
+      0,
+      s*.36,
+      s
+    );
+
+    ctx.fillStyle="#d94848";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      s,
+      Math.PI,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="sugar"){
+
+    ctx.fillStyle="#fff3d0";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,-s*1.4
+    );
+
+    ctx.lineTo(
+      s,
+      0
+    );
+
+    ctx.lineTo(
+      0,
+      s
+    );
+
+    ctx.lineTo(
+      -s,
+      0
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="seed"){
+
+    ctx.fillStyle="#b87938";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      s*.7,
+      s,
+      -.3,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="flower"){
+
+    ctx.strokeStyle="#34863b";
+
+    ctx.lineWidth=4;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,s
+    );
+
+    ctx.lineTo(
+      0,-s
+    );
+
+    ctx.stroke();
+
+    ctx.fillStyle="#f5ce3b";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      -s,
+      s*.6,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  if(o.type==="foodpile"){
+
+    ctx.fillStyle="#c88637";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      s*1.5,
+      s*.8,
       0,
       0,
       Math.PI*2
@@ -735,100 +1130,24 @@ function drawWorld(){
 
     ctx.fill();
 
-
-    ctx.strokeStyle=
-      "#b7763d";
-
-    ctx.lineWidth=5;
-
-    ctx.stroke();
-
   }
 
 
-  /* queen chamber */
+  if(o.type==="tunnel"){
 
-  ctx.fillStyle=
-    "#a96b36";
+    ctx.fillStyle="#29251f";
 
-  ctx.beginPath();
+    ctx.beginPath();
 
-  ctx.ellipse(
-    0,
-    0,
-    180,
-    125,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  ctx.strokeStyle=
-    "#d2914c";
-
-  ctx.lineWidth=6;
-
-  ctx.stroke();
-
-
-  /* queen */
-
-  ctx.font="70px Arial";
-
-  ctx.textAlign="center";
-
-  ctx.fillText(
-    "👑",
-    0,
-    15
-  );
-
-
-  /* food */
-
-  for(const f of foodObjects){
-
-    if(f.collected)
-      continue;
-
-    ctx.font="30px Arial";
-
-    ctx.fillText(
-      "🍎",
-      f.x,
-      f.y
+    ctx.arc(
+      0,
+      0,
+      s*1.3,
+      Math.PI,
+      Math.PI*2
     );
 
-  }
-
-
-  /* larvae */
-
-  for(const l of larvae){
-
-    ctx.font="25px Arial";
-
-    ctx.fillText(
-      l.raised ? "🐜" : "🥚",
-      l.x,
-      l.y
-    );
-
-  }
-
-
-  /* ants */
-
-  for(const ant of colonyAnts){
-
-    drawAnt(
-      ant.x,
-      ant.y,
-      ant.type
-    );
+    ctx.fill();
 
   }
 
@@ -838,61 +1157,85 @@ function drawWorld(){
 }
 
 
-/* =================================================
-   DRAW ANT
-================================================= */
+/* =====================================================
+   DRAW WORKER ANT
+===================================================== */
 
-function drawAnt(
-  x,
-  y,
-  typeName
-){
+function drawWorker(a){
 
-  const type=
-    antTypes.find(
-      a=>a.name===typeName
-    ) ||
-    antTypes[0];
+  const p=
+    project(
+      a.x,
+      a.z,
+      .8
+    );
+
+  if(!p)
+    return;
+
+
+  const s=
+    Math.max(
+      4,
+      Math.min(
+        24,
+        p.size
+      )
+    );
 
 
   ctx.save();
 
   ctx.translate(
-    x,
-    y
+    p.x,
+    p.y
   );
 
 
-  let size=22;
+  /*
+    Different visual ant types
+  */
 
+  if(
+    a.type.name==="Golden Ant"
+  ){
 
-  if(typeName==="Golden Ant")
-    size=26;
+    ctx.fillStyle="#ffd447";
 
-  if(typeName==="Goblin Ant")
-    size=27;
+  }
 
-  if(typeName==="Flying Ant")
-    size=21;
+  else if(
+    a.type.name==="Flash Ant"
+  ){
+
+    ctx.fillStyle="#ff633c";
+
+  }
+
+  else if(
+    a.type.name==="Goblin Ant"
+  ){
+
+    ctx.fillStyle="#8b5cc7";
+
+  }
+
+  else{
+
+    ctx.fillStyle="#21150e";
+
+  }
 
 
   /* body */
-
-  ctx.fillStyle=
-    typeName==="Golden Ant"
-    ? "#ffd83d"
-    : typeName==="Crystal Ant"
-    ? "#8ff4ff"
-    : "#17100b";
-
 
   ctx.beginPath();
 
   ctx.ellipse(
     0,
     0,
-    size,
-    size*.65,
+    s*.8,
+    s*.45,
     0,
     0,
     Math.PI*2
@@ -906,9 +1249,9 @@ function drawAnt(
   ctx.beginPath();
 
   ctx.arc(
-    size*.85,
+    s*.65,
     0,
-    size*.55,
+    s*.42,
     0,
     Math.PI*2
   );
@@ -919,22 +1262,31 @@ function drawAnt(
   /* legs */
 
   ctx.strokeStyle=
-    "#130d08";
+    ctx.fillStyle;
 
-  ctx.lineWidth=3;
+  ctx.lineWidth=
+    Math.max(
+      1,
+      s*.13
+    );
 
-  for(let i=-1;i<=1;i++){
+
+  for(
+    let i=-1;
+    i<=1;
+    i++
+  ){
 
     ctx.beginPath();
 
     ctx.moveTo(
-      i*7,
-      -8
+      i*s*.25,
+      -s*.2
     );
 
     ctx.lineTo(
-      i*15,
-      -18
+      i*s*.75,
+      -s*.55
     );
 
     ctx.stroke();
@@ -943,55 +1295,16 @@ function drawAnt(
     ctx.beginPath();
 
     ctx.moveTo(
-      i*7,
-      8
+      i*s*.25,
+      s*.2
     );
 
     ctx.lineTo(
-      i*15,
-      18
+      i*s*.75,
+      s*.55
     );
 
     ctx.stroke();
-
-  }
-
-
-  /* wings */
-
-  if(typeName==="Flying Ant"){
-
-    ctx.fillStyle=
-      "#ffffff88";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      -7,
-      -14,
-      18,
-      9,
-      -.4,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      7,
-      -14,
-      18,
-      9,
-      .4,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
 
   }
 
@@ -1001,660 +1314,479 @@ function drawAnt(
 }
 
 
-/* =================================================
-   ANIMATION
-================================================= */
+/* =====================================================
+   DRAW PLAYER
+===================================================== */
 
-function animateAnts(){
+function drawPlayer(){
 
-  for(const ant of colonyAnts){
-
-    const type=
-      antTypes.find(
-        a=>a.name===ant.type
-      ) ||
-      antTypes[0];
+  const x=W/2;
+  const y=H*.65;
 
 
-    if(!ant.target){
+  ctx.save();
 
-      ant.target={
+  ctx.translate(
+    x,y
+  );
 
-        x:
-          Math.random()*350-175,
 
-        y:
-          Math.random()*250-125
+  ctx.fillStyle="#17100c";
 
-      };
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    12,
+    15,
+    24,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -13,
+    13,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+
+  ctx.strokeStyle="#17100c";
+
+  ctx.lineWidth=3;
+
+
+  for(
+    let i=-1;
+    i<=1;
+    i++
+  ){
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,
+      0
+    );
+
+    ctx.lineTo(
+      i*22,
+      -10
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,
+      10
+    );
+
+    ctx.lineTo(
+      i*22,
+      25
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =====================================================
+   DRAW WORLD
+===================================================== */
+
+function drawWorld(){
+
+  drawGround();
+
+
+  const list=[];
+
+
+  for(
+    const o of objects
+  ){
+
+    list.push({
+
+      o:o,
+
+      depth:
+        Math.hypot(
+          o.x-player.x,
+          o.z-player.z
+        )
+
+    });
+
+  }
+
+
+  for(
+    const a of workers
+  ){
+
+    list.push({
+
+      o:a,
+
+      depth:
+        Math.hypot(
+          a.x-player.x,
+          a.z-player.z
+        )
+
+    });
+
+  }
+
+
+  list.sort(
+    (a,b)=>
+      b.depth-a.depth
+  );
+
+
+  for(
+    const item of list
+  ){
+
+    const o=item.o;
+
+
+    if(
+      o.type==="grass"
+    ){
+
+      drawGrass(o);
 
     }
 
+    else if(
+      o.type==="food"
+    ){
 
-    const dx=
-      ant.target.x-ant.x;
+      drawFood(o);
 
-    const dy=
-      ant.target.y-ant.y;
+    }
 
-    const distance=
-      Math.hypot(dx,dy);
+    else if(
+      o.type &&
+      o.type.name
+    ){
 
-
-    if(distance<3){
-
-      ant.target=null;
+      drawWorker(o);
 
     }
 
     else{
 
-      ant.x +=
-        dx/distance*
-        type.speed*.45;
-
-      ant.y +=
-        dy/distance*
-        type.speed*.45;
+      drawTaskObject(o);
 
     }
 
   }
 
-}
 
-
-/* =================================================
-   PARTICLES
-================================================= */
-
-function addParticles(
-  x,
-  y,
-  text
-){
-
-  for(let i=0;i<8;i++){
-
-    particles.push({
-
-      x,
-      y,
-
-      dx:
-        Math.random()*4-2,
-
-      dy:
-        Math.random()*4-2,
-
-      life:50,
-
-      text
-
-    });
-
-  }
+  drawPlayer();
 
 }
 
 
-function updateParticles(){
+/* =====================================================
+   PLAYER MOVEMENT
+===================================================== */
 
-  for(
-    const p of particles
-  ){
+function updatePlayer(dt){
 
-    p.x+=p.dx;
-    p.y+=p.dy;
+  const speed=
+    8*dt;
 
-    p.dy+=.04;
+  const turn=
+    2.5*dt;
 
-    p.life--;
+
+  /*
+    Correct controls.
+  */
+
+  if(controls.left)
+    player.angle-=turn;
+
+  if(controls.right)
+    player.angle+=turn;
+
+
+  if(controls.forward){
+
+    player.x +=
+      Math.sin(player.angle)*
+      speed;
+
+    player.z +=
+      -Math.cos(player.angle)*
+      speed;
 
   }
 
 
-  particles=
-    particles.filter(
-      p=>p.life>0
+  if(controls.back){
+
+    player.x -=
+      Math.sin(player.angle)*
+      speed;
+
+    player.z -=
+      -Math.cos(player.angle)*
+      speed;
+
+  }
+
+
+  player.x=
+    Math.max(
+      -100,
+      Math.min(
+        100,
+        player.x
+      )
+    );
+
+
+  player.z=
+    Math.max(
+      -110,
+      Math.min(
+        90,
+        player.z
+      )
     );
 
 }
 
 
-function drawParticles(){
+/* =====================================================
+   MOVE WORKERS
+===================================================== */
 
-  ctx.save();
-
-  ctx.font="20px Arial";
-
-  ctx.textAlign="center";
+function updateWorkers(dt){
 
   for(
-    const p of particles
+    const ant of workers
   ){
 
-    ctx.globalAlpha=
-      p.life/50;
+    ant.timer-=dt;
 
-    ctx.fillText(
-      p.text,
-      p.x,
-      p.y
-    );
-
-  }
-
-  ctx.restore();
-
-}
-
-
-/* =================================================
-   GAME LOOP
-================================================= */
-
-function loop(){
-
-  if(playing){
-
-    animateAnts();
-
-    updateParticles();
-
-    drawWorld();
-
-    drawParticles();
-
-  }
-
-  requestAnimationFrame(
-    loop
-  );
-
-}
-
-loop();
-
-
-/* =================================================
-   XP
-================================================= */
-
-function gainXP(amount){
-
-  xp+=amount;
-
-
-  if(xp>=xpNeed){
-
-    xp-=xpNeed;
-
-    level++;
-
-    xpNeed=
-      Math.floor(
-        100+
-        level*60
-      );
-
-
-    levelUp();
-
-  }
-
-
-  updateUI();
-
-}
-
-
-/* =================================================
-   LEVEL UP
-================================================= */
-
-function levelUp(){
-
-  let newlyUnlocked=[];
-
-
-  for(const ant of antTypes){
 
     if(
-      level>=ant.unlock &&
-      !unlockedAnts.includes(
-        ant.name
-      )
+      ant.timer<=0
     ){
 
-      unlockedAnts.push(
-        ant.name
-      );
+      ant.angle=
+        random(
+          0,
+          Math.PI*2
+        );
 
-      newlyUnlocked.push(
-        ant.name
-      );
+      ant.timer=
+        random(
+          1,
+          4
+        );
+
+    }
+
+
+    ant.x +=
+      Math.sin(
+        ant.angle
+      )*
+      ant.type.speed*
+      dt;
+
+
+    ant.z +=
+      -Math.cos(
+        ant.angle
+      )*
+      ant.type.speed*
+      dt;
+
+
+    if(
+      Math.abs(ant.x)>18
+    ){
+
+      ant.angle+=Math.PI;
+
+    }
+
+
+    if(
+      ant.z<5 ||
+      ant.z>45
+    ){
+
+      ant.angle+=Math.PI;
 
     }
 
   }
 
+}
 
-  const text=
-    newlyUnlocked.length>0
 
-    ?
+/* =====================================================
+   ACTION
+===================================================== */
 
-    "You reached Level "+
-    level+
-    "!<br><br>"+
-    "NEW ANT UNLOCKED:<br>"+
-    newlyUnlocked
-      .map(
-        n=>"🐜 "+n
-      )
-      .join("<br>")
+document
+.getElementById("action")
+.addEventListener(
+  "click",
+  function(){
 
-    :
+    if(!playing)
+      return;
 
-    "You reached Level "+
-    level+
-    "!<br><br>"+
-    "Your colony is becoming stronger.";
+
+    const object=
+      objects.find(
+        o=>
+          !o.collected &&
+          o.type===
+          currentTask.object
+      );
+
+
+    if(!object)
+      return;
+
+
+    const distance=
+      Math.hypot(
+        object.x-player.x,
+        object.z-player.z
+      );
+
+
+    if(distance>9){
+
+      showMessage(
+        "Move closer to the task!"
+      );
+
+      return;
+
+    }
+
+
+    object.collected=true;
+
+    taskFinished=true;
+
+    food+=currentTask.reward;
+
+    coins+=currentTask.reward;
+
+
+    updateUI();
+
+
+    showMessage(
+      "Task complete! +"+
+      currentTask.reward+
+      " food!"
+    );
+
+
+    setTimeout(
+      finishLevel,
+      600
+    );
+
+  }
+);
+
+
+/* =====================================================
+   FINISH LEVEL
+===================================================== */
+
+function finishLevel(){
+
+  playing=false;
+
+
+  const unlocked=
+    antTypes.filter(
+      a=>
+        a.level===level+1
+    );
 
 
   document.getElementById(
-    "unlockText"
-  ).innerHTML=text;
+    "levelMessage"
+  ).textContent=
+    unlocked.length
+    ? "Level "+
+      level+
+      " complete! Reach Level "+
+      unlocked[0].level+
+      " to unlock the "+
+      unlocked[0].name+"!"
+    : "Your colony is growing stronger!";
 
 
   document.getElementById(
-    "levelUp"
+    "levelScreen"
   ).style.display="flex";
 
 }
 
 
-/* =================================================
-   COLLECT FOOD
-================================================= */
+/* =====================================================
+   NEXT LEVEL
+===================================================== */
 
-document.getElementById(
-  "foodButton"
-).addEventListener(
+document
+.getElementById("nextButton")
+.addEventListener(
   "click",
-  ()=>{
+  function(){
 
-    let collected=0;
+    level++;
 
-
-    for(
-      const f of foodObjects
-    ){
-
-      if(
-        !f.collected &&
-        collected<3
-      ){
-
-        f.collected=true;
-
-        collected++;
-
-      }
-
-    }
-
-
-    if(collected===0){
-
-      showMessage(
-        "There is no nearby food left!"
-      );
-
-      return;
-
-    }
-
-
-    const bonus=
-      unlockedAnts.includes(
-        "Golden Ant"
-      )
-      ? 2
-      : 0;
-
-
-    food +=
-      collected*2+
-      bonus;
-
-
-    foodTask+=collected;
-
-
-    gainXP(
-      collected*10
-    );
-
-
-    addParticles(
-      W/2,
-      H/2,
-      "+FOOD"
-    );
-
-
-    showMessage(
-      "Your workers brought food!"
-    );
-
-    updateUI();
-
-  });
-
-
-/* =================================================
-   DIG TUNNEL
-================================================= */
-
-document.getElementById(
-  "digButton"
-).addEventListener(
-  "click",
-  ()=>{
-
-    if(food<5){
-
-      showMessage(
-        "You need 5 food to dig a tunnel."
-      );
-
-      return;
-
-    }
-
-
-    food-=5;
-
-    digTask++;
-
-    gainXP(25);
-
-
-    tunnels.push({
-
-      x:
-        Math.random()*600-300,
-
-      y:
-        Math.random()*400-200,
-
-      w:
-        90+Math.random()*70,
-
-      h:
-        30+Math.random()*20
-
-    });
-
-
-    showMessage(
-      "Your ants dug a new tunnel!"
-    );
-
-    updateUI();
-
-  });
-
-
-/* =================================================
-   RAISE LARVAE
-================================================= */
-
-document.getElementById(
-  "larvaButton"
-).addEventListener(
-  "click",
-  ()=>{
-
-    if(food<3){
-
-      showMessage(
-        "You need 3 food to feed larvae."
-      );
-
-      return;
-
-    }
-
-
-    const larva=
-      larvae.find(
-        l=>!l.raised
-      );
-
-
-    if(!larva){
-
-      showMessage(
-        "All current larvae are raised!"
-      );
-
-      return;
-
-    }
-
-
-    food-=3;
-
-    larva.raised=true;
-
-    larvaTask++;
-
-    population++;
-
-    gainXP(20);
-
-
-    colonyAnts.push({
-
-      x:
-        Math.random()*100-50,
-
-      y:
-        Math.random()*80-40,
-
-      type:"Worker Ant",
-
-      target:null
-
-    });
-
-
-    showMessage(
-      "A new worker ant joined the colony!"
-    );
-
-    updateUI();
-
-  });
-
-
-/* =================================================
-   ANT MENU
-================================================= */
-
-document.getElementById(
-  "antsButton"
-).addEventListener(
-  "click",
-  ()=>{
-
-    showAntMenu();
-
-  });
-
-
-document.getElementById(
-  "closeAnts"
-).addEventListener(
-  "click",
-  ()=>{
+    createWorld();
 
     document.getElementById(
-      "antMenu"
+      "levelScreen"
     ).style.display="none";
 
-  });
+    playing=true;
+
+    updateUI();
 
 
-function showAntMenu(){
-
-  const list=
-    document.getElementById(
-      "antList"
-    );
-
-
-  list.innerHTML="";
-
-
-  for(
-    const ant of antTypes
-  ){
-
-    const unlocked=
-      unlockedAnts.includes(
-        ant.name
-      );
-
-
-    const div=
-      document.createElement(
-        "div"
-      );
-
-
-    div.className=
-      "antCard "+
-      (
-        unlocked
-        ? ""
-        : "locked"
-      );
-
-
-    div.innerHTML=
-
-      `<div class="antName">
-        ${ant.emoji}
-        ${ant.name}
-      </div>
-
-      <div class="small">
-        ${unlocked
-          ? ant.description
-          : "Unlocks at Level "+
-            ant.unlock}
-      </div>
-
-      <div class="small">
-        Speed: ${ant.speed}
-        &nbsp; | &nbsp;
-        Work: ${ant.work}
-      </div>`;
-
-
-    list.appendChild(div);
-
-  }
-
-
-  document.getElementById(
-    "antMenu"
-  ).style.display="block";
-
-}
-
-
-/* =================================================
-   MESSAGE
-================================================= */
-
-let messageTimer;
-
-
-function showMessage(text){
-
-  const box=
-    document.getElementById(
-      "message"
-    );
-
-
-  box.innerHTML=text;
-
-  box.style.display="block";
-
-
-  clearTimeout(
-    messageTimer
-  );
-
-
-  messageTimer=
-    setTimeout(
-      ()=>{
-        box.style.display="none";
-      },
-      1800
-    );
-
-}
-
-
-/* =================================================
-   UI
-================================================= */
-
-function updateUI(){
-
-  document.getElementById(
-    "level"
-  ).textContent=
-    level;
-
-  document.getElementById(
-    "xp"
-  ).textContent=
-    xp;
-
-  document.getElementById(
-    "xpNeed"
-  ).textContent=
-    xpNeed;
-
-  document.getElementById(
-    "food"
-  ).textContent=
-    food;
-
-  document.getElementById(
-    "population"
-  ).textContent=
-    population;
-
-  document.getElementById(
-    "foodTask"
-  ).textContent=
-    foodTask+
-    " / 10";
-
-  document.getElementById(
-    "digTask"
-  ).textContent=
-    digTask+
-    " / 3";
-
-  document.getElemen
+    const newAnt=
+      antTypes.find(
+        a=>
+     
