@@ -3,15 +3,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Animal Life Simulator</title>
 
 <style>
 *{
   box-sizing:border-box;
-  user-select:none;
-  -webkit-user-select:none;
-  touch-action:none;
+  -webkit-tap-highlight-color:transparent;
 }
 
 html,body{
@@ -19,733 +17,1011 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
+  background:#07120b;
   font-family:Arial,sans-serif;
-  background:#78c8e8;
 }
 
-canvas{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
+button{
+  border:0;
+  font-family:Arial,sans-serif;
+  touch-action:manipulation;
+  cursor:pointer;
 }
 
-.screen{
+#start{
   position:fixed;
   inset:0;
-  z-index:50;
+  z-index:20;
   display:flex;
   flex-direction:column;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   text-align:center;
-  padding:25px;
   color:white;
+  background:
+    radial-gradient(circle at 50% 25%,#9bdc82,#397448 50%,#07120b);
 }
 
-#menu{
-  background:linear-gradient(
-    #70c9e9,
-    #6dbc57 55%,
-    #315c31
-  );
+#start h1{
+  font-size:44px;
+  margin:12px;
 }
 
-#gameOver{
-  display:none;
-  background:#17251de8;
-}
-
-.title{
-  font-size:clamp(38px,10vw,72px);
-  font-weight:900;
-  text-shadow:4px 4px #254c2a;
-}
-
-.subtitle{
+#start p{
   max-width:650px;
+  margin:10px 25px 30px;
   font-size:18px;
   line-height:1.5;
 }
 
-.animalButtons{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:10px;
-  max-width:700px;
-  margin-top:10px;
+#play{
+  padding:20px 55px;
+  border-radius:25px;
+  background:#e8c95a;
+  color:#18200f;
+  font-size:27px;
+  font-weight:bold;
+  box-shadow:0 7px 0 #9a812c;
 }
 
-.animalButton{
-  border:0;
+#play:active{
+  transform:translateY(6px);
+  box-shadow:0 1px 0 #9a812c;
+}
+
+#selection{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:19;
+  text-align:center;
+  color:white;
+  padding-top:45px;
+  background:linear-gradient(#71b9d0,#487b49);
+}
+
+#selection h2{
+  font-size:32px;
+}
+
+.choice{
+  width:170px;
+  margin:8px;
+  padding:17px;
   border-radius:18px;
-  padding:14px 17px;
-  background:#ffffffdd;
-  color:#17351d;
-  font-weight:900;
-  font-size:15px;
+  background:#142c1b;
+  color:white;
+  font-size:19px;
+  font-weight:bold;
 }
 
-.animalButton:active{
+.choice:active{
   transform:scale(.94);
 }
 
-.bigButton{
-  margin-top:20px;
-  border:0;
-  border-radius:20px;
-  padding:18px 35px;
-  background:#ffd447;
-  color:#18351d;
-  font-size:20px;
-  font-weight:900;
+#game{
+  display:none;
+  position:fixed;
+  inset:0;
+}
+
+#world{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  touch-action:none;
 }
 
 #hud{
-  display:none;
-  position:fixed;
-  z-index:20;
-  top:9px;
-  left:9px;
-  right:9px;
+  position:absolute;
+  top:12px;
+  left:12px;
+  right:12px;
+  z-index:5;
+  display:flex;
   justify-content:space-between;
-  gap:7px;
-  pointer-events:none;
 }
 
-.info{
-  background:#142218dd;
+.box{
+  padding:10px 14px;
+  border-radius:15px;
+  background:rgba(7,20,11,.82);
   color:white;
-  border-radius:13px;
-  padding:9px 11px;
-  font-size:11px;
   font-weight:bold;
 }
 
-#objective{
-  display:none;
-  position:fixed;
-  z-index:20;
+#task{
+  position:absolute;
   top:58px;
   left:50%;
   transform:translateX(-50%);
-  max-width:90%;
-  background:#142218dd;
+  width:min(90%,520px);
+  padding:11px;
+  border-radius:15px;
+  background:rgba(7,20,11,.82);
   color:white;
-  border-radius:14px;
-  padding:10px 14px;
   text-align:center;
-  font-size:12px;
   font-weight:bold;
+  z-index:5;
 }
 
 #controls{
-  display:none;
-  position:fixed;
-  z-index:30;
-  left:10px;
-  bottom:10px;
-  width:285px;
-  height:185px;
-}
-
-.move{
   position:absolute;
-  width:88px;
-  height:58px;
-  border:2px solid #ffffff66;
+  left:12px;
+  bottom:18px;
+  z-index:5;
+  display:flex;
+  gap:8px;
+}
+
+.ctrl{
+  width:85px;
+  height:62px;
   border-radius:17px;
-  background:#142218dd;
+  background:rgba(7,20,11,.9);
   color:white;
-  font-size:10px;
-  font-weight:900;
+  font-weight:bold;
 }
 
-.move:active{
-  background:#438d48;
-  transform:scale(.93);
+.ctrl:active{
+  transform:scale(.94);
 }
-
-#forward{left:98px;top:0}
-#back{left:98px;bottom:0}
-#left{left:0;top:63px}
-#right{right:0;top:63px}
 
 #action{
-  display:none;
-  position:fixed;
-  z-index:30;
-  right:14px;
-  bottom:30px;
-  width:125px;
-  min-height:60px;
-  border:0;
+  position:absolute;
+  right:15px;
+  bottom:25px;
+  z-index:5;
+  padding:18px 25px;
   border-radius:18px;
-  background:#ffd447;
-  color:#18351d;
-  font-size:12px;
-  font-weight:900;
+  background:#e8c95a;
+  color:#18200f;
+  font-weight:bold;
+  font-size:17px;
 }
 
 #message{
   display:none;
-  position:fixed;
-  z-index:40;
-  top:105px;
+  position:absolute;
+  z-index:10;
   left:50%;
-  transform:translateX(-50%);
-  background:#142218ee;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(88%,420px);
+  padding:25px;
+  border-radius:22px;
+  background:rgba(5,15,8,.96);
   color:white;
-  padding:12px 18px;
-  border-radius:15px;
-  font-weight:bold;
   text-align:center;
+}
+
+#continue{
+  margin-top:15px;
+  padding:13px 25px;
+  border-radius:14px;
+  background:#e8c95a;
+  font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="canvas"></canvas>
+<div id="start">
+  <div style="font-size:90px">🌲</div>
 
-<!-- MENU -->
+  <h1>Animal Life Simulator</h1>
 
-<div id="menu" class="screen">
-
-  <div style="font-size:85px">🌍🐾</div>
-
-  <div class="title">
-    ANIMAL LIFE SIMULATOR
-  </div>
-
-  <p class="subtitle">
-    Choose an animal and survive in a huge 3D-style world.
-    Herbivores eat plants and escape predators.
-    Carnivores hunt herbivores.
+  <p>
+    Enter a living wilderness. Choose an animal,
+    find food, survive predators, explore the world
+    and grow stronger.
   </p>
 
-  <p><b>CHOOSE YOUR ANIMAL</b></p>
+  <button id="play" type="button">PLAY GAME</button>
+</div>
 
-  <div class="animalButtons">
+<div id="selection">
 
-    <button class="animalButton" data-animal="deer">
-      🦌 Deer
-    </button>
+  <h2>CHOOSE YOUR ANIMAL</h2>
 
-    <button class="animalButton" data-animal="zebra">
-      🦓 Zebra
-    </button>
+  <button class="choice"
+          data-kind="herbivore"
+          data-animal="deer"
+          type="button">
+    DEER<br>
+    <small>HERBIVORE</small>
+  </button>
 
-    <button class="animalButton" data-animal="rabbit">
-      🐇 Rabbit
-    </button>
+  <button class="choice"
+          data-kind="herbivore"
+          data-animal="rabbit"
+          type="button">
+    RABBIT<br>
+    <small>HERBIVORE</small>
+  </button>
 
-    <button class="animalButton" data-animal="elephant">
-      🐘 Elephant
-    </button>
+  <button class="choice"
+          data-kind="carnivore"
+          data-animal="lion"
+          type="button">
+    LION<br>
+    <small>CARNIVORE</small>
+  </button>
 
-    <button class="animalButton" data-animal="lion">
-      🦁 Lion
-    </button>
-
-    <button class="animalButton" data-animal="tiger">
-      🐅 Tiger
-    </button>
-
-    <button class="animalButton" data-animal="wolf">
-      🐺 Wolf
-    </button>
-
-  </div>
-
-  <button
-    class="bigButton"
-    id="startButton"
-    type="button">
-    START GAME
+  <button class="choice"
+          data-kind="carnivore"
+          data-animal="wolf"
+          type="button">
+    WOLF<br>
+    <small>CARNIVORE</small>
   </button>
 
 </div>
 
+<div id="game">
 
-<!-- HUD -->
+<canvas id="world"></canvas>
 
 <div id="hud">
-
-  <div class="info">
-    ANIMAL:
-    <span id="animalName">---</span>
+  <div class="box">
+    LEVEL <span id="level">1</span>
   </div>
 
-  <div class="info">
-    HEALTH:
-    <span id="health">100</span>
+  <div class="box">
+    ENERGY <span id="energy">100</span>%
   </div>
-
-  <div class="info">
-    FOOD:
-    <span id="food">0</span>
-  </div>
-
-  <div class="info">
-    SCORE:
-    <span id="score">0</span>
-  </div>
-
 </div>
 
-
-<div id="objective"></div>
-
-
-<!-- CONTROLS -->
+<div id="task">
+  Explore the wilderness.
+</div>
 
 <div id="controls">
 
-  <button class="move" id="forward">
-    MOVE FORWARD
+  <button class="ctrl" id="left" type="button">
+    LEFT
   </button>
 
-  <button class="move" id="back">
-    MOVE BACK
+  <button class="ctrl" id="forward" type="button">
+    MOVE
   </button>
 
-  <button class="move" id="left">
-    TURN LEFT
-  </button>
-
-  <button class="move" id="right">
-    TURN RIGHT
+  <button class="ctrl" id="right" type="button">
+    RIGHT
   </button>
 
 </div>
 
-
-<button
-  id="action"
-  type="button">
-  EAT
+<button id="action" type="button">
+  EAT / HUNT
 </button>
 
+<div id="message">
 
-<div id="message"></div>
+  <div id="messageText"></div>
 
-
-<!-- GAME OVER -->
-
-<div id="gameOver" class="screen">
-
-  <div style="font-size:85px">🐾</div>
-
-  <div class="title">
-    GAME OVER
-  </div>
-
-  <p
-    class="subtitle"
-    id="gameOverText">
-  </p>
-
-  <button
-    class="bigButton"
-    id="againButton"
-    type="button">
-    PLAY AGAIN
+  <button id="continue" type="button">
+    CONTINUE
   </button>
 
 </div>
 
+</div>
 
 <script>
+"use strict";
 
-/* =====================================================
-   CANVAS
-===================================================== */
+/* =========================
+   ELEMENTS
+========================= */
 
-const canvas =
-  document.getElementById("canvas");
+const start = document.getElementById("start");
+const selection = document.getElementById("selection");
+const game = document.getElementById("game");
+const play = document.getElementById("play");
 
-const ctx =
-  canvas.getContext("2d");
+const canvas = document.getElementById("world");
+const ctx = canvas.getContext("2d");
 
-let W=innerWidth;
-let H=innerHeight;
+const levelEl = document.getElementById("level");
+const energyEl = document.getElementById("energy");
+const taskEl = document.getElementById("task");
+
+const message = document.getElementById("message");
+const messageText = document.getElementById("messageText");
+const continueButton = document.getElementById("continue");
+
+let running = false;
+let kind = "";
+let animal = "";
+
+let level = 1;
+let energy = 100;
+
+let player = {
+  x: 0,
+  y: 0,
+  angle: 0
+};
+
+let plants = [];
+let animals = [];
+let predators = [];
+let water = [];
+let rocks = [];
+
+
+/* =========================
+   CANVAS SIZE
+========================= */
 
 function resize(){
 
-  W=innerWidth;
-  H=innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-  const dpr =
-    Math.min(
-      devicePixelRatio || 1,
-      2
-    );
-
-  canvas.width=W*dpr;
-  canvas.height=H*dpr;
-
-  canvas.style.width=W+"px";
-  canvas.style.height=H+"px";
-
-  ctx.setTransform(
-    dpr,0,0,dpr,0,0
-  );
 }
+
+window.addEventListener("resize", resize);
 
 resize();
 
-addEventListener(
-  "resize",
-  resize
-);
+
+/* =========================
+   PLAY GAME
+========================= */
+
+play.addEventListener("click", function(){
+
+  start.style.display = "none";
+  selection.style.display = "block";
+
+});
 
 
-/* =====================================================
-   GAME STATE
-===================================================== */
+/* =========================
+   ANIMAL SELECTION
+========================= */
 
-let playing=false;
+document.querySelectorAll(".choice").forEach(function(button){
 
-let selected=null;
+  button.addEventListener("click", function(){
 
-let animals=[];
+    kind = button.dataset.kind;
+    animal = button.dataset.animal;
 
-let plants=[];
+    selection.style.display = "none";
+    game.style.display = "block";
 
-let rocks=[];
+    begin();
 
-let score=0;
+  });
 
-let food=0;
-
-let health=100;
-
-let lastTime=0;
-
-const player={
-  x:0,
-  z:30,
-  angle:0
-};
-
-const keys={
-  forward:false,
-  back:false,
-  left:false,
-  right:false
-};
+});
 
 
-/* =====================================================
-   ANIMAL DATA
-===================================================== */
+/* =========================
+   BEGIN GAME
+========================= */
 
-const animalData={
+function begin(){
 
-  deer:{
-    name:"Deer",
-    emoji:"🦌",
-    type:"herbivore",
-    speed:10,
-    size:1.4
-  },
+  running = true;
 
-  zebra:{
-    name:"Zebra",
-    emoji:"🦓",
-    type:"herbivore",
-    speed:9,
-    size:1.5
-  },
+  level = 1;
+  energy = 100;
 
-  rabbit:{
-    name:"Rabbit",
-    emoji:"🐇",
-    type:"herbivore",
-    speed:13,
-    size:.8
-  },
+  player.x = canvas.width / 2;
+  player.y = canvas.height / 2;
+  player.angle = 0;
 
-  elephant:{
-    name:"Elephant",
-    emoji:"🐘",
-    type:"herbivore",
-    speed:6,
-    size:2.5
-  },
+  createWorld();
 
-  lion:{
-    name:"Lion",
-    emoji:"🦁",
-    type:"carnivore",
-    speed:11,
-    size:1.8
-  },
+  updateTask();
+  updateHUD();
 
-  tiger:{
-    name:"Tiger",
-    emoji:"🐅",
-    type:"carnivore",
-    speed:12,
-    size:1.7
-  },
+  requestAnimationFrame(loop);
 
-  wolf:{
-    name:"Wolf",
-    emoji:"🐺",
-    type:"carnivore",
-    speed:13,
-    size:1.2
-  }
-
-};
+}
 
 
-/* =====================================================
-   WORLD CREATION
-===================================================== */
+/* =========================
+   CREATE WORLD
+========================= */
 
 function createWorld(){
 
-  animals=[];
-  plants=[];
-  rocks=[];
+  plants = [];
+  animals = [];
+  predators = [];
+  water = [];
+  rocks = [];
 
-  player.x=0;
-  player.z=30;
-  player.angle=0;
-
-  health=100;
-  food=0;
-  score=0;
-
-  const type=
-    animalData[selected].type;
-
-
-  /* Plants */
-
-  for(let i=0;i<80;i++){
+  for(let i = 0; i < 30; i++){
 
     plants.push({
-
-      x:random(-110,110),
-
-      z:random(-120,90),
-
-      eaten:false,
-
-      size:random(.5,1.2)
-
+      x: Math.random() * canvas.width,
+      y: 150 + Math.random() *
+        Math.max(100, canvas.height - 280),
+      size: 8 + Math.random() * 9
     });
 
   }
 
-
-  /* Herbivores */
-
-  for(let i=0;i<18;i++){
+  for(let i = 0; i < 10; i++){
 
     animals.push({
-
-      species:
-        ["deer","zebra","rabbit"]
-        [Math.floor(random(0,3))],
-
-      type:"herbivore",
-
-      x:random(-105,105),
-
-      z:random(-115,80),
-
-      angle:random(0,Math.PI*2),
-
-      speed:random(2,5),
-
-      alive:true,
-
-      flee:false
-
+      x: Math.random() * canvas.width,
+      y: 160 + Math.random() *
+        Math.max(100, canvas.height - 290),
+      type: "deer",
+      alive: true,
+      speed: 0.3 + Math.random() * 0.7,
+      phase: Math.random() * 6
     });
 
   }
 
+  for(let i = 0; i < 5; i++){
 
-  /* Carnivores */
-
-  for(let i=0;i<8;i++){
-
-    animals.push({
-
-      species:
-        ["lion","tiger","wolf"]
-        [Math.floor(random(0,3))],
-
-      type:"carnivore",
-
-      x:random(-100,100),
-
-      z:random(-110,50),
-
-      angle:random(0,Math.PI*2),
-
-      speed:random(3,5),
-
-      alive:true,
-
-      flee:false
-
+    predators.push({
+      x: Math.random() * canvas.width,
+      y: 160 + Math.random() *
+        Math.max(100, canvas.height - 290),
+      type: i % 2 ? "wolf" : "lion",
+      speed: 0.2 + Math.random() * 0.5
     });
 
   }
 
+  for(let i = 0; i < 3; i++){
 
-  /* Rocks */
+    water.push({
+      x: Math.random() * canvas.width,
+      y: 180 + Math.random() *
+        Math.max(100, canvas.height - 300),
+      w: 100 + Math.random() * 140,
+      h: 45 + Math.random() * 70
+    });
 
-  for(let i=0;i<50;i++){
+  }
+
+  for(let i = 0; i < 18; i++){
 
     rocks.push({
-
-      x:random(-110,110),
-
-      z:random(-120,100),
-
-      size:random(.5,1.5)
-
+      x: Math.random() * canvas.width,
+      y: 150 + Math.random() *
+        Math.max(100, canvas.height - 270),
+      r: 5 + Math.random() * 13
     });
 
   }
 
+}
 
-  updateUI();
+
+/* =========================
+   TASK
+========================= */
+
+function updateTask(){
+
+  if(kind === "herbivore"){
+
+    taskEl.textContent =
+      "SURVIVE: Eat plants and stay away from predators.";
+
+  }else{
+
+    taskEl.textContent =
+      "SURVIVE: Hunt herbivores to gain energy.";
+
+  }
 
 }
 
 
-/* =====================================================
-   RANDOM
-===================================================== */
+/* =========================
+   MOVEMENT
+========================= */
 
-function random(a,b){
+function move(){
 
-  return a+
-    Math.random()*(b-a);
+  if(!running) return;
+
+  const speed = 4;
+
+  player.x += Math.cos(player.angle) * speed;
+  player.y += Math.sin(player.angle) * speed;
+
+  player.x = Math.max(
+    25,
+    Math.min(canvas.width - 25, player.x)
+  );
+
+  player.y = Math.max(
+    120,
+    Math.min(canvas.height - 70, player.y)
+  );
+
+  energy = Math.max(0, energy - 0.12);
+
+}
+
+function turnLeft(){
+
+  if(!running) return;
+
+  player.angle -= 0.13;
+
+}
+
+function turnRight(){
+
+  if(!running) return;
+
+  player.angle += 0.13;
 
 }
 
 
-/* =====================================================
-   PROJECTION
-===================================================== */
+/* =========================
+   CONTROLS
+========================= */
 
-function project(
-  x,
-  z,
-  size
-){
+document.getElementById("forward")
+.addEventListener("click", move);
 
-  const dx=
-    x-player.x;
+document.getElementById("left")
+.addEventListener("click", turnLeft);
 
-  const dz=
-    z-player.z;
+document.getElementById("right")
+.addEventListener("click", turnRight);
 
-  const sin=
-    Math.sin(
-      player.angle
+
+/* =========================
+   EAT / HUNT
+========================= */
+
+document.getElementById("action")
+.addEventListener("click", function(){
+
+  if(!running) return;
+
+  if(kind === "herbivore"){
+
+    eatPlant();
+
+  }else{
+
+    hunt();
+
+  }
+
+});
+
+
+function eatPlant(){
+
+  let nearest = null;
+  let best = 70;
+
+  for(const plant of plants){
+
+    const d = distance(
+      player.x,
+      player.y,
+      plant.x,
+      plant.y
     );
 
-  const cos=
-    Math.cos(
-      player.angle
+    if(d < best){
+
+      nearest = plant;
+      best = d;
+
+    }
+
+  }
+
+  if(nearest){
+
+    nearest.x = Math.random() * canvas.width;
+
+    nearest.y =
+      150 +
+      Math.random() *
+      Math.max(100, canvas.height - 280);
+
+    energy = Math.min(
+      100,
+      energy + 25
     );
 
-  const forward=
-    -dx*sin-
-    dz*cos;
+    checkLevel();
 
-  const side=
-    dx*cos-
-    dz*sin;
-
-  if(forward<=1)
-    return null;
-
-  const scale=
-    450/forward;
-
-  return{
-
-    x:
-      W/2+
-      side*scale,
-
-    y:
-      H*.50+
-      145*scale,
-
-    size:
-      Math.max(
-        2,
-        size*scale
-      ),
-
-    depth:forward
-
-  };
+  }
 
 }
 
 
-/* =====================================================
-   BACKGROUND
-===================================================== */
+function hunt(){
 
-function drawGround(){
+  let target = null;
+  let best = 85;
 
-  const gradient=
+  for(const creature of animals){
+
+    if(!creature.alive) continue;
+
+    const d = distance(
+      player.x,
+      player.y,
+      creature.x,
+      creature.y
+    );
+
+    if(d < best){
+
+      target = creature;
+      best = d;
+
+    }
+
+  }
+
+  if(target){
+
+    target.alive = false;
+
+    energy = Math.min(
+      100,
+      energy + 35
+    );
+
+    checkLevel();
+
+  }
+
+}
+
+
+/* =========================
+   LEVEL
+========================= */
+
+function checkLevel(){
+
+  level++;
+
+  levelEl.textContent = level;
+
+  if(level % 2 === 0){
+
+    showMessage(
+      "YOU SURVIVED!<br><br>" +
+      "You reached level " +
+      level +
+      "!<br><br>" +
+      "The wilderness gets harder."
+    );
+
+  }
+
+}
+
+
+/* =========================
+   PREDATORS
+========================= */
+
+function updatePredators(){
+
+  for(const predator of predators){
+
+    const dx = player.x - predator.x;
+    const dy = player.y - predator.y;
+
+    const d = Math.sqrt(
+      dx * dx + dy * dy
+    );
+
+    if(kind === "herbivore" && d < 250){
+
+      if(d > 0){
+
+        predator.x +=
+          (dx / d) * predator.speed;
+
+        predator.y +=
+          (dy / d) * predator.speed;
+
+      }
+
+      if(d < 35){
+
+        energy -= 0.6;
+
+      }
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   WILDLIFE
+========================= */
+
+function updateWildlife(time){
+
+  for(const creature of animals){
+
+    if(!creature.alive) continue;
+
+    creature.x +=
+      Math.sin(
+        time * 0.001 +
+        creature.phase
+      ) *
+      creature.speed;
+
+    creature.y +=
+      Math.cos(
+        time * 0.0008 +
+        creature.phase
+      ) *
+      creature.speed;
+
+    creature.x = Math.max(
+      20,
+      Math.min(
+        canvas.width - 20,
+        creature.x
+      )
+    );
+
+    creature.y = Math.max(
+      140,
+      Math.min(
+        canvas.height - 80,
+        creature.y
+      )
+    );
+
+  }
+
+}
+
+
+/* =========================
+   DISTANCE
+========================= */
+
+function distance(x1,y1,x2,y2){
+
+  const dx = x1 - x2;
+  const dy = y1 - y2;
+
+  return Math.sqrt(
+    dx * dx +
+    dy * dy
+  );
+
+}
+
+
+/* =========================
+   ENVIRONMENT
+========================= */
+
+function drawEnvironment(){
+
+  const sky =
     ctx.createLinearGradient(
-      0,0,0,H
+      0,
+      0,
+      0,
+      canvas.height
     );
 
-  gradient.addColorStop(
+  sky.addColorStop(
     0,
-    "#75cbea"
+    "#6fa9c2"
   );
 
-  gradient.addColorStop(
-    .48,
-    "#62aa4c"
+  sky.addColorStop(
+    0.38,
+    "#b6d79a"
   );
 
-  gradient.addColorStop(
+  sky.addColorStop(
     1,
-    "#294d2b"
+    "#294f2d"
   );
 
-  ctx.fillStyle=gradient;
+  ctx.fillStyle = sky;
 
   ctx.fillRect(
-    0,0,W,H
+    0,
+    0,
+    canvas.width,
+    canvas.height
   );
 
 
-  ctx.strokeStyle=
-    "#ffffff18";
+  /* distant hills */
 
-  for(let i=0;i<14;i++){
+  ctx.fillStyle = "#466e48";
 
-    const y=
-      H*.53+
-      i*i*8;
+  ctx.beginPath();
+
+  ctx.moveTo(0,330);
+
+  for(
+    let x = 0;
+    x <= canvas.width;
+    x += 70
+  ){
+
+    ctx.lineTo(
+      x,
+      300 +
+      Math.sin(x * 0.012) * 35
+    );
+
+  }
+
+  ctx.lineTo(
+    canvas.width,
+    canvas.height
+  );
+
+  ctx.lineTo(
+    0,
+    canvas.height
+  );
+
+  ctx.fill();
+
+
+  /* ground */
+
+  ctx.fillStyle = "#426f38";
+
+  ctx.fillRect(
+    0,
+    canvas.height * 0.48,
+    canvas.width,
+    canvas.height * 0.52
+  );
+
+
+  /* sunlight */
+
+  const sunX =
+    canvas.width * 0.82;
+
+  const sunY = 100;
+
+  const glow =
+    ctx.createRadialGradient(
+      sunX,
+      sunY,
+      10,
+      sunX,
+      sunY,
+      170
+    );
+
+  glow.addColorStop(
+    0,
+    "rgba(255,245,190,.5)"
+  );
+
+  glow.addColorStop(
+    1,
+    "rgba(255,245,190,0)"
+  );
+
+  ctx.fillStyle = glow;
+
+  ctx.fillRect(
+    sunX - 170,
+    sunY - 170,
+    340,
+    340
+  );
+
+
+  /* water */
+
+  for(const lake of water){
+
+    drawWater(lake);
+
+  }
+
+
+  /* rocks */
+
+  for(const rock of rocks){
+
+    drawRock(rock);
+
+  }
+
+
+  /* trees */
+
+  for(let i = 0; i < 14; i++){
+
+    const x =
+      (i * 181 + 90) %
+      canvas.width;
+
+    const y =
+      160 +
+      (i * 123) %
+      Math.max(
+        250,
+        canvas.height - 300
+      );
+
+    drawTree(x,y);
+
+  }
+
+}
+
+
+/* =========================
+   WATER
+========================= */
+
+function drawWater(w){
+
+  ctx.fillStyle =
+    "rgba(55,130,165,.8)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    w.x,
+    w.y,
+    w.w,
+    w.h,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.strokeStyle =
+    "rgba(190,235,245,.5)";
+
+  ctx.lineWidth = 2;
+
+  for(let i = -2; i <= 2; i++){
 
     ctx.beginPath();
 
-    ctx.moveTo(0,y);
+    ctx.moveTo(
+      w.x - w.w * 0.65,
+      w.y + i * 14
+    );
 
-    ctx.lineTo(W,y);
+    ctx.quadraticCurveTo(
+      w.x,
+      w.y + i * 14 - 5,
+      w.x + w.w * 0.65,
+      w.y + i * 14
+    );
 
     ctx.stroke();
 
@@ -754,75 +1030,209 @@ function drawGround(){
 }
 
 
-/* =====================================================
-   PLANTS
-===================================================== */
+/* =========================
+   ROCK
+========================= */
 
-function drawPlant(p){
+function drawRock(r){
 
-  if(p.eaten)
-    return;
-
-  const q=
-    project(
-      p.x,
-      p.z,
-      p.size
-    );
-
-  if(!q)
-    return;
-
-  const s=
-    Math.max(
-      4,
-      Math.min(
-        40,
-        q.size
-      )
-    );
-
-  ctx.strokeStyle="#2c7e32";
-  ctx.lineWidth=
-    Math.max(1,s*.13);
+  ctx.fillStyle = "#66675d";
 
   ctx.beginPath();
 
   ctx.moveTo(
-    q.x,
-    q.y
+    r.x - r.r,
+    r.y + r.r * 0.4
   );
 
   ctx.lineTo(
-    q.x-s*.4,
-    q.y-s
+    r.x - r.r * 0.5,
+    r.y - r.r
   );
+
+  ctx.lineTo(
+    r.x + r.r * 0.5,
+    r.y - r.r * 0.7
+  );
+
+  ctx.lineTo(
+    r.x + r.r,
+    r.y + r.r * 0.5
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+}
+
+
+/* =========================
+   TREE
+========================= */
+
+function drawTree(x,y){
+
+  const scale =
+    0.65 +
+    (y / canvas.height) * 0.8;
+
+  ctx.save();
+
+  ctx.translate(x,y);
+  ctx.scale(scale,scale);
+
+  /* shadow */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.2)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    55,
+    45,
+    12,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* trunk */
+
+  const trunk =
+    ctx.createLinearGradient(
+      -10,
+      0,
+      15,
+      0
+    );
+
+  trunk.addColorStop(
+    0,
+    "#4a2d19"
+  );
+
+  trunk.addColorStop(
+    0.5,
+    "#80512b"
+  );
+
+  trunk.addColorStop(
+    1,
+    "#3d2515"
+  );
+
+  ctx.fillStyle = trunk;
+
+  ctx.fillRect(
+    -10,
+    0,
+    20,
+    60
+  );
+
+
+  /* foliage */
+
+  ctx.fillStyle = "#205b2c";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -20,
+    40,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle = "#347b39";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -27,
+    -5,
+    27,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    27,
+    -5,
+    27,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.restore();
+
+}
+
+
+/* =========================
+   PLANTS
+========================= */
+
+function drawPlant(p){
+
+  ctx.strokeStyle = "#174b25";
+  ctx.lineWidth = 4;
+
+  ctx.beginPath();
 
   ctx.moveTo(
-    q.x,
-    q.y
+    p.x,
+    p.y + 12
   );
 
   ctx.lineTo(
-    q.x+s*.4,
-    q.y-s
+    p.x,
+    p.y - p.size
   );
 
   ctx.stroke();
 
-
-  ctx.fillStyle="#48a849";
+  ctx.fillStyle = "#64b84e";
 
   ctx.beginPath();
 
   ctx.ellipse(
-    q.x-s*.35,
-    q.y-s*.8,
-    s*.45,
-    s*.2,
-    -.5,
+    p.x - 7,
+    p.y - 2,
+    p.size,
+    p.size * 0.45,
+    -0.5,
     0,
-    Math.PI*2
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    p.x + 7,
+    p.y - 7,
+    p.size,
+    p.size * 0.45,
+    0.5,
+    0,
+    Math.PI * 2
   );
 
   ctx.fill();
@@ -830,792 +1240,316 @@ function drawPlant(p){
 }
 
 
-/* =====================================================
-   ROCKS
-===================================================== */
+/* =========================
+   ANIMAL
+========================= */
 
-function drawRock(r){
+function drawAnimal(
+  x,
+  y,
+  type,
+  isPlayer = false
+){
 
-  const q=
-    project(
-      r.x,
-      r.z,
-      r.size
-    );
-
-  if(!q)
-    return;
-
-  const s=
-    Math.max(
-      4,
-      Math.min(
-        40,
-        q.size
-      )
-    );
-
-  ctx.fillStyle="#6a7067";
-
-  ctx.beginPath();
-
-  ctx.ellipse(
-    q.x,
-    q.y,
-    s,
-    s*.55,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-}
-
-
-/* =====================================================
-   ANIMAL DRAWING
-===================================================== */
-
-function drawAnimal(a){
-
-  if(!a.alive)
-    return;
-
-  const data=
-    animalData[a.species];
-
-  const q=
-    project(
-      a.x,
-      a.z,
-      data.size
-    );
-
-  if(!q)
-    return;
-
-  const s=
-    Math.max(
-      8,
-      Math.min(
-        90,
-        q.size
-      )
-    );
+  const scale =
+    isPlayer ? 1.35 : 0.9;
 
   ctx.save();
 
-  ctx.translate(
-    q.x,
-    q.y
-  );
+  ctx.translate(x,y);
+  ctx.scale(scale,scale);
 
 
-  /* body */
+  /* shadow */
 
-  if(a.species==="deer"){
-    ctx.fillStyle="#8a5a2d";
-  }
-  else if(a.species==="zebra"){
-    ctx.fillStyle="#eeeeee";
-  }
-  else if(a.species==="rabbit"){
-    ctx.fillStyle="#c7b8a8";
-  }
-  else if(a.species==="elephant"){
-    ctx.fillStyle="#737b7d";
-  }
-  else if(a.species==="lion"){
-    ctx.fillStyle="#c88b35";
-  }
-  else if(a.species==="tiger"){
-    ctx.fillStyle="#d4772e";
-  }
-  else{
-    ctx.fillStyle="#777777";
-  }
-
+  ctx.fillStyle =
+    "rgba(0,0,0,.28)";
 
   ctx.beginPath();
 
   ctx.ellipse(
     0,
+    20,
+    28,
+    8,
     0,
-    s,
-    s*.5,
     0,
-    0,
-    Math.PI*2
+    Math.PI * 2
   );
 
   ctx.fill();
 
 
-  /* head */
+  if(type === "deer"){
 
-  ctx.beginPath();
+    ctx.fillStyle = "#815331";
 
-  ctx.arc(
-    s*.8,
-    -s*.25,
-    s*.48,
-    0,
-    Math.PI*2
-  );
+    ctx.beginPath();
 
-  ctx.fill();
+    ctx.ellipse(
+      0,
+      0,
+      28,
+      15,
+      0,
+      0,
+      Math.PI * 2
+    );
 
+    ctx.fill();
 
-  /* legs */
+    ctx.beginPath();
 
-  ctx.fillRect(
-    -s*.6,
-    s*.3,
-    s*.15,
-    s*.65
-  );
+    ctx.ellipse(
+      25,
+      -12,
+      13,
+      11,
+      0,
+      0,
+      Math.PI * 2
+    );
 
-  ctx.fillRect(
-    -s*.15,
-    s*.3,
-    s*.15,
-    s*.65
-  );
+    ctx.fill();
 
-  ctx.fillRect(
-    s*.25,
-    s*.3,
-    s*.15,
-    s*.65
-  );
+    ctx.strokeStyle = "#4b321e";
+    ctx.lineWidth = 5;
 
-
-  /* zebra stripes */
-
-  if(a.species==="zebra"){
-
-    ctx.strokeStyle="#222";
-    ctx.lineWidth=
-      Math.max(1,s*.08);
-
-    for(
-      let i=-.5;
-      i<.7;
-      i+=.25
-    ){
+    for(const leg of [-15,-5,10,20]){
 
       ctx.beginPath();
 
       ctx.moveTo(
-        i*s,
-        -s*.4
+        leg,
+        10
       );
 
       ctx.lineTo(
-        i*s,
-        s*.4
+        leg,
+        32
       );
 
       ctx.stroke();
 
     }
 
-  }
+    ctx.strokeStyle = "#4b321e";
+    ctx.lineWidth = 2;
 
+    ctx.beginPath();
 
-  /* tiger stripes */
+    ctx.moveTo(22,-20);
+    ctx.lineTo(15,-34);
 
-  if(a.species==="tiger"){
+    ctx.moveTo(28,-20);
+    ctx.lineTo(35,-34);
 
-    ctx.strokeStyle="#4a260f";
-
-    ctx.lineWidth=
-      Math.max(1,s*.08);
-
-    for(
-      let i=-.5;
-      i<.6;
-      i+=.3
-    ){
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        i*s,
-        -s*.45
-      );
-
-      ctx.lineTo(
-        i*s+.15*s,
-        s*.35
-      );
-
-      ctx.stroke();
-
-    }
+    ctx.stroke();
 
   }
 
+  else if(type === "rabbit"){
+
+    ctx.fillStyle = "#c9c3b5";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      4,
+      24,
+      15,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(
+      22,
+      -8,
+      13,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillRect(
+      16,
+      -32,
+      7,
+      20
+    );
+
+    ctx.fillRect(
+      27,
+      -31,
+      7,
+      20
+    );
+
+  }
+
+  else if(type === "lion"){
+
+    /* mane */
+
+    ctx.fillStyle = "#70411e";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      23,
+      -8,
+      22,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* body */
+
+    ctx.fillStyle = "#b8792f";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      29,
+      16,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* head */
+
+    ctx.fillStyle = "#d99c45";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      25,
+      -8,
+      15,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+  }
+
+  else{
+
+    /* wolf */
+
+    ctx.fillStyle = "#686c69";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      29,
+      15,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(
+      24,
+      -10,
+      14,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle = "#3f4542";
+
+    ctx.beginPath();
+
+    ctx.moveTo(17,-21);
+    ctx.lineTo(20,-34);
+    ctx.lineTo(27,-22);
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.moveTo(29,-22);
+    ctx.lineTo(37,-34);
+    ctx.lineTo(39,-18);
+
+    ctx.fill();
+
+  }
 
   ctx.restore();
 
 }
 
 
-/* =====================================================
+/* =========================
    PLAYER
-===================================================== */
+========================= */
 
 function drawPlayer(){
 
-  const data=
-    animalData[selected];
-
-  const s=
-    Math.max(
-      18,
-      Math.min(
-        55,
-        data.size*28
-      )
-    );
-
-  const x=W/2;
-  const y=H*.65;
-
   ctx.save();
 
   ctx.translate(
-    x,y
+    player.x,
+    player.y
   );
 
+  ctx.rotate(
+    player.angle
+  );
 
-  /* body */
-
-  let body="#8a5a2d";
-
-  if(selected==="zebra")
-    body="#eeeeee";
-
-  if(selected==="rabbit")
-    body="#c7b8a8";
-
-  if(selected==="elephant")
-    body="#737b7d";
-
-  if(selected==="lion")
-    body="#c88b35";
-
-  if(selected==="tiger")
-    body="#d4772e";
-
-  if(selected==="wolf")
-    body="#777777";
-
-
-  ctx.fillStyle=body;
-
-  ctx.beginPath();
-
-  ctx.ellipse(
-    0,
-    10,
-    s,
-    s*.55,
+  drawAnimal(
     0,
     0,
-    Math.PI*2
+    animal,
+    true
   );
-
-  ctx.fill();
-
-
-  /* head */
-
-  ctx.beginPath();
-
-  ctx.arc(
-    s*.75,
-    -s*.15,
-    s*.5,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  /* legs */
-
-  ctx.fillRect(
-    -s*.6,
-    s*.3,
-    s*.17,
-    s*.7
-  );
-
-  ctx.fillRect(
-    -s*.15,
-    s*.3,
-    s*.17,
-    s*.7
-  );
-
-  ctx.fillRect(
-    s*.3,
-    s*.3,
-    s*.17,
-    s*.7
-  );
-
 
   ctx.restore();
 
 }
 
 
-/* =====================================================
-   FIND NEAREST FOOD
-===================================================== */
+/* =========================
+   HUD
+========================= */
 
-function nearestPlant(){
+function updateHUD(){
 
-  let best=null;
-  let distance=Infinity;
-
-  for(
-    const p of plants
-  ){
-
-    if(p.eaten)
-      continue;
-
-    const d=
-      Math.hypot(
-        p.x-player.x,
-        p.z-player.z
-      );
-
-    if(d<distance){
-
-      distance=d;
-      best=p;
-
-    }
-
-  }
-
-  return{
-    object:best,
-    distance:distance
-  };
-
-}
-
-
-/* =====================================================
-   FIND NEAREST HERBIVORE
-===================================================== */
-
-function nearestHerbivore(){
-
-  let best=null;
-  let distance=Infinity;
-
-  for(
-    const a of animals
-  ){
-
-    if(
-      !a.alive ||
-      a.type!=="herbivore"
-    )
-      continue;
-
-    const d=
-      Math.hypot(
-        a.x-player.x,
-        a.z-player.z
-      );
-
-    if(d<distance){
-
-      distance=d;
-      best=a;
-
-    }
-
-  }
-
-  return{
-    object:best,
-    distance:distance
-  };
-
-}
-
-
-/* =====================================================
-   ACTION BUTTON
-===================================================== */
-
-document
-  .getElementById("action")
-  .addEventListener(
-    "click",
-    function(){
-
-      if(!playing)
-        return;
-
-
-      const data=
-        animalData[selected];
-
-
-      /* HERBIVORE */
-
-      if(
-        data.type==="herbivore"
-      ){
-
-        const n=
-          nearestPlant();
-
-        if(
-          !n.object ||
-          n.distance>8
-        ){
-
-          showMessage(
-            "Move closer to a plant!"
-          );
-
-          return;
-
-        }
-
-
-        n.object.eaten=true;
-
-        food++;
-
-        health=
-          Math.min(
-            100,
-            health+8
-          );
-
-        score+=10;
-
-        showMessage(
-          "Plant eaten! +10"
-        );
-
-      }
-
-
-      /* CARNIVORE */
-
-      else{
-
-        const n=
-          nearestHerbivore();
-
-        if(
-          !n.object ||
-          n.distance>9
-        ){
-
-          showMessage(
-            "Move closer to a herbivore!"
-          );
-
-          return;
-
-        }
-
-
-        n.object.alive=false;
-
-        food++;
-
-        health=
-          Math.min(
-            100,
-            health+12
-          );
-
-        score+=25;
-
-        showMessage(
-          "Herbivore caught! +25"
-        );
-
-      }
-
-
-      updateUI();
-
-    }
-  );
-
-
-/* =====================================================
-   AI
-===================================================== */
-
-function updateAnimals(dt){
-
-  const playerType=
-    animalData[selected].type;
-
-
-  for(
-    const a of animals
-  ){
-
-    if(!a.alive)
-      continue;
-
-
-    const dx=
-      player.x-a.x;
-
-    const dz=
-      player.z-a.z;
-
-    const distance=
-      Math.hypot(dx,dz);
-
-
-    /*
-      Carnivores chase the player
-      when the player is a herbivore.
-    */
-
-    if(
-      playerType==="herbivore" &&
-      a.type==="carnivore" &&
-      distance<38
-    ){
-
-      const angle=
-        Math.atan2(
-          dx,
-          -dz
-        );
-
-      a.angle=angle;
-
-      a.x+=
-        Math.sin(angle)*
-        a.speed*
-        dt;
-
-      a.z+=
-        -Math.cos(angle)*
-        a.speed*
-        dt;
-
-    }
-
-
-    /*
-      Herbivores run away from
-      the player if the player
-      is a carnivore.
-    */
-
-    else if(
-      playerType==="carnivore" &&
-      a.type==="herbivore" &&
-      distance<28
-    ){
-
-      const angle=
-        Math.atan2(
-          -dx,
-          dz
-        );
-
-      a.angle=angle;
-
-      a.x+=
-        Math.sin(angle)*
-        (a.speed+3)*
-        dt;
-
-      a.z+=
-        -Math.cos(angle)*
-        (a.speed+3)*
-        dt;
-
-    }
-
-
-    else{
-
-      if(
-        Math.random()<.015
-      ){
-
-        a.angle=
-          random(
-            0,
-            Math.PI*2
-          );
-
-      }
-
-      a.x+=
-        Math.sin(a.angle)*
-        a.speed*
-        .35*
-        dt;
-
-      a.z+=
-        -Math.cos(a.angle)*
-        a.speed*
-        .35*
-        dt;
-
-    }
-
-
-    a.x=
-      Math.max(
-        -110,
-        Math.min(
-          110,
-          a.x
-        )
-      );
-
-    a.z=
-      Math.max(
-        -120,
-        Math.min(
-          90,
-          a.z
-        )
-      );
-
-
-    /*
-      Predator catches herbivore player.
-    */
-
-    if(
-      playerType==="herbivore" &&
-      a.type==="carnivore" &&
-      distance<2.5
-    ){
-
-      health-=
-        25*dt;
-
-    }
-
-  }
-
-}
-
-
-/* =====================================================
-   PLAYER MOVEMENT
-===================================================== */
-
-function updatePlayer(dt){
-
-  const data=
-    animalData[selected];
-
-  const speed=
-    data.speed*dt;
-
-  const turn=
-    2.6*dt;
-
-
-  /* Correct left/right */
-
-  if(keys.left)
-    player.angle-=turn;
-
-  if(keys.right)
-    player.angle+=turn;
-
-
-  if(keys.forward){
-
-    player.x+=
-      Math.sin(
-        player.angle
-      )*speed;
-
-    player.z+=
-      -Math.cos(
-        player.angle
-      )*speed;
-
-  }
-
-
-  if(keys.back){
-
-    player.x-=
-      Math.sin(
-        player.angle
-      )*speed;
-
-    player.z-=
-      -Math.cos(
-        player.angle
-      )*speed;
-
-  }
-
-
-  player.x=
+  energyEl.textContent =
     Math.max(
-      -110,
-      Math.min(
-        110,
-        player.x
-      )
+      0,
+      Math.round(energy)
     );
 
-  player.z=
-    Math.max(
-      -120,
-      Math.min(
-        90,
-        player.z
-      )
-    );
+  levelEl.textContent =
+    level;
 
 }
 
 
-/* =====================================================
-   DRAW WORLD
-===================================================== */
-
-function drawWorld(){
-
-  drawGround();
-
-
-  const things=[];
-
-
-  for(
-    const p of plants
-  ){
-
-    if(!p.eaten){
-
-    
+/* =================
