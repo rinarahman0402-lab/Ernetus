@@ -1,9 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,user-scalable=no">
+
 <title>Mantis Adventure 3D</title>
 
 <style>
@@ -11,7 +12,7 @@
   box-sizing:border-box;
   user-select:none;
   -webkit-user-select:none;
-  -webkit-touch-callout:none;
+  touch-action:none;
 }
 
 html,body{
@@ -19,22 +20,19 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#6bc9e8;
+  background:#72c9ed;
   font-family:Arial,sans-serif;
 }
 
-#screen{
+canvas{
   position:fixed;
   inset:0;
   width:100%;
   height:100%;
   display:block;
-  background:#6bc9e8;
 }
 
-#start,
-#win,
-#error{
+.screen{
   position:fixed;
   inset:0;
   z-index:100;
@@ -45,34 +43,43 @@ html,body{
   text-align:center;
   padding:25px;
   color:white;
-  background:linear-gradient(#63cbea,#47934d);
 }
 
-#win,
+#start{
+  background:linear-gradient(#55bfe8,#319051);
+}
+
+#win{
+  display:none;
+  background:linear-gradient(#e8ad39,#5d9b43);
+}
+
 #error{
   display:none;
+  background:#17211c;
 }
 
-h1{
-  font-size:clamp(38px,9vw,65px);
+.title{
+  font-size:clamp(40px,10vw,72px);
+  font-weight:900;
   margin:10px;
 }
 
-p{
-  max-width:620px;
-  font-size:18px;
+.subtitle{
+  font-size:19px;
   line-height:1.5;
+  max-width:650px;
 }
 
 .bigButton{
+  margin-top:22px;
+  padding:18px 32px;
   border:0;
   border-radius:20px;
-  padding:18px 35px;
-  background:#f4d35e;
-  color:#173b1b;
+  background:#ffd64d;
+  color:#18351c;
   font-size:21px;
-  font-weight:bold;
-  touch-action:manipulation;
+  font-weight:900;
 }
 
 .bigButton:active{
@@ -84,246 +91,362 @@ p{
   top:10px;
   left:10px;
   right:10px;
-  z-index:20;
+  z-index:30;
   display:none;
   justify-content:space-between;
   pointer-events:none;
 }
 
 .hud{
-  background:#000b;
+  background:#102018dd;
   color:white;
-  padding:9px 13px;
+  padding:10px 14px;
   border-radius:14px;
   font-weight:bold;
+  font-size:14px;
 }
 
 #controls{
+  display:none;
   position:fixed;
   left:12px;
   bottom:12px;
-  width:250px;
-  height:175px;
-  z-index:30;
-  display:none;
+  width:260px;
+  height:190px;
+  z-index:40;
 }
 
 .control{
   position:absolute;
   width:82px;
   height:58px;
-  border:2px solid #ffffffaa;
+  border:2px solid #ffffff99;
   border-radius:17px;
-  background:#17251ddd;
+  background:#102018dd;
   color:white;
   font-size:11px;
-  font-weight:bold;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  touch-action:none;
+  font-weight:900;
 }
 
 .control:active{
-  transform:scale(.93);
-  background:#438e48;
+  background:#397d3f;
+  transform:scale(.94);
 }
 
 #forward{
-  left:84px;
+  left:89px;
   top:0;
 }
 
 #back{
-  left:84px;
+  left:89px;
   bottom:0;
 }
 
-#left{
+#turnLeft{
   left:0;
-  top:59px;
+  top:64px;
 }
 
-#right{
+#turnRight{
   right:0;
-  top:59px;
+  top:64px;
 }
 
 #catch{
-  position:fixed;
-  right:15px;
-  bottom:25px;
-  z-index:30;
   display:none;
+  position:fixed;
+  right:14px;
+  bottom:30px;
+  z-index:45;
+  padding:19px 20px;
   border:0;
-  border-radius:18px;
-  padding:17px 22px;
-  background:#f4d35e;
-  color:#173b1b;
+  border-radius:20px;
+  background:#ffd64d;
+  color:#17351c;
+  font-weight:900;
   font-size:16px;
-  font-weight:bold;
-  touch-action:manipulation;
 }
 
 #message{
+  display:none;
+  position:fixed;
+  z-index:50;
+  top:72px;
+  left:50%;
+  transform:translateX(-50%);
+  max-width:90%;
+  padding:12px 18px;
+  border-radius:16px;
+  background:#102018ed;
+  color:white;
+  text-align:center;
+  font-weight:bold;
+}
+
+#intro{
+  display:none;
+  position:fixed;
+  z-index:60;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(90%,500px);
+  padding:24px;
+  border-radius:22px;
+  background:#102018ee;
+  color:white;
+  text-align:center;
+}
+
+#intro button{
+  margin-top:10px;
+}
+
+#danger{
+  display:none;
   position:fixed;
   left:50%;
-  bottom:105px;
+  bottom:12px;
   transform:translateX(-50%);
-  z-index:40;
-  display:none;
-  background:#000d;
+  z-index:35;
+  background:#a52323dd;
   color:white;
-  padding:11px 17px;
-  border-radius:16px;
+  padding:10px 18px;
+  border-radius:14px;
   font-weight:bold;
-  text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="screen"></canvas>
+<canvas id="game"></canvas>
 
-<div id="start">
-  <div style="font-size:80px">🦗</div>
-  <h1>Mantis Adventure 3D</h1>
-  <p>
-    You are a tiny mantis in a giant forest.
-    Explore the world and catch all 15 ants.
-  </p>
-  <button class="bigButton" id="play" type="button">
+<!-- START -->
+<div id="start" class="screen">
+
+  <div style="font-size:90px">🦗</div>
+
+  <div class="title">
+    Mantis Adventure 3D
+  </div>
+
+  <div class="subtitle">
+    You are a tiny mantis in a gigantic forest.
+    Find and catch all <b>15 ants</b> while avoiding
+    giant animals that could accidentally step on you.
+  </div>
+
+  <button class="bigButton" id="playButton">
     PLAY GAME
   </button>
+
 </div>
 
-<div id="win">
-  <div style="font-size:80px">🏆</div>
-  <h1>YOU CAUGHT ALL 15 ANTS!</h1>
-  <p>You completed Mantis Adventure!</p>
-  <button class="bigButton" id="again" type="button">
+
+<!-- WIN -->
+<div id="win" class="screen">
+
+  <div style="font-size:90px">🏆</div>
+
+  <div class="title">
+    15 ANTS CAUGHT!
+  </div>
+
+  <div class="subtitle">
+    You survived the giant forest and completed
+    the Mantis Adventure!
+  </div>
+
+  <button class="bigButton" id="againButton">
     PLAY AGAIN
   </button>
+
 </div>
 
-<div id="error">
-  <div style="font-size:70px">⚠️</div>
-  <h1>3D IS NOT AVAILABLE</h1>
-  <p>
-    Your browser could not start WebGL.
-    Try opening the game in Chrome and make sure hardware
-    acceleration is available.
-  </p>
-</div>
 
-<div id="hud">
-  <div class="hud">MANTIS ADVENTURE 3D</div>
-  <div class="hud">
-    ANTS: <span id="score">0</span>/15
+<!-- ERROR -->
+<div id="error" class="screen">
+
+  <div style="font-size:80px">⚠️</div>
+
+  <div class="title">
+    3D COULD NOT START
   </div>
+
+  <div class="subtitle">
+    Your browser could not start WebGL.
+    Reload the page and try again in Chrome.
+  </div>
+
 </div>
 
+
+<!-- HUD -->
+<div id="hud">
+
+  <div class="hud">
+    ANTS:
+    <span id="antCount">0 / 15</span>
+  </div>
+
+  <div class="hud">
+    MANTIS ADVENTURE 3D
+  </div>
+
+</div>
+
+
+<!-- CONTROLS -->
 <div id="controls">
 
-  <button class="control" id="forward" type="button">
-    FORWARD
+  <button class="control" id="forward">
+    MOVE FORWARD
   </button>
 
-  <button class="control" id="back" type="button">
-    BACK
+  <button class="control" id="back">
+    MOVE BACK
   </button>
 
-  <button class="control" id="left" type="button">
+  <button class="control" id="turnLeft">
     TURN LEFT
   </button>
 
-  <button class="control" id="right" type="button">
+  <button class="control" id="turnRight">
     TURN RIGHT
   </button>
 
 </div>
 
-<button id="catch" type="button">
+
+<button id="catch">
   CATCH ANT
 </button>
 
+
+<div id="danger">
+  DANGER! GIANT ANIMAL NEARBY!
+</div>
+
+
 <div id="message"></div>
+
+
+<div id="intro">
+
+  <h2 id="introTitle">
+    THE GIANT FOREST
+  </h2>
+
+  <p id="introText">
+    Find 15 ants hidden throughout the forest.
+    Walk close to an ant and press CATCH ANT.
+  </p>
+
+  <button class="bigButton" id="startAdventure">
+    START ADVENTURE
+  </button>
+
+</div>
 
 
 <script>
 
 /* =====================================================
    MANTIS ADVENTURE 3D
-   Native WebGL version.
-   No Three.js.
-   No external libraries.
+   Native WebGL
+   No external libraries
 ===================================================== */
 
-const canvas=document.getElementById("screen");
-const gl=canvas.getContext("webgl");
+const canvas =
+  document.getElementById("game");
 
-const start=document.getElementById("start");
-const win=document.getElementById("win");
-const errorScreen=document.getElementById("error");
-const play=document.getElementById("play");
-const again=document.getElementById("again");
-const hud=document.getElementById("hud");
-const controls=document.getElementById("controls");
-const catchButton=document.getElementById("catch");
-const scoreText=document.getElementById("score");
-const message=document.getElementById("message");
+const gl =
+  canvas.getContext("webgl", {
+    antialias:true,
+    alpha:false,
+    depth:true
+  }) ||
+  canvas.getContext("experimental-webgl");
+
 
 if(!gl){
-  start.style.display="none";
-  errorScreen.style.display="flex";
-}
+
+  document.getElementById("start")
+    .style.display="none";
+
+  document.getElementById("error")
+    .style.display="flex";
+
+}else{
 
 
 /* =====================================================
    SHADERS
 ===================================================== */
 
-const vertexSource=`
-attribute vec3 position;
-attribute vec3 color;
+const vertexSource = `
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+attribute vec3 aPosition;
+attribute vec3 aColor;
+
+uniform mat4 uProjection;
+uniform mat4 uView;
+uniform mat4 uModel;
 
 varying vec3 vColor;
 
 void main(){
-  gl_Position=
-    projection *
-    view *
-    model *
-    vec4(position,1.0);
 
-  vColor=color;
+  gl_Position =
+    uProjection *
+    uView *
+    uModel *
+    vec4(aPosition,1.0);
+
+  vColor = aColor;
 }
 `;
 
-const fragmentSource=`
+
+const fragmentSource = `
+
 precision mediump float;
 
 varying vec3 vColor;
 
 void main(){
-  gl_FragColor=vec4(vColor,1.0);
+
+  gl_FragColor =
+    vec4(vColor,1.0);
+
 }
 `;
 
 
+/* =====================================================
+   SHADER COMPILER
+===================================================== */
+
 function shader(type,source){
 
-  const s=gl.createShader(type);
+  const s =
+    gl.createShader(type);
 
   gl.shaderSource(s,source);
+
   gl.compileShader(s);
 
-  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+  if(!gl.getShaderParameter(
+    s,
+    gl.COMPILE_STATUS
+  )){
+
+    console.log(
+      gl.getShaderInfoLog(s)
+    );
+
     return null;
   }
 
@@ -331,18 +454,21 @@ function shader(type,source){
 }
 
 
-const vs=shader(
-  gl.VERTEX_SHADER,
-  vertexSource
-);
+const vs =
+  shader(
+    gl.VERTEX_SHADER,
+    vertexSource
+  );
 
-const fs=shader(
-  gl.FRAGMENT_SHADER,
-  fragmentSource
-);
+const fs =
+  shader(
+    gl.FRAGMENT_SHADER,
+    fragmentSource
+  );
 
 
-const program=gl.createProgram();
+const program =
+  gl.createProgram();
 
 gl.attachShader(program,vs);
 gl.attachShader(program,fs);
@@ -356,54 +482,81 @@ gl.useProgram(program);
    LOCATIONS
 ===================================================== */
 
-const positionLocation=
-  gl.getAttribLocation(program,"position");
+const positionLocation =
+  gl.getAttribLocation(
+    program,
+    "aPosition"
+  );
 
-const colorLocation=
-  gl.getAttribLocation(program,"color");
+const colorLocation =
+  gl.getAttribLocation(
+    program,
+    "aColor"
+  );
 
-const projectionLocation=
-  gl.getUniformLocation(program,"projection");
+const projectionLocation =
+  gl.getUniformLocation(
+    program,
+    "uProjection"
+  );
 
-const viewLocation=
-  gl.getUniformLocation(program,"view");
+const viewLocation =
+  gl.getUniformLocation(
+    program,
+    "uView"
+  );
 
-const modelLocation=
-  gl.getUniformLocation(program,"model");
+const modelLocation =
+  gl.getUniformLocation(
+    program,
+    "uModel"
+  );
 
 
 /* =====================================================
    CUBE
 ===================================================== */
 
-const cubeVertices=new Float32Array([
+const vertices = new Float32Array([
 
- -1,-1,-1,
-  1,-1,-1,
-  1, 1,-1,
- -1, 1,-1,
+  -1,-1,-1,
+   1,-1,-1,
+   1, 1,-1,
+  -1, 1,-1,
 
- -1,-1, 1,
-  1,-1, 1,
-  1, 1, 1,
- -1, 1, 1
-
-]);
-
-const cubeIndices=new Uint16Array([
-
- 0,1,2, 0,2,3,
- 4,6,5, 4,7,6,
-
- 0,4,5, 0,5,1,
- 2,6,7, 2,7,3,
-
- 0,3,7, 0,7,4,
- 1,5,6, 1,6,2
+  -1,-1, 1,
+   1,-1, 1,
+   1, 1, 1,
+  -1, 1, 1
 
 ]);
 
-const vertexBuffer=gl.createBuffer();
+
+const indices = new Uint16Array([
+
+  0,1,2,
+  0,2,3,
+
+  4,6,5,
+  4,7,6,
+
+  0,4,5,
+  0,5,1,
+
+  3,2,6,
+  3,6,7,
+
+  0,3,7,
+  0,7,4,
+
+  1,5,6,
+  1,6,2
+
+]);
+
+
+const vertexBuffer =
+  gl.createBuffer();
 
 gl.bindBuffer(
   gl.ARRAY_BUFFER,
@@ -412,11 +565,13 @@ gl.bindBuffer(
 
 gl.bufferData(
   gl.ARRAY_BUFFER,
-  cubeVertices,
+  vertices,
   gl.STATIC_DRAW
 );
 
-const indexBuffer=gl.createBuffer();
+
+const indexBuffer =
+  gl.createBuffer();
 
 gl.bindBuffer(
   gl.ELEMENT_ARRAY_BUFFER,
@@ -425,40 +580,49 @@ gl.bindBuffer(
 
 gl.bufferData(
   gl.ELEMENT_ARRAY_BUFFER,
-  cubeIndices,
+  indices,
   gl.STATIC_DRAW
 );
 
 
 /* =====================================================
-   MATRIX FUNCTIONS
+   MATH
 ===================================================== */
 
 function identity(){
 
   return new Float32Array([
+
     1,0,0,0,
     0,1,0,0,
     0,0,1,0,
     0,0,0,1
-  ]);
 
+  ]);
 }
 
 
 function multiply(a,b){
 
-  const r=new Float32Array(16);
+  const r =
+    new Float32Array(16);
 
-  for(let row=0;row<4;row++){
+  for(let c=0;c<4;c++){
 
-    for(let col=0;col<4;col++){
+    for(let row=0;row<4;row++){
 
-      r[col+row*4]=
-        a[row*4+0]*b[col+0]+
-        a[row*4+1]*b[col+4]+
-        a[row*4+2]*b[col+8]+
-        a[row*4+3]*b[col+12];
+      r[c*4+row] =
+        a[row] *
+        b[c*4] +
+
+        a[4+row] *
+        b[c*4+1] +
+
+        a[8+row] *
+        b[c*4+2] +
+
+        a[12+row] *
+        b[c*4+3];
 
     }
 
@@ -468,29 +632,7 @@ function multiply(a,b){
 }
 
 
-function perspective(fov,aspect,near,far){
-
-  const f=
-    1/Math.tan(fov/2);
-
-  const nf=
-    1/(near-far);
-
-  return new Float32Array([
-
-    f/aspect,0,0,0,
-
-    0,f,0,0,
-
-    0,0,(far+near)*nf,-1,
-
-    0,0,(2*far*near)*nf,0
-
-  ]);
-}
-
-
-function translation(x,y,z){
+function translate(x,y,z){
 
   const m=identity();
 
@@ -514,97 +656,426 @@ function scale(x,y,z){
 }
 
 
-function rotationY(angle){
+function rotateY(a){
 
-  const c=Math.cos(angle);
-  const s=Math.sin(angle);
+  const c=Math.cos(a);
+  const s=Math.sin(a);
 
   return new Float32Array([
 
-    c,0,-s,0,
-    0,1,0,0,
-    s,0,c,0,
-    0,0,0,1
+     c,0,-s,0,
+     0,1, 0,0,
+     s,0, c,0,
+     0,0, 0,1
+
+  ]);
+}
+
+
+function perspective(
+  fov,
+  aspect,
+  near,
+  far
+){
+
+  const f=
+    1/Math.tan(fov/2);
+
+  const nf=
+    1/(near-far);
+
+  return new Float32Array([
+
+    f/aspect,0,0,0,
+
+    0,f,0,0,
+
+    0,0,
+    (far+near)*nf,
+    -1,
+
+    0,0,
+    (2*far*near)*nf,
+    0
+
+  ]);
+}
+
+
+function lookAt(
+  eye,
+  center,
+  up
+){
+
+  let zx =
+    eye[0]-center[0];
+
+  let zy =
+    eye[1]-center[1];
+
+  let zz =
+    eye[2]-center[2];
+
+
+  let length =
+    Math.hypot(zx,zy,zz);
+
+  zx/=length;
+  zy/=length;
+  zz/=length;
+
+
+  let xx =
+    up[1]*zz -
+    up[2]*zy;
+
+  let xy =
+    up[2]*zx -
+    up[0]*zz;
+
+  let xz =
+    up[0]*zy -
+    up[1]*zx;
+
+
+  length =
+    Math.hypot(xx,xy,xz);
+
+  xx/=length;
+  xy/=length;
+  xz/=length;
+
+
+  const yx =
+    zy*xz -
+    zz*xy;
+
+  const yy =
+    zz*xx -
+    zx*xz;
+
+  const yz =
+    zx*xy -
+    zy*xx;
+
+
+  return new Float32Array([
+
+    xx,yx,zx,0,
+
+    xy,yy,zy,0,
+
+    xz,yz,zz,0,
+
+    -(xx*eye[0]+
+      xy*eye[1]+
+      xz*eye[2]),
+
+    -(yx*eye[0]+
+      yy*eye[1]+
+      yz*eye[2]),
+
+    -(zx*eye[0]+
+      zy*eye[1]+
+      zz*eye[2]),
+
+    1
 
   ]);
 }
 
 
 /* =====================================================
-   CAMERA
+   GAME
 ===================================================== */
 
-let cameraX=0;
-let cameraY=2;
-let cameraZ=0;
+let playing=false;
 
-let cameraAngle=0;
+let antsCaught=0;
+
+let objects=[];
+
+let player={
+
+  x:0,
+  y:1.2,
+  z:18,
+
+  yaw:0
+
+};
 
 
-/* =====================================================
-   GAME STATE
-===================================================== */
+const input={
 
-let ants=[];
-let running=false;
-let caught=0;
-
-const buttons={
   forward:false,
   back:false,
   left:false,
   right:false
+
 };
 
 
 /* =====================================================
-   DRAW OBJECT
+   RANDOM
 ===================================================== */
 
-function drawCube(
+function random(min,max){
+
+  return min +
+    Math.random() *
+    (max-min);
+
+}
+
+
+/* =====================================================
+   ADD OBJECT
+===================================================== */
+
+function add(
+  type,
   x,y,z,
   sx,sy,sz,
-  color,
-  angle=0
+  color
 ){
 
+  objects.push({
+
+    type,
+
+    x,y,z,
+
+    sx,sy,sz,
+
+    color,
+
+    active:true,
+
+    angle:random(0,6.28),
+
+    speed:random(.3,.8)
+
+  });
+
+}
+
+
+/* =====================================================
+   BUILD FOREST
+===================================================== */
+
+function buildForest(){
+
+  objects=[];
+
+  antsCaught=0;
+
+
+  /* REAL GROUND */
+
+  add(
+    "ground",
+    0,-1,0,
+    80,1,80,
+    [.12,.38,.10]
+  );
+
+
+  /* FOREST TREES */
+
+  for(let i=0;i<55;i++){
+
+    let x=
+      random(-65,65);
+
+    let z=
+      random(-65,65);
+
+
+    if(
+      Math.abs(x)<8 &&
+      Math.abs(z)<8
+    ){
+
+      continue;
+
+    }
+
+
+    /* trunk */
+
+    add(
+      "treeTrunk",
+      x,
+      3,
+      z,
+      1.2,
+      4,
+      1.2,
+      [.30,.16,.07]
+    );
+
+
+    /* canopy */
+
+    add(
+      "treeLeaf",
+      x,
+      7,
+      z,
+      3.5,
+      2.8,
+      3.5,
+      [.04,.30,.08]
+    );
+
+  }
+
+
+  /* SMALL PLANTS */
+
+  for(let i=0;i<35;i++){
+
+    const x=
+      random(-65,65);
+
+    const z=
+      random(-65,65);
+
+    add(
+      "plant",
+      x,
+      .7,
+      z,
+      .25,
+      1.4,
+      .25,
+      [.08,.55,.10]
+    );
+
+  }
+
+
+  /* 15 ANTS */
+
+  for(let i=0;i<15;i++){
+
+    let x,z;
+
+    do{
+
+      x=random(-50,50);
+      z=random(-55,5);
+
+    }while(
+      Math.hypot(x,z-player.z)<12
+    );
+
+
+    add(
+      "ant",
+      x,
+      .55,
+      z,
+      .55,
+      .35,
+      .8,
+      [.20,.06,.025]
+    );
+
+  }
+
+
+  /* GIANT DEER */
+
+  for(let i=0;i<4;i++){
+
+    add(
+      "deer",
+      random(-45,45),
+      4,
+      random(-45,0),
+      4,
+      5,
+      2,
+      [.38,.20,.08]
+    );
+
+  }
+
+
+  /* GIANT ELEPHANTS */
+
+  for(let i=0;i<2;i++){
+
+    add(
+      "elephant",
+      random(-40,40),
+      4,
+      random(-45,-15),
+      6,
+      5,
+      4,
+      [.32,.34,.35]
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   DRAW CUBE
+===================================================== */
+
+function drawCube(o){
+
   let model=
-    translation(x,y,z);
+    translate(
+      o.x,
+      o.y,
+      o.z
+    );
+
 
   model=
     multiply(
       model,
-      rotationY(angle)
+      rotateY(o.angle)
     );
+
 
   model=
     multiply(
       model,
-      scale(sx,sy,sz)
+      scale(
+        o.sx,
+        o.sy,
+        o.sz
+      )
     );
 
 
-  const colors=new Float32Array([
-
-    ...color,...color,...color,...color,
-    ...color,...color,...color,...color
-
-  ]);
+  const c=o.color;
 
 
-  const colorBuffer=
-    gl.createBuffer();
+  const colors=
+    new Float32Array([
 
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    colorBuffer
-  );
+      c[0],c[1],c[2],
+      c[0]*.85,c[1]*.85,c[2]*.85,
+      c[0]*1.12,c[1]*1.12,c[2]*1.12,
+      c[0]*.70,c[1]*.70,c[2]*.70,
 
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    colors,
-    gl.STREAM_DRAW
-  );
+      c[0]*.92,c[1]*.92,c[2]*.92,
+      c[0]*.78,c[1]*.78,c[2]*.78,
+      c[0]*1.08,c[1]*1.08,c[2]*1.08,
+      c[0]*.65,c[1]*.65,c[2]*.65
+
+    ]);
 
 
   gl.bindBuffer(
@@ -626,10 +1097,20 @@ function drawCube(
   );
 
 
+  const colorBuffer=
+    gl.createBuffer();
+
   gl.bindBuffer(
     gl.ARRAY_BUFFER,
     colorBuffer
   );
+
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    colors,
+    gl.STREAM_DRAW
+  );
+
 
   gl.enableVertexAttribArray(
     colorLocation
@@ -669,318 +1150,483 @@ function drawCube(
 
 
 /* =====================================================
-   WORLD
+   DRAW SPECIAL ANT
 ===================================================== */
 
-function createWorld(){
+function drawAnt(o){
 
-  ants=[];
+  /* body */
 
-  caught=0;
+  drawCube({
 
-  scoreText.textContent="0";
+    x:o.x,
+    y:o.y,
+    z:o.z,
 
+    sx:.7,
+    sy:.35,
+    sz:1.0,
 
-  for(let i=0;i<100;i++){
+    angle:o.angle,
 
-    const angle=
-      Math.random()*Math.PI*2;
-
-    const distance=
-      12+Math.random()*130;
-
-    const x=
-      Math.cos(angle)*distance;
-
-    const z=
-      Math.sin(angle)*distance;
-
-    const size=
-      .7+Math.random()*.9;
-
-
-    /* TREE TRUNK */
-
-    drawObjects.push({
-      type:"tree",
-      x:x,
-      z:z,
-      size:size,
-      angle:Math.random()*6.28
-    });
-
-  }
-
-
-  /* 15 ANTS */
-
-  for(let i=0;i<15;i++){
-
-    const angle=
-      Math.random()*Math.PI*2;
-
-    const distance=
-      15+Math.random()*100;
-
-    ants.push({
-
-      x:Math.cos(angle)*distance,
-
-      z:Math.sin(angle)*distance,
-
-      caught:false,
-
-      wobble:Math.random()*6.28
-
-    });
-
-  }
-
-}
-
-
-let drawObjects=[];
-
-
-/* =====================================================
-   DRAW WORLD
-===================================================== */
-
-function drawWorld(){
-
-  drawObjects.forEach(o=>{
-
-    const s=o.size;
-
-
-    /* trunk */
-
-    drawCube(
-      o.x,
-      2*s,
-      o.z,
-      .35*s,
-      2*s,
-      .35*s,
-      [0.35,0.20,0.10],
-      o.angle
-    );
-
-
-    /* leaves */
-
-    drawCube(
-      o.x,
-      5*s,
-      o.z,
-      1.8*s,
-      1.5*s,
-      1.8*s,
-      [0.08,0.40,0.12],
-      o.angle
-    );
+    color:[.20,.05,.02]
 
   });
 
 
-  /* ants */
+  /* head */
 
-  ants.forEach(ant=>{
+  const hx=
+    o.x +
+    Math.sin(o.angle)*.9;
 
-    if(ant.caught)
-      return;
-
-
-    /* body */
-
-    drawCube(
-      ant.x,
-      .25,
-      ant.z,
-      .32,
-      .18,
-      .18,
-      [0.10,0.05,0.025],
-      ant.wobble
-    );
+  const hz=
+    o.z -
+    Math.cos(o.angle)*.9;
 
 
-    /* head */
+  drawCube({
 
-    drawCube(
-      ant.x-.35,
-      .28,
-      ant.z,
-      .16,
-      .16,
-      .16,
-      [0.12,0.06,0.03],
-      ant.wobble
-    );
+    x:hx,
+    y:o.y+.05,
+    z:hz,
+
+    sx:.5,
+    sy:.4,
+    sz:.5,
+
+    angle:o.angle,
+
+    color:[.27,.07,.025]
+
+  });
+
+}
 
 
-    /* legs */
+/* =====================================================
+   DRAW DEER
+===================================================== */
 
-    for(let i=-1;i<=1;i++){
+function drawDeer(o){
 
-      drawCube(
-        ant.x,
-        .12,
-        ant.z+i*.13,
-        .45,
-        .04,
-        .04,
-        [0.16,0.08,0.03],
-        .7
+  drawCube({
+
+    x:o.x,
+    y:o.y,
+    z:o.z,
+
+    sx:4,
+    sy:2,
+    sz:2,
+
+    angle:o.angle,
+
+    color:[.38,.20,.08]
+
+  });
+
+
+  /* legs */
+
+  const legs=[
+
+    [-2.5,-1],
+    [2.5,-1],
+    [-2.5,1],
+    [2.5,1]
+
+  ];
+
+
+  for(const l of legs){
+
+    drawCube({
+
+      x:o.x+l[0],
+      y:o.y-3,
+      z:o.z+l[1],
+
+      sx:.55,
+      sy:2,
+      sz:.55,
+
+      angle:o.angle,
+
+      color:[.30,.15,.06]
+
+    });
+
+  }
+
+
+  /* neck */
+
+  drawCube({
+
+    x:o.x,
+    y:o.y+3,
+    z:o.z-1.2,
+
+    sx:1.2,
+    sy:2.5,
+    sz:1.2,
+
+    angle:o.angle,
+
+    color:[.40,.22,.09]
+
+  });
+
+}
+
+
+/* =====================================================
+   DRAW ELEPHANT
+===================================================== */
+
+function drawElephant(o){
+
+  drawCube({
+
+    x:o.x,
+    y:o.y,
+    z:o.z,
+
+    sx:5,
+    sy:3,
+    sz:3,
+
+    angle:o.angle,
+
+    color:[.32,.34,.36]
+
+  });
+
+
+  /* four huge legs */
+
+  const legs=[
+
+    [-3,-2],
+    [3,-2],
+    [-3,2],
+    [3,2]
+
+  ];
+
+
+  for(const l of legs){
+
+    drawCube({
+
+      x:o.x+l[0],
+      y:o.y-3.5,
+      z:o.z+l[1],
+
+      sx:1,
+      sy:2.5,
+      sz:1,
+
+      angle:0,
+
+      color:[.27,.29,.31]
+
+    });
+
+  }
+
+
+  /* head */
+
+  drawCube({
+
+    x:o.x,
+    y:o.y+2,
+    z:o.z-3.2,
+
+    sx:3,
+    sy:2.5,
+    sz:2.5,
+
+    angle:o.angle,
+
+    color:[.35,.37,.39]
+
+  });
+
+
+  /* trunk */
+
+  drawCube({
+
+    x:o.x,
+    y:o.y,
+    z:o.z-5.4,
+
+    sx:.9,
+    sy:2.5,
+    sz:.9,
+
+    angle:0,
+
+    color:[.27,.29,.31]
+
+  });
+
+}
+
+
+/* =====================================================
+   UPDATE ANIMALS
+===================================================== */
+
+function updateAnimals(dt){
+
+  for(const o of objects){
+
+    if(
+      o.type!=="deer" &&
+      o.type!=="elephant"
+    ){
+
+      continue;
+
+    }
+
+
+    o.angle +=
+      Math.sin(
+        performance.now()*.0005+
+        o.x
+      )*.0002;
+
+
+    const speed=
+      o.type==="elephant"
+      ? .7
+      : 1.0;
+
+
+    o.x +=
+      Math.sin(o.angle)*
+      speed*
+      dt;
+
+
+    o.z +=
+      -Math.cos(o.angle)*
+      speed*
+      dt;
+
+
+    if(
+      o.x>60 ||
+      o.x<-60 ||
+      o.z>60 ||
+      o.z<-60
+    ){
+
+      o.angle += Math.PI;
+
+    }
+
+
+    const d=
+      Math.hypot(
+        o.x-player.x,
+        o.z-player.z
+      );
+
+
+    if(d<9){
+
+      document.getElementById(
+        "danger"
+      ).style.display="block";
+
+    }
+
+    else{
+
+      document.getElementById(
+        "danger"
+      ).style.display="none";
+
+    }
+
+
+    if(d<4){
+
+      player.x +=
+        Math.sin(o.angle+Math.PI)*
+        .08;
+
+      player.z +=
+        -Math.cos(o.angle+Math.PI)*
+        .08;
+
+      showMessage(
+        "A giant animal almost stepped on you!"
       );
 
     }
 
-  });
+  }
 
 }
 
 
 /* =====================================================
-   GROUND
-===================================================== */
-
-function drawGround(){
-
-  drawCube(
-    0,
-    -1.1,
-    0,
-    250,
-    1,
-    250,
-    [0.18,0.48,0.16]
-  );
-
-}
-
-
-/* =====================================================
-   NEAREST ANT
+   DISTANCE TO ANT
 ===================================================== */
 
 function nearestAnt(){
 
-  let nearest=null;
-  let distance=9999;
+  let best=null;
+
+  let bestDistance=9999;
 
 
-  ants.forEach(ant=>{
+  for(const o of objects){
 
-    if(ant.caught)
-      return;
+    if(
+      o.type!=="ant" ||
+      !o.active
+    ){
 
-
-    const dx=
-      ant.x-cameraX;
-
-    const dz=
-      ant.z-cameraZ;
-
-
-    const d=
-      Math.sqrt(
-        dx*dx+
-        dz*dz
-      );
-
-
-    if(d<distance){
-
-      distance=d;
-      nearest=ant;
+      continue;
 
     }
 
-  });
+
+    const d=
+      Math.hypot(
+        o.x-player.x,
+        o.z-player.z
+      );
+
+
+    if(d<bestDistance){
+
+      bestDistance=d;
+      best=o;
+
+    }
+
+  }
 
 
   return {
-    ant:nearest,
-    distance:distance
+    object:best,
+    distance:bestDistance
   };
 
 }
 
 
 /* =====================================================
-   CATCH
+   CATCH ANT
 ===================================================== */
 
-catchButton.addEventListener(
+document.getElementById(
+  "catch"
+).addEventListener(
   "click",
   ()=>{
 
-    if(!running)
-      return;
-
-
-    const result=
+    const nearest=
       nearestAnt();
 
 
-    if(
-      result.ant &&
-      result.distance<4
-    ){
+    if(!nearest.object){
 
-      result.ant.caught=true;
-
-      caught++;
-
-      scoreText.textContent=
-        caught;
-
-
-      showMessage(
-        "ANT CAUGHT! "+
-        caught+
-        " / 15"
-      );
-
-
-      if(caught===15){
-
-        running=false;
-
-        hud.style.display="none";
-        controls.style.display="none";
-        catchButton.style.display="none";
-
-        win.style.display="flex";
-
-      }
+      return;
 
     }
 
-  }
-);
+
+    if(nearest.distance>4){
+
+      showMessage(
+        "Move closer to the ant!"
+      );
+
+      return;
+
+    }
+
+
+    nearest.object.active=false;
+
+    antsCaught++;
+
+
+    document.getElementById(
+      "antCount"
+    ).textContent=
+      antsCaught+" / 15";
+
+
+    showMessage(
+      "ANT CAUGHT! "+
+      antsCaught+
+      " / 15"
+    );
+
+
+    if(antsCaught>=15){
+
+      setTimeout(
+        winGame,
+        800
+      );
+
+    }
+
+  });
 
 
 /* =====================================================
    MOVEMENT
 ===================================================== */
 
-function update(){
+function movePlayer(dt){
 
-  const speed=.18;
+  if(!playing)
+    return;
 
 
-  if(buttons.left){
+  const moveSpeed=
+    7 * dt;
 
-    cameraAngle-=.055;
+  const turnSpeed=
+    2.4 * dt;
+
+
+  /*
+    CORRECT DIRECTIONS:
+
+    TURN LEFT  = decrease yaw
+    TURN RIGHT = increase yaw
+
+    MOVE FORWARD = forward direction
+    MOVE BACK = opposite direction
+  */
+
+
+  if(input.left){
+
+    player.yaw -=
+      turnSpeed;
 
   }
 
 
-  if(buttons.right){
+  if(input.right){
 
-    cameraAngle+=.055;
+    player.yaw +=
+      turnSpeed;
 
   }
 
@@ -988,407 +1634,62 @@ function update(){
   let amount=0;
 
 
-  if(buttons.forward)
+  if(input.forward)
     amount+=1;
 
-
-  if(buttons.back)
+  if(input.back)
     amount-=1;
 
 
   if(amount!==0){
 
-    cameraX+=
-      Math.sin(cameraAngle)*
-      speed*
+    player.x +=
+      Math.sin(player.yaw) *
+      moveSpeed *
       amount;
 
-    cameraZ+=
-      -Math.cos(cameraAngle)*
-      speed*
+    player.z +=
+      -Math.cos(player.yaw) *
+      moveSpeed *
       amount;
 
   }
 
-}
 
+  /* forest boundaries */
 
-/* =====================================================
-   VIEW MATRIX
-===================================================== */
-
-function viewMatrix(){
-
-  const cos=Math.cos(cameraAngle);
-  const sin=Math.sin(cameraAngle);
-
-
-  const view=identity();
-
-
-  view[0]=cos;
-  view[2]=sin;
-
-  view[8]=-sin;
-  view[10]=cos;
-
-
-  view[12]=
-    -(cameraX*cos-cameraZ*sin);
-
-  view[13]=
-    -cameraY;
-
-  view[14]=
-    -(cameraX*sin+cameraZ*cos);
-
-
-  return view;
-
-}
-
-
-/* =====================================================
-   RENDER
-===================================================== */
-
-function render(){
-
-  if(!running)
-    return;
-
-
-  resize();
-
-
-  gl.enable(
-    gl.DEPTH_TEST
-  );
-
-  gl.clearColor(
-    .35,
-    .72,
-    .86,
-    1
-  );
-
-  gl.clear(
-    gl.COLOR_BUFFER_BIT|
-    gl.DEPTH_BUFFER_BIT
-  );
-
-
-  const projection=
-    perspective(
-      Math.PI/3,
-      canvas.width/canvas.height,
-      .1,
-      500
+  player.x=
+    Math.max(
+      -70,
+      Math.min(
+        70,
+        player.x
+      )
     );
 
 
-  gl.uniformMatrix4fv(
-    projectionLocation,
-    false,
-    projection
-  );
+  player.z=
+    Math.max(
+      -70,
+      Math.min(
+        70,
+        player.z
+      )
+    );
+
+}
 
 
-  gl.uniformMatrix4fv(
-    viewLocation,
-    false,
-    viewMatrix()
-  );
+/* =====================================================
+   UPDATE CATCH BUTTON
+===================================================== */
 
+function updateCatchButton(){
 
-  drawGround();
-
-  drawWorld();
-
-
-  const result=
+  const nearest=
     nearestAnt();
 
 
   if(
-    result.ant &&
-    result.distance<4
-  ){
-
-    catchButton.style.display=
-      "block";
-
-  }else{
-
-    catchButton.style.display=
-      "none";
-
-  }
-
-
-  update();
-
-
-  requestAnimationFrame(render);
-
-}
-
-
-/* =====================================================
-   RESIZE
-===================================================== */
-
-function resize(){
-
-  const dpr=
-    Math.min(
-      window.devicePixelRatio||1,
-      2
-    );
-
-
-  const width=
-    Math.floor(
-      innerWidth*dpr
-    );
-
-  const height=
-    Math.floor(
-      innerHeight*dpr
-    );
-
-
-  if(
-    canvas.width!==width||
-    canvas.height!==height
-  ){
-
-    canvas.width=width;
-    canvas.height=height;
-
-    gl.viewport(
-      0,
-      0,
-      width,
-      height
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   START GAME
-===================================================== */
-
-play.addEventListener(
-  "click",
-  ()=>{
-
-    /*
-      No external library is needed.
-      The button can start immediately.
-    */
-
-    drawObjects=[];
-
-    cameraX=0;
-    cameraY=2;
-    cameraZ=0;
-    cameraAngle=0;
-
-    createWorld();
-
-    start.style.display="none";
-
-    hud.style.display="flex";
-    controls.style.display="block";
-
-    running=true;
-
-    showMessage(
-      "Find and catch 15 ants!"
-    );
-
-    render();
-
-  }
-);
-
-
-/* =====================================================
-   PLAY AGAIN
-===================================================== */
-
-again.addEventListener(
-  "click",
-  ()=>{
-
-    drawObjects=[];
-
-    cameraX=0;
-    cameraY=2;
-    cameraZ=0;
-    cameraAngle=0;
-
-    createWorld();
-
-    win.style.display="none";
-
-    hud.style.display="flex";
-    controls.style.display="block";
-
-    running=true;
-
-    render();
-
-  }
-);
-
-
-/* =====================================================
-   TOUCH CONTROLS
-===================================================== */
-
-function holdButton(id,key){
-
-  const b=
-    document.getElementById(id);
-
-
-  b.addEventListener(
-    "pointerdown",
-    e=>{
-
-      e.preventDefault();
-
-      buttons[key]=true;
-
-    }
-  );
-
-
-  b.addEventListener(
-    "pointerup",
-    e=>{
-
-      e.preventDefault();
-
-      buttons[key]=false;
-
-    }
-  );
-
-
-  b.addEventListener(
-    "pointercancel",
-    ()=>{
-      buttons[key]=false;
-    }
-  );
-
-
-  b.addEventListener(
-    "pointerleave",
-    ()=>{
-      buttons[key]=false;
-    }
-  );
-
-}
-
-
-holdButton(
-  "forward",
-  "forward"
-);
-
-holdButton(
-  "back",
-  "back"
-);
-
-holdButton(
-  "left",
-  "left"
-);
-
-holdButton(
-  "right",
-  "right"
-);
-
-
-/* =====================================================
-   KEYBOARD
-===================================================== */
-
-window.addEventListener(
-  "keydown",
-  e=>{
-
-    if(e.key==="ArrowUp")
-      buttons.forward=true;
-
-    if(e.key==="ArrowDown")
-      buttons.back=true;
-
-    if(e.key==="ArrowLeft")
-      buttons.left=true;
-
-    if(e.key==="ArrowRight")
-      buttons.right=true;
-
-  }
-);
-
-
-window.addEventListener(
-  "keyup",
-  e=>{
-
-    if(e.key==="ArrowUp")
-      buttons.forward=false;
-
-    if(e.key==="ArrowDown")
-      buttons.back=false;
-
-    if(e.key==="ArrowLeft")
-      buttons.left=false;
-
-    if(e.key==="ArrowRight")
-      buttons.right=false;
-
-  }
-);
-
-
-/* =====================================================
-   MESSAGE
-===================================================== */
-
-function showMessage(text){
-
-  message.textContent=text;
-
-  message.style.display="block";
-
-  clearTimeout(window.messageTimer);
-
-  window.messageTimer=
-    setTimeout(
-      ()=>{
-        message.style.display="none";
-      },
-      1800
-    );
-
-}
-
-</script>
-
-</body>
-</html>
-```
+    ne
       
