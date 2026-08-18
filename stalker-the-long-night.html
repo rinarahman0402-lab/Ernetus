@@ -1,0 +1,481 @@
+<!-- IMPORTANT FIX:
+     1. Three.js loads first.
+     2. START NIGHT has its click handler immediately.
+     3. The 3D scene is created only after START NIGHT is pressed.
+-->
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+
+<script>
+"use strict";
+
+let scene = null;
+let camera = null;
+let renderer = null;
+let gameStarted = false;
+
+const startButton = document.getElementById("startBtn");
+const startScreen = document.getElementById("start");
+const task = document.getElementById("task");
+
+startButton.addEventListener("click", function () {
+
+    /* Check that Three.js actually loaded */
+    if (typeof THREE === "undefined") {
+        task.textContent =
+            "3D engine could not load. Please check your internet connection and try again.";
+        return;
+    }
+
+    /* Create the 3D world only now */
+    if (!scene) {
+        createGame();
+    }
+
+    startScreen.style.display = "none";
+    gameStarted = true;
+
+    resetGame();
+    requestAnimationFrame(gameLoop);
+});
+
+
+function createGame() {
+
+    /* ---------------- SCENE ---------------- */
+
+    scene = new THREE.Scene();
+
+    scene.background = new THREE.Color(0x11161c);
+
+    scene.fog = new THREE.Fog(
+        0x11161c,
+        3,
+        35
+    );
+
+
+    /* ---------------- CAMERA ---------------- */
+
+    camera = new THREE.PerspectiveCamera(
+        70,
+        window.innerWidth / window.innerHeight,
+        0.05,
+        100
+    );
+
+    camera.position.set(
+        0,
+        1.6,
+        7
+    );
+
+
+    /* ---------------- RENDERER ---------------- */
+
+    renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio, 2)
+    );
+
+    renderer.shadowMap.enabled = true;
+
+    document.getElementById("game").appendChild(
+        renderer.domElement
+    );
+
+
+    /* ---------------- LIGHTS ---------------- */
+
+    const ambient =
+        new THREE.HemisphereLight(
+            0xaabbcc,
+            0x111111,
+            1.2
+        );
+
+    scene.add(ambient);
+
+
+    const ceilingLight =
+        new THREE.PointLight(
+            0xffd9a0,
+            8,
+            18
+        );
+
+    ceilingLight.position.set(
+        0,
+        2.7,
+        0
+    );
+
+    ceilingLight.castShadow = true;
+
+    scene.add(ceilingLight);
+
+
+    /* ---------------- MATERIALS ---------------- */
+
+    const floorMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0x39322c,
+            roughness: 0.9
+        });
+
+
+    const wallMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0x575b60,
+            roughness: 0.9
+        });
+
+
+    const woodMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0x593a27,
+            roughness: 0.8
+        });
+
+
+    const whiteMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0xbfc1bf,
+            roughness: 0.6
+        });
+
+
+    /* ---------------- HELPER ---------------- */
+
+    function cube(
+        x,
+        y,
+        z,
+        width,
+        height,
+        depth,
+        material
+    ) {
+
+        const geometry =
+            new THREE.BoxGeometry(
+                width,
+                height,
+                depth
+            );
+
+        const mesh =
+            new THREE.Mesh(
+                geometry,
+                material
+            );
+
+        mesh.position.set(
+            x,
+            y,
+            z
+        );
+
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        scene.add(mesh);
+
+        return mesh;
+    }
+
+
+    /* ---------------- FLOOR ---------------- */
+
+    cube(
+        0,
+        -0.1,
+        0,
+        20,
+        0.2,
+        20,
+        floorMaterial
+    );
+
+
+    /* ---------------- OUTER WALLS ---------------- */
+
+    cube(
+        -10,
+        1.5,
+        0,
+        0.3,
+        3,
+        20,
+        wallMaterial
+    );
+
+    cube(
+        10,
+        1.5,
+        0,
+        0.3,
+        3,
+        20,
+        wallMaterial
+    );
+
+    cube(
+        0,
+        1.5,
+        -10,
+        20,
+        3,
+        0.3,
+        wallMaterial
+    );
+
+    cube(
+        0,
+        1.5,
+        10,
+        20,
+        3,
+        0.3,
+        wallMaterial
+    );
+
+
+    /* ---------------- INTERIOR WALL ---------------- */
+
+    cube(
+        -5,
+        1.5,
+        0,
+        0.25,
+        3,
+        10,
+        wallMaterial
+    );
+
+
+    cube(
+        5,
+        1.5,
+        0,
+        0.25,
+        3,
+        10,
+        wallMaterial
+    );
+
+
+    /* ---------------- BED ---------------- */
+
+    cube(
+        6,
+        0.45,
+        7,
+        3.5,
+        0.5,
+        1.8,
+        woodMaterial
+    );
+
+    cube(
+        6,
+        0.75,
+        7,
+        3.2,
+        0.25,
+        1.5,
+        whiteMaterial
+    );
+
+
+    /* ---------------- FRIDGE ---------------- */
+
+    cube(
+        -8.5,
+        1.4,
+        -7,
+        1.2,
+        2.8,
+        1.2,
+        whiteMaterial
+    );
+
+
+    /* fridge handle */
+
+    cube(
+        -8,
+        1.4,
+        -6.35,
+        0.08,
+        0.9,
+        0.08,
+        woodMaterial
+    );
+
+
+    /* ---------------- SINK ---------------- */
+
+    cube(
+        -6,
+        0.9,
+        -7,
+        1.5,
+        0.15,
+        0.8,
+        whiteMaterial
+    );
+
+    cube(
+        -6,
+        1.4,
+        -7.25,
+        0.1,
+        0.7,
+        0.1,
+        whiteMaterial
+    );
+
+
+    /* ---------------- DESK ---------------- */
+
+    cube(
+        -7,
+        0.7,
+        6.5,
+        3,
+        0.2,
+        1.2,
+        woodMaterial
+    );
+
+
+    /* ---------------- COMPUTER ---------------- */
+
+    cube(
+        -7,
+        1.65,
+        6.3,
+        1.8,
+        1.1,
+        0.18,
+        new THREE.MeshStandardMaterial({
+            color: 0x15191d
+        })
+    );
+
+
+    /* computer screen */
+
+    cube(
+        -7,
+        1.65,
+        6.18,
+        1.5,
+        0.8,
+        0.03,
+        new THREE.MeshStandardMaterial({
+            color: 0x12394b
+        })
+    );
+
+
+    /* ---------------- DOOR ---------------- */
+
+    cube(
+        0,
+        1.2,
+        -9.8,
+        1.5,
+        2.4,
+        0.15,
+        woodMaterial
+    );
+
+
+    /* ---------------- CEILING ---------------- */
+
+    cube(
+        0,
+        3,
+        0,
+        20,
+        0.15,
+        20,
+        new THREE.MeshStandardMaterial({
+            color: 0x15181c
+        })
+    );
+
+
+    window.addEventListener(
+        "resize",
+        resizeGame
+    );
+
+
+    task.textContent =
+        "You are inside the house. Survive until 6:00 AM.";
+}
+
+
+function resetGame() {
+
+    camera.position.set(
+        0,
+        1.6,
+        7
+    );
+
+    camera.rotation.set(
+        0,
+        0,
+        0
+    );
+
+    task.textContent =
+        "10:00 PM — Something is moving downstairs.";
+}
+
+
+function resizeGame() {
+
+    if (!renderer || !camera)
+        return;
+
+    camera.aspect =
+        window.innerWidth /
+        window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+}
+
+
+function gameLoop() {
+
+    if (!gameStarted)
+        return;
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+</script>
