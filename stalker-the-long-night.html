@@ -1,481 +1,1368 @@
-<!-- IMPORTANT FIX:
-     1. Three.js loads first.
-     2. START NIGHT has its click handler immediately.
-     3. The 3D scene is created only after START NIGHT is pressed.
--->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0,
+maximum-scale=1.0, user-scalable=no">
+
+<title>Stalker: The Long Night</title>
+
+<style>
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#080b0f;
+    font-family:Arial,sans-serif;
+}
+
+#game{
+    position:fixed;
+    inset:0;
+}
+
+#startScreen{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:
+    radial-gradient(circle,#303943,#080b0f 75%);
+    color:white;
+    text-align:center;
+    padding:20px;
+}
+
+.panel{
+    width:90%;
+    max-width:600px;
+    background:#0d1117;
+    border:2px solid #59636d;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 20px 60px #000;
+}
+
+h1{
+    font-size:clamp(38px,9vw,65px);
+    margin:5px 0 20px;
+}
+
+.story{
+    text-align:left;
+    line-height:1.55;
+    background:#171d24;
+    padding:18px;
+    border-radius:12px;
+    margin-bottom:22px;
+}
+
+#startButton{
+    border:0;
+    border-radius:14px;
+    padding:16px 30px;
+    background:#d7b84d;
+    color:#17130a;
+    font-weight:bold;
+    font-size:20px;
+}
+
+#startButton:active{
+    transform:scale(.96);
+}
+
+#error{
+    display:none;
+    margin-top:15px;
+    padding:12px;
+    border-radius:10px;
+    background:#511818;
+    color:#ffb5b5;
+}
+
+#hud{
+    position:fixed;
+    z-index:20;
+    top:10px;
+    left:10px;
+    right:10px;
+    display:none;
+    justify-content:space-between;
+    color:white;
+}
+
+.stat{
+    background:#000c;
+    padding:8px;
+    border-radius:8px;
+    font-size:12px;
+}
+
+#message{
+    position:fixed;
+    z-index:20;
+    top:55px;
+    left:50%;
+    transform:translateX(-50%);
+    color:white;
+    background:#000c;
+    padding:9px 14px;
+    border-radius:9px;
+    display:none;
+    text-align:center;
+}
+
+#joystick{
+    position:fixed;
+    z-index:30;
+    left:15px;
+    bottom:15px;
+    width:140px;
+    height:140px;
+    border:3px solid #ffffff55;
+    border-radius:50%;
+    background:#ffffff12;
+    display:none;
+}
+
+#knob{
+    position:absolute;
+    left:38px;
+    top:38px;
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:#d7b84d;
+    border:3px solid white;
+}
+
+.action{
+    position:fixed;
+    z-index:30;
+    right:15px;
+    border:0;
+    border-radius:12px;
+    padding:12px 15px;
+    background:#d7b84d;
+    color:#17130a;
+    font-weight:bold;
+    display:none;
+}
+
+#interact{
+    bottom:150px;
+}
+
+#camera{
+    bottom:95px;
+}
+
+#hide{
+    bottom:40px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<div id="startScreen">
+
+<div class="panel">
+
+<div style="font-size:55px">🏠</div>
+
+<h1>
+STALKER:<br>
+THE LONG NIGHT
+</h1>
+
+<div class="story">
+
+<p>
+<b>The house was supposed to be empty.</b>
+</p>
+
+<p>
+Six months ago, your older brother
+disappeared.
+</p>
+
+<p>
+Before he vanished, he told you that
+someone was walking through the house
+every night.
+</p>
+
+<p>
+The police found no intruder.
+They found only an old security system,
+a computer that was still running,
+and a note.
+</p>
+
+<p>
+<i>
+"If you hear footsteps, don't open
+the door. If you see him on a camera,
+hide. He knows this house better than
+you do."
+</i>
+</p>
+
+<p>
+Tonight you returned to the house.
+At exactly 10:00 PM, the front door
+locked itself.
+</p>
+
+<p>
+<b>
+Survive until 6:00 AM.
+Find food.
+Find water.
+Keep your sanity.
+And never let the stalker find you.
+</b>
+</p>
+
+</div>
+
+<button id="startButton">
+START NIGHT
+</button>
+
+<div id="error"></div>
+
+</div>
+
+</div>
+
+<div id="hud">
+
+<div class="stat">
+TIME:
+<span id="time">10:00 PM</span>
+</div>
+
+<div class="stat">
+FOOD:
+<span id="food">100</span>
+</div>
+
+<div class="stat">
+WATER:
+<span id="water">100</span>
+</div>
+
+<div class="stat">
+SANITY:
+<span id="sanity">100</span>
+</div>
+
+</div>
+
+<div id="message">
+Explore the house.
+</div>
+
+<div id="joystick">
+<div id="knob"></div>
+</div>
+
+<button id="interact" class="action">
+INTERACT
+</button>
+
+<button id="camera" class="action">
+CAMERAS
+</button>
+
+<button id="hide" class="action">
+HIDE
+</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 
 <script>
+
 "use strict";
 
-let scene = null;
-let camera = null;
-let renderer = null;
-let gameStarted = false;
+let scene=null;
+let camera=null;
+let renderer=null;
 
-const startButton = document.getElementById("startBtn");
-const startScreen = document.getElementById("start");
-const task = document.getElementById("task");
+let started=false;
 
-startButton.addEventListener("click", function () {
+let playerX=0;
+let playerZ=7;
 
-    /* Check that Three.js actually loaded */
-    if (typeof THREE === "undefined") {
-        task.textContent =
-            "3D engine could not load. Please check your internet connection and try again.";
-        return;
-    }
+let rotationY=0;
+let rotationX=0;
 
-    /* Create the 3D world only now */
-    if (!scene) {
-        createGame();
-    }
+let food=100;
+let water=100;
+let sanity=100;
 
-    startScreen.style.display = "none";
-    gameStarted = true;
+let gameMinutes=0;
 
-    resetGame();
-    requestAnimationFrame(gameLoop);
+let moveX=0;
+let moveY=0;
+
+let lastTime=performance.now();
+
+let objects=[];
+
+let stalker=null;
+
+const startScreen=
+document.getElementById("startScreen");
+
+const startButton=
+document.getElementById("startButton");
+
+const errorBox=
+document.getElementById("error");
+
+const game=
+document.getElementById("game");
+
+const hud=
+document.getElementById("hud");
+
+const joystick=
+document.getElementById("joystick");
+
+const knob=
+document.getElementById("knob");
+
+const interactButton=
+document.getElementById("interact");
+
+const cameraButton=
+document.getElementById("camera");
+
+const hideButton=
+document.getElementById("hide");
+
+const message=
+document.getElementById("message");
+
+function material(color){
+
+return new THREE.MeshStandardMaterial({
+color:color,
+roughness:.8
 });
 
+}
+
+const wallMaterial=
+material(0x555b61);
+
+const floorMaterial=
+material(0x40372f);
+
+const woodMaterial=
+material(0x5b3926);
+
+const whiteMaterial=
+material(0xbfc1bd);
+
+const darkMaterial=
+material(0x161a1e);
+
+const screenMaterial=
+material(0x0c384d);
+
+const redMaterial=
+material(0x5c2025);
+
+function createBox(
+x,y,z,
+width,height,depth,
+mat
+){
+
+const geometry=
+new THREE.BoxGeometry(
+width,
+height,
+depth
+);
+
+const mesh=
+new THREE.Mesh(
+geometry,
+mat
+);
+
+mesh.position.set(x,y,z);
+
+mesh.castShadow=true;
+mesh.receiveShadow=true;
+
+scene.add(mesh);
+
+objects.push(mesh);
+
+return mesh;
+
+}
+
+function createHouse(){
+
+createBox(
+0,-0.1,0,
+20,.2,20,
+floorMaterial
+);
+
+createBox(
+-10,1.5,0,
+.3,3,20,
+wallMaterial
+);
+
+createBox(
+10,1.5,0,
+.3,3,20,
+wallMaterial
+);
+
+createBox(
+0,1.5,-10,
+20,3,.3,
+wallMaterial
+);
+
+createBox(
+0,1.5,10,
+20,3,.3,
+wallMaterial
+);
+
+createBox(
+-5,1.5,0,
+.25,3,10,
+wallMaterial
+);
+
+createBox(
+5,1.5,0,
+.25,3,10,
+wallMaterial
+);
+
+createBox(
+0,1.2,-9.8,
+1.5,2.4,.15,
+woodMaterial
+);
+
+createBox(
+7,.45,7,
+3.5,.5,1.8,
+woodMaterial
+);
+
+createBox(
+7,.75,7,
+3.2,.25,1.5,
+whiteMaterial
+);
+
+createBox(
+-7,.7,-7,
+4,.9,1,
+woodMaterial
+);
+
+createBox(
+-8.8,1.4,-6,
+1.2,2.8,1.2,
+whiteMaterial
+);
+
+createBox(
+-8.8,1.4,-5.35,
+1,2.4,.08,
+whiteMaterial
+);
+
+createBox(
+-8.35,1.4,-5.27,
+.07,.9,.07,
+woodMaterial
+);
+
+createBox(
+-5.6,.95,-7,
+1.5,.15,.8,
+whiteMaterial
+);
+
+createBox(
+-5.6,1.35,-7.2,
+.1,.7,.1,
+whiteMaterial
+);
+
+createBox(
+-7,.7,6.3,
+3,.2,1.2,
+woodMaterial
+);
+
+createBox(
+-7,1.65,6.2,
+1.8,1.1,.18,
+darkMaterial
+);
+
+createBox(
+-7,1.65,6.08,
+1.45,.78,.03,
+screenMaterial
+);
+
+createBox(
+-7,.9,5.75,
+1.3,.08,.45,
+darkMaterial
+);
+
+createBox(
+7,.65,-7,
+3.5,1.1,1.2,
+redMaterial
+);
+
+createBox(
+7,1.7,-8.8,
+2.8,1.5,.15,
+darkMaterial
+);
+
+createBox(
+0,3,0,
+20,.15,20,
+darkMaterial
+);
+
+}
+     function createStalker(){
+
+const group=new THREE.Group();
+
+const black=material(0x080808);
+const skin=material(0x77736d);
+
+const head=new THREE.Mesh(
+new THREE.SphereGeometry(.35,16,12),
+skin
+);
+
+head.position.y=2.6;
+group.add(head);
+
+const body=new THREE.Mesh(
+new THREE.BoxGeometry(.75,1.4,.4),
+black
+);
+
+body.position.y=1.75;
+group.add(body);
+
+const armGeometry=
+new THREE.CapsuleGeometry(.09,1.4,5,8);
+
+const leftArm=new THREE.Mesh(
+armGeometry,
+black
+);
+
+leftArm.position.set(-.55,1.5,0);
+group.add(leftArm);
+
+const rightArm=new THREE.Mesh(
+armGeometry,
+black
+);
+
+rightArm.position.set(.55,1.5,0);
+group.add(rightArm);
+
+const legGeometry=
+new THREE.CapsuleGeometry(.11,1.5,5,8);
+
+const leftLeg=new THREE.Mesh(
+legGeometry,
+black
+);
+
+leftLeg.position.set(-.2,.55,0);
+group.add(leftLeg);
+
+const rightLeg=new THREE.Mesh(
+legGeometry,
+black
+);
+
+rightLeg.position.set(.2,.55,0);
+group.add(rightLeg);
+
+const eyeMaterial=
+new THREE.MeshBasicMaterial({
+color:0xff1111
+});
+
+const eye1=new THREE.Mesh(
+new THREE.SphereGeometry(.045,8,8),
+eyeMaterial
+);
+
+eye1.position.set(-.12,2.63,-.32);
+group.add(eye1);
+
+const eye2=new THREE.Mesh(
+new THREE.SphereGeometry(.045,8,8),
+eyeMaterial
+);
+
+eye2.position.set(.12,2.63,-.32);
+group.add(eye2);
+
+group.position.set(-7,0,-7);
+
+scene.add(group);
+
+stalker=group;
 
-function createGame() {
-
-    /* ---------------- SCENE ---------------- */
-
-    scene = new THREE.Scene();
-
-    scene.background = new THREE.Color(0x11161c);
-
-    scene.fog = new THREE.Fog(
-        0x11161c,
-        3,
-        35
-    );
-
-
-    /* ---------------- CAMERA ---------------- */
-
-    camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.05,
-        100
-    );
-
-    camera.position.set(
-        0,
-        1.6,
-        7
-    );
-
-
-    /* ---------------- RENDERER ---------------- */
-
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-
-    renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 2)
-    );
-
-    renderer.shadowMap.enabled = true;
-
-    document.getElementById("game").appendChild(
-        renderer.domElement
-    );
-
-
-    /* ---------------- LIGHTS ---------------- */
-
-    const ambient =
-        new THREE.HemisphereLight(
-            0xaabbcc,
-            0x111111,
-            1.2
-        );
-
-    scene.add(ambient);
-
-
-    const ceilingLight =
-        new THREE.PointLight(
-            0xffd9a0,
-            8,
-            18
-        );
-
-    ceilingLight.position.set(
-        0,
-        2.7,
-        0
-    );
-
-    ceilingLight.castShadow = true;
-
-    scene.add(ceilingLight);
-
-
-    /* ---------------- MATERIALS ---------------- */
-
-    const floorMaterial =
-        new THREE.MeshStandardMaterial({
-            color: 0x39322c,
-            roughness: 0.9
-        });
-
-
-    const wallMaterial =
-        new THREE.MeshStandardMaterial({
-            color: 0x575b60,
-            roughness: 0.9
-        });
-
-
-    const woodMaterial =
-        new THREE.MeshStandardMaterial({
-            color: 0x593a27,
-            roughness: 0.8
-        });
-
-
-    const whiteMaterial =
-        new THREE.MeshStandardMaterial({
-            color: 0xbfc1bf,
-            roughness: 0.6
-        });
-
-
-    /* ---------------- HELPER ---------------- */
-
-    function cube(
-        x,
-        y,
-        z,
-        width,
-        height,
-        depth,
-        material
-    ) {
-
-        const geometry =
-            new THREE.BoxGeometry(
-                width,
-                height,
-                depth
-            );
-
-        const mesh =
-            new THREE.Mesh(
-                geometry,
-                material
-            );
-
-        mesh.position.set(
-            x,
-            y,
-            z
-        );
-
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        scene.add(mesh);
-
-        return mesh;
-    }
-
-
-    /* ---------------- FLOOR ---------------- */
-
-    cube(
-        0,
-        -0.1,
-        0,
-        20,
-        0.2,
-        20,
-        floorMaterial
-    );
-
-
-    /* ---------------- OUTER WALLS ---------------- */
-
-    cube(
-        -10,
-        1.5,
-        0,
-        0.3,
-        3,
-        20,
-        wallMaterial
-    );
-
-    cube(
-        10,
-        1.5,
-        0,
-        0.3,
-        3,
-        20,
-        wallMaterial
-    );
-
-    cube(
-        0,
-        1.5,
-        -10,
-        20,
-        3,
-        0.3,
-        wallMaterial
-    );
-
-    cube(
-        0,
-        1.5,
-        10,
-        20,
-        3,
-        0.3,
-        wallMaterial
-    );
-
-
-    /* ---------------- INTERIOR WALL ---------------- */
-
-    cube(
-        -5,
-        1.5,
-        0,
-        0.25,
-        3,
-        10,
-        wallMaterial
-    );
-
-
-    cube(
-        5,
-        1.5,
-        0,
-        0.25,
-        3,
-        10,
-        wallMaterial
-    );
-
-
-    /* ---------------- BED ---------------- */
-
-    cube(
-        6,
-        0.45,
-        7,
-        3.5,
-        0.5,
-        1.8,
-        woodMaterial
-    );
-
-    cube(
-        6,
-        0.75,
-        7,
-        3.2,
-        0.25,
-        1.5,
-        whiteMaterial
-    );
-
-
-    /* ---------------- FRIDGE ---------------- */
-
-    cube(
-        -8.5,
-        1.4,
-        -7,
-        1.2,
-        2.8,
-        1.2,
-        whiteMaterial
-    );
-
-
-    /* fridge handle */
-
-    cube(
-        -8,
-        1.4,
-        -6.35,
-        0.08,
-        0.9,
-        0.08,
-        woodMaterial
-    );
-
-
-    /* ---------------- SINK ---------------- */
-
-    cube(
-        -6,
-        0.9,
-        -7,
-        1.5,
-        0.15,
-        0.8,
-        whiteMaterial
-    );
-
-    cube(
-        -6,
-        1.4,
-        -7.25,
-        0.1,
-        0.7,
-        0.1,
-        whiteMaterial
-    );
-
-
-    /* ---------------- DESK ---------------- */
-
-    cube(
-        -7,
-        0.7,
-        6.5,
-        3,
-        0.2,
-        1.2,
-        woodMaterial
-    );
-
-
-    /* ---------------- COMPUTER ---------------- */
-
-    cube(
-        -7,
-        1.65,
-        6.3,
-        1.8,
-        1.1,
-        0.18,
-        new THREE.MeshStandardMaterial({
-            color: 0x15191d
-        })
-    );
-
-
-    /* computer screen */
-
-    cube(
-        -7,
-        1.65,
-        6.18,
-        1.5,
-        0.8,
-        0.03,
-        new THREE.MeshStandardMaterial({
-            color: 0x12394b
-        })
-    );
-
-
-    /* ---------------- DOOR ---------------- */
-
-    cube(
-        0,
-        1.2,
-        -9.8,
-        1.5,
-        2.4,
-        0.15,
-        woodMaterial
-    );
-
-
-    /* ---------------- CEILING ---------------- */
-
-    cube(
-        0,
-        3,
-        0,
-        20,
-        0.15,
-        20,
-        new THREE.MeshStandardMaterial({
-            color: 0x15181c
-        })
-    );
-
-
-    window.addEventListener(
-        "resize",
-        resizeGame
-    );
-
-
-    task.textContent =
-        "You are inside the house. Survive until 6:00 AM.";
 }
 
 
-function resetGame() {
+/* =========================
+   START NIGHT
+========================= */
 
-    camera.position.set(
-        0,
-        1.6,
-        7
-    );
+startButton.onclick=function(){
 
-    camera.rotation.set(
-        0,
-        0,
-        0
-    );
+try{
 
-    task.textContent =
-        "10:00 PM — Something is moving downstairs.";
+if(typeof THREE==="undefined"){
+
+errorBox.style.display="block";
+
+errorBox.textContent=
+"The 3D engine could not load. Check your internet connection and reload the game.";
+
+return;
+
 }
 
 
-function resizeGame() {
+/* SCENE */
 
-    if (!renderer || !camera)
-        return;
+scene=new THREE.Scene();
 
-    camera.aspect =
-        window.innerWidth /
-        window.innerHeight;
+scene.background=
+new THREE.Color(0x11161c);
 
-    camera.updateProjectionMatrix();
+scene.fog=
+new THREE.Fog(
+0x11161c,
+3,
+35
+);
 
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
+
+/* CAMERA */
+
+camera=
+new THREE.PerspectiveCamera(
+70,
+window.innerWidth/
+window.innerHeight,
+.05,
+100
+);
+
+camera.position.set(
+playerX,
+1.6,
+playerZ
+);
+
+
+/* RENDERER */
+
+renderer=
+new THREE.WebGLRenderer({
+antialias:true
+});
+
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
+
+renderer.setPixelRatio(
+Math.min(
+window.devicePixelRatio,
+2
+)
+);
+
+renderer.shadowMap.enabled=true;
+
+game.innerHTML="";
+
+game.appendChild(
+renderer.domElement
+);
+
+
+/* LIGHT */
+
+const light=
+new THREE.HemisphereLight(
+0xb9cce0,
+0x15100d,
+1.3
+);
+
+scene.add(light);
+
+const lamp=
+new THREE.PointLight(
+0xffd7a0,
+7,
+18
+);
+
+lamp.position.set(
+0,
+2.7,
+0
+);
+
+lamp.castShadow=true;
+
+scene.add(lamp);
+
+
+/* BUILD WORLD */
+
+createHouse();
+
+createStalker();
+
+
+/* SHOW GAME */
+
+startScreen.style.display="none";
+
+hud.style.display="flex";
+
+joystick.style.display="block";
+
+interactButton.style.display="block";
+
+cameraButton.style.display="block";
+
+hideButton.style.display="block";
+
+message.style.display="block";
+
+message.textContent=
+"10:00 PM — The front door just locked.";
+
+started=true;
+
+lastTime=
+performance.now();
+
+
+/* RENDER FIRST FRAME */
+
+renderer.render(
+scene,
+camera
+);
+
+requestAnimationFrame(
+gameLoop
+);
+
+}
+
+catch(error){
+
+console.error(error);
+
+errorBox.style.display="block";
+
+errorBox.textContent=
+"The game could not start: "+
+error.message;
+
+}
+
+};
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop(){
+
+if(!started)return;
+
+requestAnimationFrame(
+gameLoop
+);
+
+const now=
+performance.now();
+
+const delta=
+Math.min(
+.05,
+(now-lastTime)/1000
+);
+
+lastTime=now;
+
+updateGame(delta);
+
+camera.position.set(
+playerX,
+1.6,
+playerZ
+);
+
+camera.rotation.order="YXZ";
+
+camera.rotation.y=
+rotationY;
+
+camera.rotation.x=
+rotationX;
+
+renderer.render(
+scene,
+camera
+);
+
 }
 
 
-function gameLoop() {
+/* =========================
+   MOVEMENT
+========================= */
 
-    if (!gameStarted)
-        return;
+function updateGame(delta){
 
-    requestAnimationFrame(
-        gameLoop
-    );
+const speed=2.2;
 
-    renderer.render(
-        scene,
-        camera
-    );
+const forwardX=
+Math.sin(rotationY);
+
+const forwardZ=
+Math.cos(rotationY);
+
+const rightX=
+Math.cos(rotationY);
+
+const rightZ=
+-Math.sin(rotationY);
+
+const dx=
+(
+forwardX*(-moveY)+
+rightX*moveX
+)*
+speed*
+delta;
+
+const dz=
+(
+forwardZ*(-moveY)+
+rightZ*moveX
+)*
+speed*
+delta;
+
+let newX=
+playerX+dx;
+
+let newZ=
+playerZ+dz;
+
+
+/* HOUSE BOUNDARIES */
+
+if(
+newX>-9.3 &&
+newX<9.3
+){
+
+playerX=newX;
+
 }
+
+if(
+newZ>-9.3 &&
+newZ<9.3
+){
+
+playerZ=newZ;
+
+}
+
+
+/* SURVIVAL */
+
+food-=delta*.12;
+
+water-=delta*.17;
+
+sanity-=delta*.035;
+
+document.getElementById("food").textContent=
+Math.max(
+0,
+Math.floor(food)
+);
+
+document.getElementById("water").textContent=
+Math.max(
+0,
+Math.floor(water)
+);
+
+document.getElementById("sanity").textContent=
+Math.max(
+0,
+Math.floor(sanity)
+);
+
+
+/* TIME */
+
+gameMinutes+=
+delta*.5;
+
+const minutes=
+Math.floor(gameMinutes);
+
+const hour=
+22+
+Math.floor(minutes/60);
+
+const minute=
+minutes%60;
+
+let displayHour=
+hour%24;
+
+let suffix=
+displayHour>=12?
+"PM":
+"AM";
+
+displayHour=
+displayHour%12||12;
+
+document.getElementById("time").textContent=
+displayHour+
+":"+
+String(minute).padStart(2,"0")+
+" "+
+suffix;
+
+
+/* NIGHT COMPLETE */
+
+if(hour>=30){
+
+message.textContent=
+"YOU SURVIVED THE NIGHT!";
+
+started=false;
+
+}
+
+
+/* STALKER */
+
+if(stalker){
+
+stalker.lookAt(
+playerX,
+1.5,
+playerZ
+);
+
+}
+
+}
+
+
+/* =========================
+   JOYSTICK
+========================= */
+
+function joystickMove(e){
+
+const rect=
+joystick.getBoundingClientRect();
+
+const centerX=
+rect.left+
+rect.width/2;
+
+const centerY=
+rect.top+
+rect.height/2;
+
+let dx=
+e.clientX-centerX;
+
+let dy=
+e.clientY-centerY;
+
+const max=40;
+
+const distance=
+Math.hypot(dx,dy);
+
+if(distance>max){
+
+dx=
+dx/distance*max;
+
+dy=
+dy/distance*max;
+
+}
+
+moveX=dx/max;
+
+moveY=dy/max;
+
+knob.style.transform=
+"translate("+
+dx+
+"px,"+
+dy+
+"px)";
+
+}
+
+
+let joystickPointer=null;
+
+joystick.addEventListener(
+"pointerdown",
+function(e){
+
+joystickPointer=
+e.pointerId;
+
+joystick.setPointerCapture(
+e.pointerId
+);
+
+joystickMove(e);
+
+}
+);
+
+joystick.addEventListener(
+"pointermove",
+function(e){
+
+if(
+e.pointerId===
+joystickPointer
+){
+
+joystickMove(e);
+
+}
+
+}
+);
+
+
+function resetJoystick(){
+
+moveX=0;
+moveY=0;
+
+knob.style.transform=
+"translate(0,0)";
+
+}
+
+
+joystick.addEventListener(
+"pointerup",
+resetJoystick
+);
+
+joystick.addEventListener(
+"pointercancel",
+resetJoystick
+);
+
+
+/* =========================
+   LOOK AROUND
+========================= */
+
+let lookPointer=null;
+
+let lastLookX=0;
+let lastLookY=0;
+
+
+document.addEventListener(
+"pointerdown",
+function(e){
+
+if(!started)return;
+
+if(
+e.target===joystick ||
+joystick.contains(e.target)
+)return;
+
+if(
+e.target.tagName==="BUTTON"
+)
+return;
+
+lookPointer=
+e.pointerId;
+
+lastLookX=
+e.clientX;
+
+lastLookY=
+e.clientY;
+
+}
+);
+
+
+document.addEventListener(
+"pointermove",
+function(e){
+
+if(
+e.pointerId!==lookPointer
+)
+return;
+
+const dx=
+e.clientX-lastLookX;
+
+const dy=
+e.clientY-lastLookY;
+
+rotationY-=
+dx*.004;
+
+rotationX-=
+dy*.003;
+
+rotationX=
+Math.max(
+-.7,
+Math.min(
+.7,
+rotationX
+)
+);
+
+lastLookX=
+e.clientX;
+
+lastLookY=
+e.clientY;
+
+}
+);
+
+
+document.addEventListener(
+"pointerup",
+function(e){
+
+if(
+e.pointerId===
+lookPointer
+){
+
+lookPointer=null;
+
+}
+
+}
+);
+
+
+/* =========================
+   INTERACTION
+========================= */
+
+interactButton.onclick=
+function(){
+
+const x=playerX;
+const z=playerZ;
+
+const fridgeDistance=
+Math.hypot(
+x+8.8,
+z+6
+);
+
+const sinkDistance=
+Math.hypot(
+x+5.6,
+z+7
+);
+
+const computerDistance=
+Math.hypot(
+x+7,
+z-6.3
+);
+
+
+if(
+fridgeDistance<3
+){
+
+food=
+Math.min(
+100,
+food+45
+);
+
+message.textContent=
+"You found food in the fridge.";
+
+}
+
+else if(
+sinkDistance<3
+){
+
+water=
+Math.min(
+100,
+water+50
+);
+
+message.textContent=
+"You drank water from the sink.";
+
+}
+
+else if(
+computerDistance<3
+){
+
+sanity=
+Math.min(
+100,
+sanity+20
+);
+
+message.textContent=
+"The computer is still running...";
+
+}
+
+else{
+
+message.textContent=
+"Nothing to interact with nearby.";
+
+}
+
+};
+
+
+/* =========================
+   CAMERA BUTTON
+========================= */
+
+cameraButton.onclick=
+function(){
+
+message.textContent=
+"Security cameras show the house.";
+
+};
+
+
+/* =========================
+   HIDE BUTTON
+========================= */
+
+hideButton.onclick=
+function(){
+
+message.textContent=
+"You are hiding. Stay quiet.";
+
+};
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+"resize",
+function(){
+
+if(
+!renderer ||
+!camera
+)
+return;
+
+camera.aspect=
+window.innerWidth/
+window.innerHeight;
+
+camera.updateProjectionMatrix();
+
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
+
+});
+
 </script>
+
+</body>
+</html>
