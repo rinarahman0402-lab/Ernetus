@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Last Day at School</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#8ed8ff, #f7f2d0);
+    min-height: 100vh;
+    color: #222;
+}
+
+#game {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 38px;
+    margin: 10px 0;
+}
+
+#screen {
+    background: white;
+    border: 5px solid #333;
+    border-radius: 20px;
+    padding: 25px;
+    min-height: 430px;
+    box-shadow: 0 8px 0 #555;
+}
+
+#scene {
+    font-size: 80px;
+    margin: 15px;
+}
+
+#story {
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+button {
+    border: 3px solid #222;
+    border-radius: 12px;
+    background: #ffd84d;
+    padding: 13px 20px;
+    margin: 7px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+input {
+    padding: 13px;
+    font-size: 18px;
+    border: 3px solid #333;
+    border-radius: 10px;
+    width: min(90%, 400px);
+}
+
+#progress {
+    margin: 15px auto;
+    background: #ddd;
+    border-radius: 20px;
+    height: 25px;
+    overflow: hidden;
+    max-width: 600px;
+}
+
+#bar {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width .4s;
+}
+
+#message {
+    font-weight: bold;
+    min-height: 30px;
+    margin: 10px;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <h1>🏫 The Last Day at School</h1>
+
+    <div id="progress">
+        <div id="bar"></div>
+    </div>
+
+    <div id="screen">
+        <div id="scene">🏫</div>
+        <div id="story">
+            It's your LAST DAY at school!
+            <br><br>
+            Something strange is happening...
+            <br>
+            Can you survive all 10 challenges?
+        </div>
+
+        <div id="message"></div>
+
+        <button onclick="startGame()">START SCHOOL DAY</button>
+    </div>
+
+</div>
+
+<script>
+
+let challenge = 0;
+
+const randomWords = [
+    "Dinosaur",
+    "Banana",
+    "Toilet",
+    "Magnet",
+    "Frog",
+    "Balloon",
+    "Sock",
+    "UFO",
+    "Cucumber",
+    "Octopus"
+];
+
+function startGame() {
+    challenge = 1;
+    showChallenge();
+}
+
+function updateProgress() {
+    document.getElementById("bar").style.width =
+        ((challenge - 1) / 10 * 100) + "%";
+}
+
+function nextChallenge() {
+    challenge++;
+
+    if (challenge > 10) {
+        finishGame();
+    } else {
+        showChallenge();
+    }
+}
+
+function showChallenge() {
+
+    updateProgress();
+
+    const scene = document.getElementById("scene");
+    const story = document.getElementById("story");
+    const message = document.getElementById("message");
+
+    message.innerHTML = "";
+
+    // 1
+    if (challenge === 1) {
+
+        scene.innerHTML = "⏰";
+
+        story.innerHTML = `
+        <h2>1. The Alarm Clock</h2>
+        <p>
+        Your alarm goes crazy on the last day!
+        You need to stop it.
+        </p>
+        <button onclick="nextChallenge()">SMASH THE STOP BUTTON</button>
+        `;
+    }
+
+    // 2
+    else if (challenge === 2) {
+
+        scene.innerHTML = "🔐";
+
+        story.innerHTML = `
+        <h2>2. The Locker</h2>
+        <p>
+        Your locker has a 3-digit combination.
+        The clue says:
+        <br><br>
+        <b>2 + 3 = ?</b>
+        </p>
+
+        <input id="answer" placeholder="Enter the code">
+
+        <br>
+
+        <button onclick="checkAnswer('5')">UNLOCK</button>
+        `;
+    }
+
+    // 3
+    else if (challenge === 3) {
+
+        scene.innerHTML = "📚";
+
+        story.innerHTML = `
+        <h2>3. The Missing Book</h2>
+        <p>
+        Your teacher's book disappeared!
+        Where should you look first?
+        </p>
+
+        <button onclick="wrong('The ceiling is probably not hiding a book!')">
+        Ceiling
+        </button>
+
+        <button onclick="wrong('Nice guess, but no book!')">
+        Playground
+        </button>
+
+        <button onclick="nextChallenge()">
+        Bookshelf
+        </button>
+        `;
+    }
+
+    // 4
+    else if (challenge === 4) {
+
+        scene.innerHTML = "🔤";
+
+        story.innerHTML = `
+        <h2>4. The 10 Random Words</h2>
+        <p>
+        The strange school computer asks you to remember these words:
+        </p>
+
+        <p>
+        <b>${randomWords.join(" • ")}</b>
+        </p>
+
+        <p>
+        Type the word <b>OCTOPUS</b>.
+        </p>
+
+        <input id="answer" placeholder="Type the word">
+
+        <br>
+
+        <button onclick="checkAnswer('octopus')">SUBMIT</button>
+        `;
+    }
+
+    // 5
+    else if (challenge === 5) {
+
+        scene.innerHTML = "🚽";
+
+        story.innerHTML = `
+        <h2>5. The Toilet Puzzle</h2>
+
+        <p>
+        You enter the bathroom and see three toilet stalls.
+        One contains the key.
+        </p>
+
+        <button onclick="wrong('No key!')">STALL 1</button>
+        <button onclick="nextChallenge()">STALL 2</button>
+        <button onclick="wrong('Absolutely nothing here!')">STALL 3</button>
+        `;
+    }
+
+    // 6
+    else if (challenge === 6) {
+
+        scene.innerHTML = "🍌";
+
+        story.innerHTML = `
+        <h2>6. The Cafeteria Disaster</h2>
+        <p>
+        Someone dropped a banana on the floor.
+        You need to cross the cafeteria without stepping on it.
+        </p>
+
+        <button onclick="wrong('SPLAT! You stepped on the banana!')">
+        Walk left
+        </button>
+
+        <button onclick="nextChallenge()">
+        Jump over it
+        </button>
+
+        <button onclick="wrong('SPLAT!')">
+        Walk right
+        </button>
+        `;
+    }
+
+    // 7
+    else if (challenge === 7) {
+
+        scene.innerHTML = "🧲";
+
+        story.innerHTML = `
+        <h2>7. The Giant Magnet</h2>
+        <p>
+        A giant magnet is blocking the hallway.
+        What should you do?
+        </p>
+
+        <button onclick="wrong('That makes the magnet stronger!')">
+        Throw metal at it
+        </button>
+
+        <button onclick="nextChallenge()">
+        Take the wooden route
+        </button>
+
+        <button onclick="wrong('That did not work!')">
+        Touch it
+        </button>
+        `;
+    }
+
+    // 8
+    else if (challenge === 8) {
+
+        scene.innerHTML = "🛸";
+
+        story.innerHTML = `
+        <h2>8. UFO Over School</h2>
+        <p>
+        A UFO has appeared above the school!
+        What should you do?
+        </p>
+
+        <button onclick="nextChallenge()">
+        Take a picture
+        </button>
+
+        <button onclick="wrong('The UFO notices you!')">
+        Throw your backpack
+        </button>
+
+        <button onclick="wrong('That was probably not a good idea.')">
+        Scream at it
+        </button>
+        `;
+    }
+
+    // 9
+    else if (challenge === 9) {
+
+        scene.innerHTML = "🐙";
+
+        story.innerHTML = `
+        <h2>9. The Mystery Creature</h2>
+        <p>
+        A mysterious octopus is sitting in your classroom.
+        It wants you to answer:
+        </p>
+
+        <p><b>How many legs does an octopus have?</b></p>
+
+        <button onclick="wrong('Try again!')">6</button>
+        <button onclick="nextChallenge()">8</button>
+        <button onclick="wrong('Too many!')">10</button>
+        `;
+    }
+
+    // 10
+    else if (challenge === 10) {
+
+        scene.innerHTML = "🎓";
+
+        story.innerHTML = `
+        <h2>10. THE FINAL BELL</h2>
+
+        <p>
+        The final bell is about to ring.
+        You have one last choice.
+        </p>
+
+        <button onclick="finishGame()">
+        RUN TO THE SCHOOL GATE
+        </button>
+
+        <button onclick="finishGame()">
+        STAY FOR THE LAST CLASS
+        </button>
+
+        <button onclick="finishGame()">
+        THROW YOUR BACKPACK IN THE AIR
+        </button>
+        `;
+    }
+}
+
+function checkAnswer(correct) {
+
+    const input = document.getElementById("answer");
+
+    if (input.value.trim().toLowerCase() === correct.toLowerCase()) {
+        nextChallenge();
+    } else {
+        document.getElementById("message").innerHTML =
+            "❌ That's not correct. Try again!";
+    }
+}
+
+function wrong(text) {
+
+    document.getElementById("message").innerHTML =
+        "❌ " + text + " Try again!";
+
+}
+
+function finishGame() {
+
+    document.getElementById("bar").style.width = "100%";
+
+    document.getElementById("scene").innerHTML = "🎉";
+
+    document.getElementById("story").innerHTML = `
+        <h2>YOU SURVIVED THE LAST DAY!</h2>
+
+        <p>
+        The final bell rings...
+        </p>
+
+        <p>
+        🎓 School is over!<br>
+        🍌 The banana disaster is over!<br>
+        🚽 The toilet mystery is solved!<br>
+        🛸 The UFO is gone!<br>
+        🔤 And you survived the 10 random words!
+        </p>
+
+        <h2>🏆 CONGRATULATIONS! 🏆</h2>
+
+        <button onclick="location.reload()">
+        PLAY AGAIN
+        </button>
+    `;
+
+    document.getElementById("message").innerHTML = "";
+}
+
+</script>
+
+</body>
+  </html>
