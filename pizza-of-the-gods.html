@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pizza of the Gods</title>
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden; /* Prevent scrolling during drag */
+    }
+
+    h1 {
+      color: #f1c40f;
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: #bdc3c7;
+      margin-top: 0;
+    }
+
+    /* Main Container */
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* The Pizza Base (the Drop Target) */
+    #pizza-base {
+      width: 300px;
+      height: 300px;
+      background-color: #d2b48c; /* Tan/Dough color */
+      border: 15px solid #cd853f; /* Darker Tan/Crust color */
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      position: relative;
+      margin-bottom: 20px;
+      overflow: visible; /* To see toppings near the edge */
+    }
+
+    /* The Ingredients Menu (the Draggable Items) */
+    .ingredients-menu {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Common styling for draggable ingredient tiles */
+    .ingredient {
+      width: 60px;
+      height: 60px;
+      background-color: #fff;
+      border-radius: 10px;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #333;
+      user-select: none;
+      border: 2px solid #ccc;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .ingredient:active {
+      cursor: grabbing;
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+    }
+
+    /* The actual added toppings that appear on the pizza */
+    .topping-on-pizza {
+      position: absolute;
+      transform: translate(-50%, -50%); /* Center the topping where it's dropped */
+      font-size: 2rem;
+      pointer-events: none; /* Let clicks pass through to the base if needed */
+    }
+
+    /* Controls at the bottom */
+    .controls {
+      margin-top: 20px;
+    }
+
+    #clear-btn {
+      padding: 10px 20px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #clear-btn:active {
+      transform: translateY(2px);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🍕 Pizza of the Gods</h1>
+  <p>Drag anything onto the pizza. Seriously, ANYTHING.</p>
+
+  <div class="game-container">
+    <!-- The Pizza Base -->
+    <div id="pizza-base">
+      <!-- Toppings get dynamically added here -->
+    </div>
+
+    <!-- The Ingredients Menu (Tiles the player drags from) -->
+    <div class="ingredients-menu">
+      <!-- CLASSIC -->
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🥫">🥫</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🧀">🧀</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🍕">🍕</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🍄">🍄</div>
+      
+      <!-- CHAOS -->
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🤖">🤖</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="💎">💎</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🕶️">🕶️</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🐱">🐱</div>
+
+      <!-- GALAXY -->
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🌌">🌌</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🌕">🌕</div>
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="☀️">☀️</div> <!-- THE SUN -->
+      <div class="ingredient" draggable="true" data-type="topping" data-emoji="🌌">🌌</div>
+    </div>
+
+    <div class="controls">
+      <button id="clear-btn">Eat Pizza (Clear)</button>
+    </div>
+  </div>
+
+  <script>
+    const pizzaBase = document.getElementById('pizza-base');
+    const ingredients = document.querySelectorAll('.ingredient');
+    const clearBtn = document.getElementById('clear-btn');
+    
+    let draggedEmoji = '';
+
+    // --- SETUP DRAG AND DROP ---
+    ingredients.forEach(ingredient => {
+      ingredient.addEventListener('dragstart', (e) => {
+        draggedEmoji = ingredient.getAttribute('data-emoji');
+      });
+    });
+
+    pizzaBase.addEventListener('dragover', (e) => {
+      // Must prevent default to allow a drop!
+      e.preventDefault();
+    });
+
+    pizzaBase.addEventListener('drop', (e) => {
+      e.preventDefault();
+
+      if (draggedEmoji) {
+        // Calculate where to place the topping (relative to the pizza base)
+        const baseRect = pizzaBase.getBoundingClientRect();
+        const dropX = e.clientX - baseRect.left;
+        const dropY = e.clientY - baseRect.top;
+
+        addTopping(draggedEmoji, dropX, dropY);
+        draggedEmoji = ''; // Reset after drop
+      }
+    });
+
+    // Function to physically add the emoji topping to the pizza
+    function addTopping(emoji, x, y) {
+      const toppingElement = document.createElement('div');
+      toppingElement.className = 'topping-on-pizza';
+      toppingElement.innerText = emoji;
+      toppingElement.style.left = `${x}px`;
+      toppingElement.style.top = `${y}px`;
+
+      pizzaBase.appendChild(toppingElement);
+    }
+
+    // --- CLEAR PIZZA ---
+    clearBtn.addEventListener('click', () => {
+      pizzaBase.innerHTML = ''; // Delete all toppings inside
+    });
+  </script>
+</body>
+</html>
