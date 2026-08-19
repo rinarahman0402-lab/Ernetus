@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gameception</title>
+  <style>
+    body {
+      background-color: #0f0f1b;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      color: #00ffcc;
+    }
+
+    #status {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #ff007f;
+    }
+
+    /* Outer Arcade Screen */
+    .arcade-cabinet {
+      width: 340px;
+      height: 420px;
+      background: #222;
+      border: 8px solid #444;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,255,204,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Inner Screen */
+    .inner-screen {
+      width: 100%;
+      height: 280px;
+      background: #000;
+      border: 4px solid #00ffcc;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mini-Game Elements */
+    #player {
+      width: 30px;
+      height: 30px;
+      background: #00ffcc;
+      position: absolute;
+      bottom: 10px;
+      left: 135px;
+      border-radius: 5px;
+    }
+
+    .obstacle {
+      width: 25px;
+      height: 25px;
+      background: #ff0055;
+      position: absolute;
+      top: 0;
+      border-radius: 3px;
+    }
+
+    #target {
+      width: 40px;
+      height: 40px;
+      background: #ffcc00;
+      border-radius: 50%;
+      position: absolute;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #000;
+      user-select: none;
+    }
+
+    #plug-btn {
+      padding: 15px 25px;
+      background: #ff0055;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #990033;
+    }
+
+    #plug-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #990033;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .ctrl-btn {
+      padding: 10px 20px;
+      background: #333;
+      color: white;
+      border: 2px solid #555;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .ctrl-btn:active {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🕹️ Gameception</h1>
+  <div id="status">Beat 3 inner mini-games to beat the outer game!</div>
+
+  <div class="arcade-cabinet">
+    <div class="inner-screen" id="screen">
+      <!-- Mini-games render here -->
+    </div>
+
+    <div class="controls" id="arcade-controls">
+      <button class="ctrl-btn" id="left-btn">⬅️</button>
+      <button class="ctrl-btn" id="right-btn">➡️</button>
+    </div>
+  </div>
+
+  <script>
+    const screen = document.getElementById('screen');
+    const status = document.getElementById('status');
+    const arcadeControls = document.getElementById('arcade-controls');
+    let currentStage = 1;
+
+    // --- MINI-GAME 1: DODGE THE GLITCH ---
+    let playerPos = 135;
+    let gameInterval;
+    let timer = 10;
+
+    function startStage1() {
+      status.innerText = "Mini-Game 1: Dodge falling glitch blocks! (10s)";
+      screen.innerHTML = `<div id="player"></div><div id="timer-text" style="position:absolute; top:10px; color:#fff;">Time: 10s</div>`;
+      
+      const player = document.getElementById('player');
+      
+      document.getElementById('left-btn').onclick = () => {
+        if (playerPos > 10) playerPos -= 30;
+        player.style.left = playerPos + 'px';
+      };
+      
+      document.getElementById('right-btn').onclick = () => {
+        if (playerPos < 260) playerPos += 30;
+        player.style.left = playerPos + 'px';
+      };
+
+      // Spawn falling obstacles
+      let spawnInterval = setInterval(() => {
+        let obs = document.createElement('div');
+        obs.className = 'obstacle';
+        obs.style.left = Math.floor(Math.random() * 260) + 'px';
+        screen.appendChild(obs);
+
+        let topPos = 0;
+        let fall = setInterval(() => {
+          topPos += 5;
+          obs.style.top = topPos + 'px';
+
+          // Collision Check
+          if (topPos > 230 && topPos < 260) {
+            let obsLeft = parseInt(obs.style.left);
+            if (Math.abs(obsLeft - playerPos) < 25) {
+              clearInterval(fall);
+              clearInterval(spawnInterval);
+              clearInterval(gameInterval);
+              alert("Hit by glitch! Restarting Mini-Game 1...");
+              startStage1();
+            }
+          }
+
+          if (topPos > 280) {
+            clearInterval(fall);
+            obs.remove();
+          }
+        }, 30);
+      }, 600);
+
+      // Timer
+      gameInterval = setInterval(() => {
+        timer--;
+        document.getElementById('timer-text').innerText = `Time: ${timer}s`;
+        if (timer <= 0) {
+          clearInterval(gameInterval);
+          clearInterval(spawnInterval);
+          currentStage = 2;
+          startStage2();
+        }
+      }, 1000);
+    }
+
+    // --- MINI-GAME 2: CATCH THE ESCAPEE ---
+    let clicksNeeded = 5;
+
+    function startStage2() {
+      arcadeControls.style.display = 'none'; // Hide directional buttons
+      status.innerText = "Mini-Game 2: Catch the teleporter code block! (5 clicks)";
+      screen.innerHTML = `<div id="target">CODE</div>`;
+
+      const target = document.getElementById('target');
+      
+      function moveTarget() {
+        let x = Math.floor(Math.random() * 240);
+        let y = Math.floor(Math.random() * 220);
+        target.style.left = x + 'px';
+        target.style.top = y + 'px';
+      }
+
+      moveTarget();
+
+      target.onclick = () => {
+        clicksNeeded--;
+        if (clicksNeeded > 0) {
+          target.innerText = clicksNeeded;
+          moveTarget();
+        } else {
+          currentStage = 3;
+          startStage3();
+        }
+      };
+    }
+
+    // --- MINI-GAME 3: PULL THE PLUG ---
+    let plugClicks = 0;
+
+    function startStage3() {
+      status.innerText = "Mini-Game 3: Spam 'PULL PLUG' to shut down the machine!";
+      screen.innerHTML = `<button id="plug-btn">PULL PLUG (0/10)</button>`;
+
+      const plugBtn = document.getElementById('plug-btn');
+
+      plugBtn.onclick = () => {
+        plugClicks++;
+        plugBtn.innerText = `PULL PLUG (${plugClicks}/10)`;
+        if (plugClicks >= 10) {
+          screen.innerHTML = `<h2 style="color:#ff0055;">GAME DESTROYED!</h2><p style="text-align:center;">You beat the mini-games inside the game to beat the main game!</p>`;
+          status.innerText = "🎉 YOU WIN GAMECEPTION!";
+        }
+      };
+    }
+
+    // Start initial game
+    startStage1();
+  </script>
+</body>
+  </html>
+  
