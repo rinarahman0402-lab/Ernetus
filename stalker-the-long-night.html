@@ -1,484 +1,183 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Stalker: The Long Night</title>
 
 <style>
-*{box-sizing:border-box}
-
 html,body{
-margin:0;
-width:100%;
-height:100%;
-background:#080b10;
-font-family:Arial,sans-serif;
-color:white;
-}
-
-body{overflow:hidden}
-
-button{
-font-family:Arial,sans-serif;
-cursor:pointer;
--webkit-tap-highlight-color:transparent;
-}
-
-#startScreen{
-position:fixed;
-inset:0;
-z-index:1000;
-display:flex;
-justify-content:center;
-align-items:flex-start;
-overflow-y:auto;
-overflow-x:hidden;
--webkit-overflow-scrolling:touch;
-touch-action:pan-y;
-padding:25px 15px 45px;
-background:radial-gradient(circle at 50% 20%,#303a45 0%,#121820 40%,#05070a 100%);
-}
-
-.startBox{
-width:100%;
-max-width:650px;
-margin:auto;
-padding:25px;
-background:rgba(12,16,22,.97);
-border:2px solid #59636e;
-border-radius:20px;
-box-shadow:0 20px 70px #000;
-text-align:center;
-}
-
-.houseIcon{
-font-size:55px;
-margin-bottom:5px;
-}
-
-.startTitle{
-font-size:clamp(35px,10vw,64px);
-line-height:.95;
-margin:5px 0 25px;
-letter-spacing:2px;
-}
-
-.story{
-text-align:left;
-padding:20px;
-border-radius:14px;
-background:#181e26;
-border:1px solid #303944;
-line-height:1.6;
-font-size:17px;
-margin-bottom:25px;
-}
-
-.story p{
-margin:0 0 18px;
-}
-
-.story p:last-child{
-margin-bottom:0;
-}
-
-.warning{
-color:#e5c85a;
-font-weight:bold;
-}
-
-#startButton{
-display:block;
-width:100%;
-padding:18px 20px;
-border:0;
-border-radius:14px;
-background:#e2c44d;
-color:#171208;
-font-size:22px;
-font-weight:bold;
-box-shadow:0 6px 0 #8b7623;
-}
-
-#startButton:active{
-transform:translateY(4px);
-box-shadow:0 2px 0 #8b7623;
-}
-
-#startError{
-display:none;
-margin-top:15px;
-padding:12px;
-border-radius:10px;
-background:#541c1c;
-color:#ffbcbc;
-font-size:14px;
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+    font-family:Arial,sans-serif;
 }
 
 #game{
-position:fixed;
-inset:0;
-z-index:1;
-background:#080b10;
+    width:100%;
+    height:100%;
+    position:relative;
 }
 
-#game canvas{
-position:absolute;
-inset:0;
-width:100%;
-height:100%;
-display:block;
+#startScreen{
+    position:absolute;
+    inset:0;
+    z-index:20;
+    background:
+        radial-gradient(circle at center,#182331,#030507 75%);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+}
+
+#startScreen h1{
+    font-size:42px;
+    margin:10px;
+    text-shadow:0 0 20px #000;
+}
+
+#startScreen p{
+    max-width:500px;
+    line-height:1.5;
+    color:#bbb;
+}
+
+button{
+    border:0;
+    border-radius:12px;
+    padding:16px 30px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#startButton{
+    background:#ddd;
+    color:#111;
+    margin-top:20px;
+}
+
+#startButton:active{
+    transform:scale(.96);
 }
 
 #hud{
-position:fixed;
-z-index:50;
-top:10px;
-left:10px;
-right:10px;
-display:none;
-justify-content:center;
-gap:6px;
-pointer-events:none;
-}
-
-.stat{
-padding:8px 10px;
-border-radius:9px;
-background:rgba(0,0,0,.72);
-border:1px solid #ffffff22;
-font-size:11px;
-white-space:nowrap;
+    display:none;
+    position:absolute;
+    z-index:10;
+    top:10px;
+    left:10px;
+    right:10px;
+    pointer-events:none;
+    color:white;
+    text-shadow:0 2px 4px #000;
 }
 
 #message{
-position:fixed;
-z-index:50;
-left:50%;
-top:62px;
-transform:translateX(-50%);
-display:none;
-max-width:90%;
-padding:9px 14px;
-border-radius:10px;
-background:rgba(0,0,0,.78);
-text-align:center;
-font-size:14px;
+    background:rgba(0,0,0,.45);
+    padding:8px 12px;
+    border-radius:8px;
+    display:inline-block;
+}
+
+#controls{
+    display:none;
+    position:absolute;
+    z-index:15;
+    inset:0;
+    pointer-events:none;
 }
 
 #joystick{
-position:fixed;
-z-index:60;
-left:15px;
-bottom:18px;
-width:135px;
-height:135px;
-display:none;
-border-radius:50%;
-border:3px solid #ffffff40;
-background:#ffffff10;
-touch-action:none;
+    position:absolute;
+    left:25px;
+    bottom:25px;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.3);
+    pointer-events:auto;
+    touch-action:none;
 }
 
-#joystickKnob{
-position:absolute;
-left:37px;
-top:37px;
-width:58px;
-height:58px;
-border-radius:50%;
-background:#e2c44d;
-border:3px solid #fff;
-box-shadow:0 4px 12px #0008;
+#stick{
+    position:absolute;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:rgba(255,255,255,.45);
+    left:35px;
+    top:35px;
 }
 
-.action{
-position:fixed;
-z-index:60;
-right:15px;
-display:none;
-min-width:105px;
-padding:12px 15px;
-border:0;
-border-radius:12px;
-background:#e2c44d;
-color:#171208;
-font-size:14px;
-font-weight:bold;
-box-shadow:0 4px 12px #0008;
+#lookArea{
+    position:absolute;
+    right:0;
+    top:0;
+    width:65%;
+    height:100%;
+    pointer-events:auto;
+    touch-action:none;
 }
 
-.action:active{transform:scale(.95)}
-
-#interactButton{bottom:155px}
-#cameraButton{bottom:100px}
-#hideButton{bottom:45px}
-
-.modalScreen{
-position:fixed;
-inset:0;
-z-index:500;
-display:none;
-align-items:center;
-justify-content:center;
-padding:15px;
-background:rgba(0,0,0,.84);
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:28px;
+    text-shadow:0 0 5px black;
+    display:none;
+    z-index:12;
+    pointer-events:none;
 }
 
-.modal{
-width:100%;
-max-width:650px;
-max-height:92vh;
-overflow:auto;
-padding:20px;
-border-radius:18px;
-background:#10151b;
-border:2px solid #505b66;
-box-shadow:0 20px 70px #000;
-text-align:center;
-}
-
-.modal h2{margin-top:0}
-
-.modalButton{
-padding:11px 18px;
-margin:5px;
-border:0;
-border-radius:10px;
-font-weight:bold;
-background:#e2c44d;
-color:#171208;
-}
-
-#cameraCanvas{
-width:100%;
-max-height:55vh;
-display:block;
-background:#030405;
-border-radius:10px;
-border:2px solid #444;
-}
-
-#obbyArea{
-position:relative;
-width:100%;
-height:270px;
-overflow:hidden;
-border-radius:12px;
-border:2px solid #444;
-background:linear-gradient(#111923,#1d2630);
-}
-
-.platform{
-position:absolute;
-height:18px;
-border-radius:6px;
-background:#e2c44d;
-}
-
-#obbyPlayer{
-position:absolute;
-width:25px;
-height:25px;
-border-radius:50%;
-background:#55aaff;
-left:18px;
-bottom:25px;
-}
-
-#gameOverTitle{font-size:45px}
-
-#restartButton{
-padding:15px 25px;
-border:0;
-border-radius:12px;
-background:#e2c44d;
-color:#171208;
-font-size:18px;
-font-weight:bold;
-}
-
-@media(max-width:500px){
-.startBox{padding:18px}
-.story{font-size:16px;padding:17px}
-.stat{font-size:9px;padding:7px 6px}
-#joystick{width:125px;height:125px}
-#joystickKnob{left:34px;top:34px}
+#error{
+    color:#ff7777;
+    margin-top:15px;
+    max-width:500px;
 }
 </style>
 </head>
 
 <body>
 
+<div id="game">
+
 <div id="startScreen">
-<div class="startBox">
+    <h1>STALKER: THE LONG NIGHT</h1>
+    <p>
+        The night has begun.<br>
+        Explore the house, find your way through the darkness,
+        and survive the thing that is following you.
+    </p>
 
-<div class="houseIcon">🏠</div>
+    <button id="startButton">START NIGHT</button>
 
-<div class="startTitle">
-STALKER:<br>
-THE LONG NIGHT
+    <div id="error"></div>
 </div>
-
-<div class="story">
-
-<p><b>The house was supposed to be empty.</b></p>
-
-<p>Six months ago, your older brother disappeared.</p>
-
-<p>
-Before he vanished, he told you that someone
-was walking through the house every night.
-</p>
-
-<p>
-The police found no intruder.
-They found only an old security system,
-a computer that was still running,
-and a note.
-</p>
-
-<p>
-<i>
-"If you hear footsteps, don't open the door.
-If you see him on a camera, hide.
-He knows this house better than you do."
-</i>
-</p>
-
-<p>
-Tonight you returned to the house.
-At exactly 10:00 PM, the front door locked itself.
-</p>
-
-<p class="warning">SURVIVE UNTIL 6:00 AM.</p>
-
-<p>
-Find food in the fridge.
-Find water at the sink.
-Keep your sanity by using the computer.
-Watch the security cameras.
-Hide under the bed when the stalker gets close.
-</p>
-
-<p><b>The night has just begun.</b></p>
-
-</div>
-
-<button id="startButton">START NIGHT</button>
-
-<div id="startError"></div>
-
-</div>
-</div>
-
-<div id="game"></div>
 
 <div id="hud">
-
-<div class="stat">
-TIME:
-<span id="timeDisplay">10:00 PM</span>
+    <div id="message">10:00 PM — The front door locked itself.</div>
 </div>
 
-<div class="stat">
-FOOD:
-<span id="foodDisplay">100</span>
+<div id="crosshair">+</div>
+
+<div id="controls">
+    <div id="joystick">
+        <div id="stick"></div>
+    </div>
+
+    <div id="lookArea"></div>
 </div>
 
-<div class="stat">
-WATER:
-<span id="waterDisplay">100</span>
-</div>
-
-<div class="stat">
-SANITY:
-<span id="sanityDisplay">100</span>
-</div>
-
-</div>
-
-<div id="message">Explore the house.</div>
-
-<div id="joystick">
-<div id="joystickKnob"></div>
-</div>
-
-<button id="interactButton" class="action">INTERACT</button>
-<button id="cameraButton" class="action">CAMERAS</button>
-<button id="hideButton" class="action">HIDE</button>
-
-<div id="cameraScreen" class="modalScreen">
-
-<div class="modal">
-
-<h2>SECURITY CAMERAS</h2>
-
-<canvas id="cameraCanvas" width="640" height="360"></canvas>
-
-<p id="cameraName">Camera 1 — Living Room</p>
-
-<button class="modalButton" id="previousCamera">◀ CAMERA</button>
-<button class="modalButton" id="nextCamera">CAMERA ▶</button>
-
-<br>
-
-<button class="modalButton" id="closeCamera">CLOSE</button>
-
-</div>
-</div>
-
-<div id="computerScreen" class="modalScreen">
-
-<div class="modal">
-
-<h2>COMPUTER</h2>
-
-<p id="obbyText">
-Complete the tiny obby to restore your sanity.
-</p>
-
-<div id="obbyArea">
-
-<div class="platform"
-style="left:15px;bottom:18px;width:70px"></div>
-
-<div class="platform"
-style="left:145px;bottom:68px;width:70px"></div>
-
-<div class="platform"
-style="left:275px;bottom:118px;width:70px"></div>
-
-<div class="platform"
-style="left:405px;bottom:168px;width:70px"></div>
-
-<div id="obbyPlayer"></div>
-
-</div>
-
-<button class="modalButton" id="obbyJump">JUMP</button>
-
-<button class="modalButton" id="closeComputer">
-EXIT COMPUTER
-</button>
-
-</div>
-</div>
-
-<div id="gameOverScreen" class="modalScreen">
-
-<div class="modal">
-
-<h1 id="gameOverTitle">GAME OVER</h1>
-
-<p id="gameOverText">The night is over.</p>
-
-<button id="restartButton">RESTART NIGHT</button>
-
-</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
@@ -489,1427 +188,637 @@ let scene;
 let camera;
 let renderer;
 
-let securityCamera;
-let cameraRenderer;
-
+let player;
 let stalker;
 
 let gameStarted=false;
-let gameFinished=false;
-let playerHidden=false;
 
-let lastFrame=0;
-let nightTime=0;
-
-let food=100;
-let water=100;
-let sanity=100;
-
-let player={
-x:-6,
-y:1.6,
-z:6
-};
-
-let rotationY=0;
-let rotationX=0;
+let yaw=0;
+let pitch=0;
 
 let moveX=0;
-let moveY=0;
+let moveZ=0;
 
-let joystickPointer=null;
-let lookPointer=null;
-
-let lookX=0;
-let lookY=0;
-
-let cameraNumber=0;
-let obbyStep=0;
-
-const objects=[];
-const solidObjects=[];
-
+const game=document.getElementById("game");
 const startScreen=document.getElementById("startScreen");
 const startButton=document.getElementById("startButton");
-const startError=document.getElementById("startError");
-const game=document.getElementById("game");
+const errorBox=document.getElementById("error");
 const hud=document.getElementById("hud");
 const message=document.getElementById("message");
+const controls=document.getElementById("controls");
 const joystick=document.getElementById("joystick");
-const joystickKnob=document.getElementById("joystickKnob");
-const interactButton=document.getElementById("interactButton");
-const cameraButton=document.getElementById("cameraButton");
-const hideButton=document.getElementById("hideButton");
-
-const cameraScreen=document.getElementById("cameraScreen");
-const cameraCanvas=document.getElementById("cameraCanvas");
-const cameraName=document.getElementById("cameraName");
-
-const computerScreen=document.getElementById("computerScreen");
-const obbyPlayer=document.getElementById("obbyPlayer");
-const obbyText=document.getElementById("obbyText");
-
-const gameOverScreen=document.getElementById("gameOverScreen");
-const gameOverTitle=document.getElementById("gameOverTitle");
-const gameOverText=document.getElementById("gameOverText");
-const restartButton=document.getElementById("restartButton");
-
-function material(color){
-return new THREE.MeshStandardMaterial({
-color:color,
-roughness:.82
-});
-}
-
-const wallMaterial=material(0x565d64);
-const floorMaterial=material(0x40372f);
-const woodMaterial=material(0x5b3823);
-const whiteMaterial=material(0xbfc3c5);
-const darkMaterial=material(0x111416);
-const redMaterial=material(0x713238);
-const metalMaterial=material(0x747a7d);
-
-const screenMaterial=
-new THREE.MeshBasicMaterial({color:0x08779c});
-
-const stalkerMaterial=material(0x08090a);
-const skinMaterial=material(0x6f6964);
-
-function box(x,y,z,width,height,depth,mat,solid=true){
-
-const mesh=
-new THREE.Mesh(
-new THREE.BoxGeometry(
-width,
-height,
-depth
-),
-mat
-);
-
-mesh.position.set(x,y,z);
-
-mesh.castShadow=true;
-mesh.receiveShadow=true;
-
-scene.add(mesh);
-objects.push(mesh);
-
-if(solid){
-solidObjects.push({
-x:x,
-z:z,
-width:width,
-depth:depth
-});
-}
-
-return mesh;
-}
-
-function createHouse(){
-
-box(0,-.1,0,20,.2,20,floorMaterial,false);
-
-box(-10,1.5,0,.3,3,20,wallMaterial);
-box(10,1.5,0,.3,3,20,wallMaterial);
-box(0,1.5,-10,20,3,.3,wallMaterial);
-
-box(-6.5,1.5,10,7,3,.3,wallMaterial);
-box(6.5,1.5,10,7,3,.3,wallMaterial);
-
-box(-4,1.5,4,.3,3,8,wallMaterial);
-
-box(-7,1.5,0,6,3,.3,wallMaterial);
-box(-1,1.5,0,6,3,.3,wallMaterial);
-
-box(4,1.5,-5,.3,3,10,wallMaterial);
-
-box(-4,1.5,6,.2,3,2,woodMaterial,false);
-box(0,1.5,9.8,2.5,3,.2,woodMaterial,false);
-
-box(-7,.55,7,3.5,.8,2,woodMaterial);
-box(-7,1.02,7,3.1,.18,1.6,whiteMaterial,false);
-
-box(7,1.6,-7,2,3.2,1.5,whiteMaterial);
-box(7,1.65,-6.2,1.6,2.7,.08,metalMaterial,false);
-box(7.75,1.7,-6.1,.08,.8,.08,woodMaterial,false);
-
-box(5.8,.9,-7,2,.2,1,metalMaterial);
-box(5.8,.65,-7,1.5,.5,.7,whiteMaterial);
-
-box(7,.7,-5,3,.9,.8,woodMaterial);
-
-box(-7,.8,5.8,3,.15,1.2,woodMaterial);
-
-box(-8.1,.4,5.8,.12,.8,.12,woodMaterial,false);
-box(-5.9,.4,5.8,.12,.8,.12,woodMaterial,false);
-
-box(-7,1.65,5.5,1.8,1.2,.18,darkMaterial);
-box(-7,1.65,5.38,1.45,.78,.04,screenMaterial,false);
-
-box(-7,.98,5.8,1.3,.08,.5,darkMaterial,false);
-
-box(6,.65,6,3.5,1.1,1.4,redMaterial);
-
-box(2,.55,6,2,.1,1.2,woodMaterial);
-
-box(0,3.1,0,20,.15,20,darkMaterial,false);
-}
-
-function createStalker(){
-
-const group=new THREE.Group();
-
-const head=
-new THREE.Mesh(
-new THREE.SphereGeometry(.38,18,14),
-skinMaterial
-);
-
-head.position.y=2.55;
-group.add(head);
-
-const body=
-new THREE.Mesh(
-new THREE.BoxGeometry(.7,1.35,.42),
-stalkerMaterial
-);
-
-body.position.y=1.65;
-group.add(body);
-
-const armGeometry=
-new THREE.CapsuleGeometry(.09,1.55,6,8);
-
-const leftArm=
-new THREE.Mesh(
-armGeometry,
-stalkerMaterial
-);
-
-leftArm.position.set(-.55,1.45,0);
-leftArm.rotation.z=-.12;
-group.add(leftArm);
-
-const rightArm=
-new THREE.Mesh(
-armGeometry,
-stalkerMaterial
-);
-
-rightArm.position.set(.55,1.45,0);
-rightArm.rotation.z=.12;
-group.add(rightArm);
-
-const legGeometry=
-new THREE.CapsuleGeometry(.11,1.55,6,8);
-
-const leftLeg=
-new THREE.Mesh(
-legGeometry,
-stalkerMaterial
-);
-
-leftLeg.position.set(-.2,.45,0);
-group.add(leftLeg);
-
-const rightLeg=
-new THREE.Mesh(
-legGeometry,
-stalkerMaterial
-);
-
-rightLeg.position.set(.2,.45,0);
-group.add(rightLeg);
-
-const eyeMaterial=
-new THREE.MeshBasicMaterial({
-color:0xff2222
-});
-
-const eye1=
-new THREE.Mesh(
-new THREE.SphereGeometry(.055,8,8),
-eyeMaterial
-);
-
-eye1.position.set(-.13,2.6,-.35);
-group.add(eye1);
-
-const eye2=
-new THREE.Mesh(
-new THREE.SphereGeometry(.055,8,8),
-eyeMaterial
-);
-
-eye2.position.set(.13,2.6,-.35);
-group.add(eye2);
-
-group.position.set(7,0,7);
-
-scene.add(group);
-
-stalker=group;
-}
-
-function isBlocked(x,z){
-
-const radius=.35;
-
-for(let i=0;i<solidObjects.length;i++){
-
-const o=solidObjects[i];
-
-if(
-x>o.x-o.width/2-radius &&
-x<o.x+o.width/2+radius &&
-z>o.z-o.depth/2-radius &&
-z<o.z+o.depth/2+radius
-){
-return true;
-}
-
-}
-
-return false;
-}
-
-function movePlayer(dx,dz){
-
-const newX=player.x+dx;
-const newZ=player.z+dz;
-
-if(!isBlocked(newX,player.z)){
-player.x=newX;
-}
-
-if(!isBlocked(player.x,newZ)){
-player.z=newZ;
-}
-}
-```
-/* =========================
-   START GAME
-========================= */
+const stick=document.getElementById("stick");
+const lookArea=document.getElementById("lookArea");
+const crosshair=document.getElementById("crosshair");
 
 function startGame(){
 
-startError.style.display="none";
+    errorBox.textContent="";
 
-if(typeof THREE==="undefined"){
+    if(typeof THREE==="undefined"){
+        errorBox.textContent=
+        "The 3D engine could not load. Check your internet connection and reload the page.";
+        return;
+    }
 
-startError.style.display="block";
+    try{
 
-startError.textContent=
-"The 3D engine did not load. Check your internet connection and reload the page.";
+        scene=new THREE.Scene();
 
-return;
+        scene.background=new THREE.Color(0x05080c);
+
+        scene.fog=new THREE.Fog(
+            0x05080c,
+            2,
+            35
+        );
+
+        camera=new THREE.PerspectiveCamera(
+            70,
+            innerWidth/innerHeight,
+            .05,
+            100
+        );
+
+        renderer=new THREE.WebGLRenderer({
+            antialias:true
+        });
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+
+        renderer.setPixelRatio(
+            Math.min(devicePixelRatio,2)
+        );
+
+        renderer.shadowMap.enabled=true;
+
+        game.appendChild(renderer.domElement);
+
+        createWorld();
+
+        createPlayer();
+
+        createStalker();
+
+        startScreen.style.display="none";
+        hud.style.display="block";
+        controls.style.display="block";
+        crosshair.style.display="block";
+
+        gameStarted=true;
+
+        animate();
+
+    }catch(error){
+
+        console.error(error);
+
+        errorBox.textContent=
+        "Game error: "+error.message;
+    }
 }
 
-try{
 
-gameFinished=false;
-gameStarted=false;
-playerHidden=false;
+function createWorld(){
 
-food=100;
-water=100;
-sanity=100;
-nightTime=0;
+    // Floor
 
-player.x=-6;
-player.y=1.6;
-player.z=6;
+    const floorMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x24272b,
+        roughness:1
+    });
 
-rotationY=0;
-rotationX=0;
+    const floor=
+    new THREE.Mesh(
+        new THREE.BoxGeometry(30,.2,30),
+        floorMaterial
+    );
 
-scene=new THREE.Scene();
+    floor.position.y=-.1;
+    floor.receiveShadow=true;
 
-scene.background=
-new THREE.Color(0x101820);
+    scene.add(floor);
 
-scene.fog=
-new THREE.Fog(
-0x101820,
-3,
-35
-);
 
-camera=
-new THREE.PerspectiveCamera(
-70,
-window.innerWidth/window.innerHeight,
-.05,
-100
-);
+    // Walls
 
-camera.position.set(
-player.x,
-player.y,
-player.z
-);
+    const wallMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x34383c,
+        roughness:1
+    });
 
-renderer=
-new THREE.WebGLRenderer({
-antialias:true
-});
+    function wall(x,y,z,w,h,d){
 
-renderer.setSize(
-window.innerWidth,
-window.innerHeight
-);
+        const mesh=
+        new THREE.Mesh(
+            new THREE.BoxGeometry(w,h,d),
+            wallMaterial
+        );
 
-renderer.setPixelRatio(
-Math.min(
-window.devicePixelRatio||1,
-2
-)
-);
+        mesh.position.set(x,y,z);
+        mesh.castShadow=true;
+        mesh.receiveShadow=true;
 
-renderer.shadowMap.enabled=true;
+        scene.add(mesh);
+    }
 
-game.innerHTML="";
 
-game.appendChild(
-renderer.domElement
-);
+    // House walls
 
-const ambient=
-new THREE.HemisphereLight(
-0xc8d8e8,
-0x16100b,
-1.2
-);
+    wall(0,2,-10,20,4,.5);
+    wall(-10,2,0,.5,4,20);
+    wall(10,2,0,.5,4,20);
+    wall(0,2,10,20,4,.5);
 
-scene.add(ambient);
+    // Interior walls
 
-const livingLight=
-new THREE.PointLight(
-0xffd6a0,
-10,
-22
-);
+    wall(-3,2,-3,.5,4,14);
+    wall(4,2,3,12,4,.5);
 
-livingLight.position.set(
-0,
-2.7,
-5
-);
 
-livingLight.castShadow=true;
+    // Door
 
-scene.add(livingLight);
+    const doorMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x191919
+    });
 
-const kitchenLight=
-new THREE.PointLight(
-0xffdca5,
-8,
-15
-);
+    const door=
+    new THREE.Mesh(
+        new THREE.BoxGeometry(2.5,3,.25),
+        doorMaterial
+    );
 
-kitchenLight.position.set(
-7,
-2.5,
--6
-);
+    door.position.set(
+        0,
+        1.5,
+        -9.7
+    );
 
-scene.add(kitchenLight);
+    scene.add(door);
 
-createHouse();
-createStalker();
 
-startScreen.style.display="none";
+    // Furniture
 
-hud.style.display="flex";
-message.style.display="block";
-joystick.style.display="block";
-interactButton.style.display="block";
-cameraButton.style.display="block";
-hideButton.style.display="block";
+    const furnitureMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x3b2920
+    });
 
-message.textContent=
-"10:00 PM — The front door locked itself.";
+    function box(x,y,z,w,h,d){
 
-gameStarted=true;
+        const mesh=
+        new THREE.Mesh(
+            new THREE.BoxGeometry(w,h,d),
+            furnitureMaterial
+        );
 
-lastFrame=performance.now();
+        mesh.position.set(x,y,z);
+        mesh.castShadow=true;
+        mesh.receiveShadow=true;
 
-renderer.render(
-scene,
-camera
-);
+        scene.add(mesh);
+    }
 
-requestAnimationFrame(
-gameLoop
-);
+    box(-7,.6,-5,3,1.2,1.5);
+    box(6,.5,-5,2,1,1);
+    box(6,.7,6,3,1.4,1.5);
+    box(-6,.5,6,2,1,2);
 
-}catch(error){
 
-console.error(error);
+    // Ceiling light
 
-gameStarted=false;
+    const light=
+    new THREE.PointLight(
+        0xffd6a0,
+        12,
+        18
+    );
 
-startError.style.display="block";
+    light.position.set(
+        0,
+        3.5,
+        0
+    );
 
-startError.textContent=
-"Game error: "+error.message;
+    light.castShadow=true;
+
+    scene.add(light);
+
+
+    // Moonlight
+
+    const moon=
+    new THREE.DirectionalLight(
+        0x7187aa,
+        1
+    );
+
+    moon.position.set(
+        -5,
+        10,
+        5
+    );
+
+    moon.castShadow=true;
+
+    scene.add(moon);
+
+
+    // Ambient light
+
+    scene.add(
+        new THREE.HemisphereLight(
+            0x52627a,
+            0x080605,
+            .45
+        )
+    );
 }
+
+
+function createPlayer(){
+
+    player=
+    new THREE.Object3D();
+
+    player.position.set(
+        0,
+        1.6,
+        7
+    );
+
+    camera.position.set(
+        0,
+        0,
+        0
+    );
+
+    player.add(camera);
+
+    scene.add(player);
 }
+
+
+function createStalker(){
+
+    stalker=
+    new THREE.Group();
+
+    // Body
+
+    const body=
+    new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            .35,
+            .45,
+            1.8,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x080808
+        })
+    );
+
+    body.position.y=1;
+
+    stalker.add(body);
+
+
+    // Head
+
+    const head=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .42,
+            16,
+            16
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x050505
+        })
+    );
+
+    head.position.y=2.15;
+
+    stalker.add(head);
+
+
+    // Eyes
+
+    const eyeMaterial=
+    new THREE.MeshBasicMaterial({
+        color:0xff3333
+    });
+
+    const eye1=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(.045,8,8),
+        eyeMaterial
+    );
+
+    const eye2=
+    eye1.clone();
+
+    eye1.position.set(-.14,2.18,.38);
+    eye2.position.set(.14,2.18,.38);
+
+    stalker.add(eye1);
+    stalker.add(eye2);
+
+
+    stalker.position.set(
+        0,
+        0,
+        -7
+    );
+
+    scene.add(stalker);
+}
+
+
+function updateStalker(){
+
+    if(!stalker || !player)
+        return;
+
+    const direction=
+    new THREE.Vector3();
+
+    direction.subVectors(
+        player.position,
+        stalker.position
+    );
+
+    direction.y=0;
+
+    const distance=
+    direction.length();
+
+    if(distance>3){
+
+        direction.normalize();
+
+        stalker.position.addScaledVector(
+            direction,
+            .004
+        );
+    }
+
+    stalker.lookAt(
+        player.position.x,
+        stalker.position.y+1,
+        player.position.z
+    );
+}
+
+
+function updateMovement(){
+
+    if(!player)
+        return;
+
+    const speed=.07;
+
+    const forward=
+    new THREE.Vector3(
+        Math.sin(yaw),
+        0,
+        Math.cos(yaw)
+    );
+
+    const right=
+    new THREE.Vector3(
+        Math.cos(yaw),
+        0,
+        -Math.sin(yaw)
+    );
+
+    player.position.addScaledVector(
+        forward,
+        moveZ*speed
+    );
+
+    player.position.addScaledVector(
+        right,
+        moveX*speed
+    );
+
+    player.position.x=
+    Math.max(
+        -9,
+        Math.min(9,player.position.x)
+    );
+
+    player.position.z=
+    Math.max(
+        -9,
+        Math.min(9,player.position.z)
+    );
+}
+
+
+function animate(){
+
+    if(!gameStarted)
+        return;
+
+    requestAnimationFrame(animate);
+
+    updateMovement();
+
+    updateStalker();
+
+    camera.rotation.order="YXZ";
+
+    camera.rotation.y=yaw;
+    camera.rotation.x=pitch;
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
 
 startButton.addEventListener(
-"click",
-function(event){
-
-event.preventDefault();
-event.stopPropagation();
-
-startGame();
-
-}
-);
-
-restartButton.addEventListener(
-"click",
-function(){
-location.reload();
-}
+    "click",
+    startGame
 );
 
 
-/* =========================
-   GAME LOOP
-========================= */
+window.addEventListener(
+    "resize",
+    function(){
 
-function gameLoop(){
+        if(!camera || !renderer)
+            return;
 
-if(!gameStarted)
-return;
+        camera.aspect=
+        innerWidth/innerHeight;
 
-requestAnimationFrame(
-gameLoop
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+    }
 );
-
-const now=
-performance.now();
-
-const delta=
-Math.min(
-.05,
-(now-lastFrame)/1000
-);
-
-lastFrame=now;
-
-updatePlayer(delta);
-updateStalker(delta);
-updateClock(delta);
-updateCameraFeed();
-
-camera.position.set(
-player.x,
-player.y,
-player.z
-);
-
-camera.rotation.order="YXZ";
-
-camera.rotation.y=rotationY;
-camera.rotation.x=rotationX;
-
-renderer.render(
-scene,
-camera
-);
-}
-
-
-/* =========================
-   PLAYER
-========================= */
-
-function updatePlayer(delta){
-
-if(playerHidden){
-
-moveX=0;
-moveY=0;
-}
-
-const speed=2.0;
-
-const forwardX=
-Math.sin(rotationY);
-
-const forwardZ=
--Math.cos(rotationY);
-
-const rightX=
-Math.cos(rotationY);
-
-const rightZ=
-Math.sin(rotationY);
-
-const dx=
-(
-rightX*moveX+
-forwardX*moveY
-)*
-speed*
-delta;
-
-const dz=
-(
-rightZ*moveX+
-forwardZ*moveY
-)*
-speed*
-delta;
-
-movePlayer(dx,dz);
-
-if(!playerHidden){
-
-food-=delta*.10;
-water-=delta*.14;
-sanity-=delta*.025;
-
-}else{
-
-sanity+=delta*.01;
-
-}
-
-food=Math.max(
-0,
-Math.min(100,food)
-);
-
-water=Math.max(
-0,
-Math.min(100,water)
-);
-
-sanity=Math.max(
-0,
-Math.min(100,sanity)
-);
-
-document.getElementById(
-"foodDisplay"
-).textContent=
-Math.floor(food);
-
-document.getElementById(
-"waterDisplay"
-).textContent=
-Math.floor(water);
-
-document.getElementById(
-"sanityDisplay"
-).textContent=
-Math.floor(sanity);
-
-if(food<=0){
-
-message.textContent=
-"You are starving. Find the fridge.";
-
-}
-
-if(water<=0){
-
-message.textContent=
-"You are thirsty. Find the sink.";
-
-}
-
-if(sanity<30){
-
-message.textContent=
-"Your sanity is getting low. Use the computer.";
-
-}
-}
-
-
-/* =========================
-   CLOCK
-========================= */
-
-function updateClock(delta){
-
-nightTime+=delta*.55;
-
-const startMinutes=22*60;
-
-const currentMinutes=
-startMinutes+
-Math.floor(nightTime);
-
-if(currentMinutes>=30*60){
-
-winGame();
-return;
-
-}
-
-const shown=
-currentMinutes%(24*60);
-
-let hour=
-Math.floor(shown/60);
-
-const minute=shown%60;
-
-const suffix=
-hour>=12?"PM":"AM";
-
-hour=hour%12||12;
-
-document.getElementById(
-"timeDisplay"
-).textContent=
-hour+
-":"+
-String(minute).padStart(2,"0")+
-" "+
-suffix;
-}
-
-
-/* =========================
-   STALKER
-========================= */
-
-let patrolIndex=0;
-
-const patrolPoints=[
-[7,7],
-[7,-7],
-[6,-3],
-[1,2],
-[-2,6],
-[-7,7]
-];
-
-function updateStalker(delta){
-
-if(!stalker)
-return;
-
-const sx=stalker.position.x;
-const sz=stalker.position.z;
-
-const dx=player.x-sx;
-const dz=player.z-sz;
-
-const distance=
-Math.hypot(dx,dz);
-
-let targetX;
-let targetZ;
-
-if(playerHidden){
-
-targetX=sx;
-targetZ=sz;
-
-}else if(distance<9){
-
-targetX=player.x;
-targetZ=player.z;
-
-}else{
-
-const point=
-patrolPoints[patrolIndex];
-
-targetX=point[0];
-targetZ=point[1];
-
-if(
-Math.hypot(
-targetX-sx,
-targetZ-sz
-)<1
-){
-
-patrolIndex=
-(patrolIndex+1)%
-patrolPoints.length;
-
-}
-}
-
-const tx=targetX-sx;
-const tz=targetZ-sz;
-
-const length=
-Math.hypot(tx,tz)||1;
-
-const speed=
-distance<9?.75:.42;
-
-const newX=
-sx+
-tx/length*
-speed*
-delta;
-
-const newZ=
-sz+
-tz/length*
-speed*
-delta;
-
-if(!isBlocked(newX,newZ)){
-
-stalker.position.x=newX;
-stalker.position.z=newZ;
-
-}
-
-stalker.lookAt(
-player.x,
-1.5,
-player.z
-);
-
-if(
-distance<1.25 &&
-!playerHidden
-){
-
-loseGame(
-"The stalker found you."
-);
-
-}
-
-if(
-distance<5 &&
-!playerHidden
-){
-
-message.textContent=
-"FOOTSTEPS... HIDE!";
-
-}
-}
 
 
 /* =========================
    JOYSTICK
 ========================= */
 
-function updateJoystick(event){
-
-const rect=
-joystick.getBoundingClientRect();
-
-const centerX=
-rect.left+
-rect.width/2;
-
-const centerY=
-rect.top+
-rect.height/2;
-
-let dx=
-event.clientX-centerX;
-
-let dy=
-event.clientY-centerY;
-
-const max=42;
-
-const distance=
-Math.hypot(dx,dy);
-
-if(distance>max){
-
-dx=dx/distance*max;
-dy=dy/distance*max;
-
-}
-
-moveX=dx/max;
-moveY=-dy/max;
-
-joystickKnob.style.transform=
-"translate("+dx+"px,"+dy+"px)";
-}
+let joystickActive=false;
 
 joystick.addEventListener(
-"pointerdown",
-function(event){
+    "pointerdown",
+    function(e){
 
-joystickPointer=
-event.pointerId;
+        joystickActive=true;
 
-joystick.setPointerCapture(
-event.pointerId
-);
-
-updateJoystick(event);
-
-}
+        joystick.setPointerCapture(
+            e.pointerId
+        );
+    }
 );
 
 joystick.addEventListener(
-"pointermove",
-function(event){
+    "pointermove",
+    function(e){
 
-if(
-event.pointerId===
-joystickPointer
-){
+        if(!joystickActive)
+            return;
 
-updateJoystick(event);
+        const rect=
+        joystick.getBoundingClientRect();
 
-}
+        let x=
+        e.clientX-
+        (rect.left+rect.width/2);
 
-}
+        let y=
+        e.clientY-
+        (rect.top+rect.height/2);
+
+        const max=35;
+
+        const length=
+        Math.hypot(x,y);
+
+        if(length>max){
+
+            x=x/length*max;
+            y=y/length*max;
+        }
+
+        stick.style.left=
+        (35+x)+"px";
+
+        stick.style.top=
+        (35+y)+"px";
+
+        moveX=x/max;
+        moveZ=-y/max;
+    }
 );
 
-function resetJoystick(){
+function stopJoystick(){
 
-moveX=0;
-moveY=0;
+    joystickActive=false;
 
-joystickKnob.style.transform=
-"translate(0,0)";
+    moveX=0;
+    moveZ=0;
+
+    stick.style.left="35px";
+    stick.style.top="35px";
 }
 
 joystick.addEventListener(
-"pointerup",
-resetJoystick
+    "pointerup",
+    stopJoystick
 );
 
 joystick.addEventListener(
-"pointercancel",
-resetJoystick
+    "pointercancel",
+    stopJoystick
 );
 
 
 /* =========================
-   LOOK AROUND
+   LOOK
 ========================= */
 
-document.addEventListener(
-"pointerdown",
-function(event){
+let looking=false;
+let lastX=0;
+let lastY=0;
 
-if(!gameStarted)
-return;
+lookArea.addEventListener(
+    "pointerdown",
+    function(e){
 
-if(joystick.contains(event.target))
-return;
+        looking=true;
 
-if(event.target.closest("button"))
-return;
+        lastX=e.clientX;
+        lastY=e.clientY;
 
-if(event.target.closest(".modalScreen"))
-return;
-
-lookPointer=
-event.pointerId;
-
-lookX=event.clientX;
-lookY=event.clientY;
-
-}
+        lookArea.setPointerCapture(
+            e.pointerId
+        );
+    }
 );
 
-document.addEventListener(
-"pointermove",
-function(event){
+lookArea.addEventListener(
+    "pointermove",
+    function(e){
 
-if(event.pointerId!==lookPointer)
-return;
+        if(!looking)
+            return;
 
-const dx=
-event.clientX-lookX;
+        const dx=
+        e.clientX-lastX;
 
-const dy=
-event.clientY-lookY;
+        const dy=
+        e.clientY-lastY;
 
-rotationY-=dx*.004;
-rotationX-=dy*.003;
+        lastX=e.clientX;
+        lastY=e.clientY;
 
-rotationX=
-Math.max(
--.8,
-Math.min(.8,rotationX)
+        yaw-=dx*.004;
+
+        pitch-=dy*.004;
+
+        pitch=
+        Math.max(
+            -1.3,
+            Math.min(1.3,pitch)
+        );
+    }
 );
 
-lookX=event.clientX;
-lookY=event.clientY;
+function stopLooking(){
 
+    looking=false;
 }
+
+lookArea.addEventListener(
+    "pointerup",
+    stopLooking
 );
 
-document.addEventListener(
-"pointerup",
-function(event){
-
-if(event.pointerId===lookPointer){
-lookPointer=null;
-}
-
-}
-);
-```
-/* =========================
-   INTERACTION
-========================= */
-
-interactButton.addEventListener(
-"click",
-function(){
-
-if(playerHidden){
-
-playerHidden=false;
-
-message.textContent=
-"You came out of hiding.";
-
-return;
-}
-
-const fridgeDistance=
-Math.hypot(
-player.x-7,
-player.z+7
-);
-
-const sinkDistance=
-Math.hypot(
-player.x-5.8,
-player.z+7
-);
-
-const computerDistance=
-Math.hypot(
-player.x+7,
-player.z-5.5
-);
-
-if(fridgeDistance<2.8){
-
-food=Math.min(
-100,
-food+45
-);
-
-message.textContent=
-"You got food from the fridge.";
-
-return;
-}
-
-if(sinkDistance<2.8){
-
-water=Math.min(
-100,
-water+50
-);
-
-message.textContent=
-"You drank water from the sink.";
-
-return;
-}
-
-if(computerDistance<2.8){
-
-openComputer();
-
-return;
-}
-
-message.textContent=
-"There is nothing useful nearby.";
-
-}
-);
-
-
-/* =========================
-   HIDE
-========================= */
-
-hideButton.addEventListener(
-"click",
-function(){
-
-const bedDistance=
-Math.hypot(
-player.x+7,
-player.z-7
-);
-
-if(bedDistance<3.2){
-
-playerHidden=true;
-
-message.textContent=
-"You are hiding under the bed.";
-
-}else{
-
-message.textContent=
-"Get closer to the bed to hide.";
-
-}
-
-}
-);
-
-
-/* =========================
-   CAMERAS
-========================= */
-
-const cameraLocations=[
-{
-name:"Camera 1 — Living Room",
-x:6,
-y:2.7,
-z:7,
-lookX:3,
-lookY:1,
-lookZ:3
-},
-{
-name:"Camera 2 — Kitchen",
-x:8,
-y:2.7,
-z:-8,
-lookX:6,
-lookY:1,
-lookZ:-5
-},
-{
-name:"Camera 3 — Hallway",
-x:0,
-y:2.7,
-z:2,
-lookX:0,
-lookY:1,
-lookZ:-5
-},
-{
-name:"Camera 4 — Bedroom",
-x:-8,
-y:2.7,
-z:8,
-lookX:-5,
-lookY:1,
-lookZ:5
-}
-];
-
-function openCameras(){
-
-cameraScreen.style.display="flex";
-
-if(!cameraRenderer){
-
-cameraRenderer=
-new THREE.WebGLRenderer({
-canvas:cameraCanvas,
-antialias:true
-});
-
-cameraRenderer.setSize(
-640,
-360,
-false
-);
-
-securityCamera=
-new THREE.PerspectiveCamera(
-65,
-640/360,
-.05,
-100
-);
-
-}
-
-updateSecurityCamera();
-
-}
-
-function updateSecurityCamera(){
-
-if(!securityCamera)
-return;
-
-const data=
-cameraLocations[cameraNumber];
-
-securityCamera.position.set(
-data.x,
-data.y,
-data.z
-);
-
-securityCamera.lookAt(
-data.lookX,
-data.lookY,
-data.lookZ
-);
-
-cameraName.textContent=
-data.name;
-
-}
-
-function updateCameraFeed(){
-
-if(
-cameraScreen.style.display!=="flex"
-)
-return;
-
-if(
-!cameraRenderer||
-!securityCamera
-)
-return;
-
-updateSecurityCamera();
-
-cameraRenderer.render(
-scene,
-securityCamera
-);
-
-}
-
-cameraButton.addEventListener(
-"click",
-openCameras
-);
-
-document.getElementById(
-"closeCamera"
-).addEventListener(
-"click",
-function(){
-
-cameraScreen.style.display="none";
-
-}
-);
-
-document.getElementById(
-"previousCamera"
-).addEventListener(
-"click",
-function(){
-
-cameraNumber=
-(
-cameraNumber-
-1+
-cameraLocations.length
-)%
-cameraLocations.length;
-
-updateSecurityCamera();
-
-}
-);
-
-document.getElementById(
-"nextCamera"
-).addEventListener(
-"click",
-function(){
-
-cameraNumber=
-(
-cameraNumber+
-1
-)%
-cameraLocations.length;
-
-updateSecurityCamera();
-
-}
-);
-
-
-/* =========================
-   COMPUTER OBBY
-========================= */
-
-function openComputer(){
-
-computerScreen.style.display="flex";
-
-obbyStep=0;
-
-obbyPlayer.style.left="18px";
-obbyPlayer.style.bottom="25px";
-
-obbyText.textContent=
-"Reach the final platform.";
-
-}
-
-document.getElementById(
-"closeComputer"
-).addEventListener(
-"click",
-function(){
-
-computerScreen.style.display="none";
-
-message.textContent=
-"You left the computer.";
-
-}
-);
-
-document.getElementById(
-"obbyJump"
-).addEventListener(
-"click",
-function(){
-
-if(obbyStep===0){
-
-obbyStep=1;
-
-obbyPlayer.style.left="148px";
-obbyPlayer.style.bottom="75px";
-
-obbyText.textContent=
-"Good! Jump again.";
-
-}
-
-else if(obbyStep===1){
-
-obbyStep=2;
-
-obbyPlayer.style.left="278px";
-obbyPlayer.style.bottom="125px";
-
-obbyText.textContent=
-"Almost there!";
-
-}
-
-else if(obbyStep===2){
-
-obbyStep=3;
-
-obbyPlayer.style.left="408px";
-obbyPlayer.style.bottom="175px";
-
-sanity=
-Math.min(
-100,
-sanity+35
-);
-
-obbyText.textContent=
-"YOU BEAT THE OBBY! SANITY RESTORED.";
-
-}
-
-else{
-
-obbyText.textContent=
-"You already completed it.";
-
-}
-
-}
-);
-
-
-/* =========================
-   GAME OVER
-========================= */
-
-function loseGame(reason){
-
-if(gameFinished)
-return;
-
-gameFinished=true;
-gameStarted=false;
-
-gameOverTitle.textContent=
-"GAME OVER";
-
-gameOverText.textContent=
-reason;
-
-gameOverScreen.style.display=
-"flex";
-
-}
-
-function winGame(){
-
-if(gameFinished)
-return;
-
-gameFinished=true;
-gameStarted=false;
-
-gameOverTitle.textContent=
-"6:00 AM";
-
-gameOverText.textContent=
-"The sun is rising. You survived the entire night.";
-
-gameOverScreen.style.display=
-"flex";
-
-}
-
-
-/* =========================
-   RESIZE
-========================= */
-
-window.addEventListener(
-"resize",
-function(){
-
-if(
-!camera||
-!renderer
-)
-return;
-
-camera.aspect=
-window.innerWidth/
-window.innerHeight;
-
-camera.updateProjectionMatrix();
-
-renderer.setSize(
-window.innerWidth,
-window.innerHeight
-);
-
-}
+lookArea.addEventListener(
+    "pointercancel",
+    stopLooking
 );
 
 </script>
 
 </body>
 </html>
-```
