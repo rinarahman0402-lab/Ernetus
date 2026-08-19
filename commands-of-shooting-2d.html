@@ -2,105 +2,207 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Commands of Shooting 2D</title>
 
 <style>
-* {
-    box-sizing: border-box;
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#111;
+    color:white;
+    font-family:Arial,sans-serif;
+    overflow:hidden;
 }
 
-body {
-    margin: 0;
-    background: #101318;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    background:linear-gradient(#18232d,#34434d);
 }
 
-#game {
-    max-width: 1000px;
-    margin: auto;
-    padding: 12px;
+canvas{
+    width:100%;
+    height:100%;
+    display:block;
+    touch-action:none;
 }
 
-h1 {
-    margin: 8px;
-    font-size: 32px;
+#briefing{
+    position:absolute;
+    inset:0;
+    z-index:10;
+    background:rgba(0,0,0,.9);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
 }
 
-#hud {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    background: #20252b;
-    border: 2px solid #555;
-    border-radius: 12px;
-    padding: 10px;
-    margin-bottom: 10px;
-    font-weight: bold;
+#briefingBox{
+    width:min(600px,95%);
+    background:#20252a;
+    border:3px solid #aaa;
+    border-radius:18px;
+    padding:25px;
+    text-align:center;
 }
 
-#gameCanvas {
-    width: 100%;
-    max-width: 900px;
-    height: 520px;
-    background: #37474f;
-    border: 4px solid #777;
-    border-radius: 12px;
-    display: block;
-    margin: auto;
-    cursor: crosshair;
-    touch-action: none;
+#briefingBox h1{
+    margin-top:0;
 }
 
-#message {
-    min-height: 35px;
-    margin-top: 10px;
-    font-size: 18px;
-    font-weight: bold;
+#command{
+    font-size:22px;
+    line-height:1.5;
+    margin:25px 0;
 }
 
-#briefing {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.88);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    padding: 20px;
+button{
+    border:0;
+    border-radius:12px;
+    padding:15px 28px;
+    font-size:20px;
+    font-weight:bold;
+    background:#e4bd36;
+    cursor:pointer;
 }
 
-#briefingBox {
-    background: #202020;
-    border: 3px solid #ddd;
-    border-radius: 18px;
-    padding: 28px;
-    max-width: 600px;
-    width: 100%;
+#hud{
+    position:absolute;
+    z-index:5;
+    top:10px;
+    left:10px;
+    right:10px;
+    display:none;
+    justify-content:space-between;
+    pointer-events:none;
+    font-weight:bold;
+    font-size:18px;
+    text-shadow:0 2px 4px #000;
 }
 
-#briefingBox h2 {
-    margin-top: 0;
+#message{
+    position:absolute;
+    z-index:6;
+    top:50px;
+    left:50%;
+    transform:translateX(-50%);
+    font-weight:bold;
+    text-shadow:0 2px 4px #000;
+    pointer-events:none;
 }
 
-button {
-    background: #e0b52f;
-    border: 3px solid #111;
-    border-radius: 10px;
-    padding: 13px 25px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
+#gun{
+    position:absolute;
+    z-index:4;
+    left:50%;
+    bottom:-8px;
+    transform:translateX(-50%);
+    width:230px;
+    height:150px;
+    pointer-events:none;
 }
 
-button:hover {
-    transform: scale(1.04);
+.gun-body{
+    position:absolute;
+    left:75px;
+    bottom:20px;
+    width:110px;
+    height:55px;
+    background:#191919;
+    border-radius:8px;
+    transform:skewX(-8deg);
 }
 
-.hidden {
-    display: none !important;
+.gun-barrel{
+    position:absolute;
+    left:145px;
+    bottom:62px;
+    width:100px;
+    height:18px;
+    background:#090909;
+    border-radius:5px;
+}
+
+.gun-scope{
+    position:absolute;
+    left:105px;
+    bottom:72px;
+    width:55px;
+    height:18px;
+    background:#333;
+    border-radius:5px;
+}
+
+.gun-grip{
+    position:absolute;
+    left:85px;
+    bottom:-5px;
+    width:32px;
+    height:65px;
+    background:#151515;
+    transform:rotate(15deg);
+    border-radius:5px;
+}
+
+#muzzle{
+    position:absolute;
+    left:240px;
+    bottom:62px;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#555;
+}
+
+.flash{
+    animation:flash .08s linear;
+}
+
+@keyframes flash{
+    0%{background:#fff}
+    100%{background:#555}
+}
+
+#crosshair{
+    position:absolute;
+    z-index:3;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:45px;
+    height:45px;
+    border:2px solid rgba(255,255,255,.75);
+    border-radius:50%;
+    pointer-events:none;
+}
+
+#crosshair:before,
+#crosshair:after{
+    content:"";
+    position:absolute;
+    background:white;
+}
+
+#crosshair:before{
+    width:2px;
+    height:65px;
+    left:20px;
+    top:-12px;
+}
+
+#crosshair:after{
+    width:65px;
+    height:2px;
+    left:-12px;
+    top:20px;
+}
+
+.hidden{
+    display:none!important;
 }
 </style>
 </head>
@@ -109,346 +211,457 @@ button:hover {
 
 <div id="game">
 
-<h1>🎯 Commands of Shooting 2D</h1>
+<canvas id="canvas" width="1000" height="650"></canvas>
 
 <div id="hud">
-    <div>Level: <span id="levelText">1</span>/50</div>
-    <div>Targets: <span id="targetsText">0</span></div>
-    <div>Remaining: <span id="remainingText">0</span></div>
+    <span>LEVEL <b id="level">1</b>/50</span>
+    <span>TARGETS: <b id="targets">0</b></span>
+    <span>LEFT: <b id="left">0</b></span>
 </div>
-
-<canvas id="gameCanvas" width="900" height="520"></canvas>
 
 <div id="message"></div>
 
+<div id="crosshair"></div>
+
+<div id="gun">
+    <div class="gun-body"></div>
+    <div class="gun-barrel"></div>
+    <div class="gun-scope"></div>
+    <div class="gun-grip"></div>
+    <div id="muzzle"></div>
 </div>
 
 <div id="briefing">
-
-<div id="briefingBox">
-
-<h2>🧑‍✈️ COMMANDER BRIEFING</h2>
-
-<p id="briefingText"></p>
-
-<button id="startButton">BEGIN MISSION</button>
-
+    <div id="briefingBox">
+        <h1>🧑‍✈️ COMMANDER</h1>
+        <div id="command"></div>
+        <button id="begin">BEGIN MISSION</button>
+    </div>
 </div>
 
 </div>
 
 <script>
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-const levelText = document.getElementById("levelText");
-const targetsText = document.getElementById("targetsText");
-const remainingText = document.getElementById("remainingText");
-const briefing = document.getElementById("briefing");
-const briefingText = document.getElementById("briefingText");
-const startButton = document.getElementById("startButton");
-const message = document.getElementById("message");
+const briefing=document.getElementById("briefing");
+const command=document.getElementById("command");
+const begin=document.getElementById("begin");
 
-let level = 1;
-let enemies = [];
-let missionType = "all";
-let targetColor = null;
-let missionStarted = false;
+const hud=document.getElementById("hud");
+const message=document.getElementById("message");
 
-const colors = [
-    {name:"RED", color:"#ef5350"},
-    {name:"BLUE", color:"#42a5f5"},
-    {name:"GREEN", color:"#66bb6a"},
-    {name:"YELLOW", color:"#ffee58"},
-    {name:"PURPLE", color:"#ab47bc"}
+const levelText=document.getElementById("level");
+const targetsText=document.getElementById("targets");
+const leftText=document.getElementById("left");
+
+const muzzle=document.getElementById("muzzle");
+
+let level=1;
+let enemies=[];
+let missionType="color";
+let targetColor="";
+let playing=false;
+
+const colors={
+    RED:"#ef4444",
+    GREEN:"#22c55e",
+    BLUE:"#3b82f6",
+    YELLOW:"#facc15"
+};
+
+const colorNames=[
+    "RED",
+    "GREEN",
+    "BLUE",
+    "YELLOW"
 ];
 
-function randomColor() {
-    return colors[Math.floor(Math.random() * colors.length)];
+function resizeCanvas(){
+
+    const dpr=Math.min(devicePixelRatio||1,2);
+
+    const rect=canvas.getBoundingClientRect();
+
+    canvas.width=rect.width*dpr;
+    canvas.height=rect.height*dpr;
+
+    ctx.setTransform(
+        dpr,0,0,dpr,0,0
+    );
 }
 
-function createMission() {
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
 
-    if (level === 1 || Math.random() < 0.55) {
+resizeCanvas();
 
-        missionType = "color";
 
-        const selected = randomColor();
-        targetColor = selected;
+function makeMission(){
 
-        briefingText.innerHTML =
-            `Level <b>${level}</b><br><br>
-            Commander speaking.<br><br>
-            🎯 <b>Target ONLY the ${selected.name} Stickmen.</b><br><br>
-            Do NOT target the other colours.`;
+    /*
+      About 40% of missions:
+      eliminate everyone.
 
-    } else {
+      About 60%:
+      eliminate one colour.
+    */
 
-        missionType = "all";
-        targetColor = null;
+    if(Math.random()<.4){
 
-        briefingText.innerHTML =
-            `Level <b>${level}</b><br><br>
-            Commander speaking.<br><br>
-            🚨 <b>Eliminate EVERY Stickman.</b><br><br>
-            Clear the entire area.`;
+        missionType="all";
+        targetColor="";
+
+        command.innerHTML=
+        `
+        <b>LEVEL ${level}</b><br><br>
+        🚨 <b>ELIMINATE EVERY STICKMAN.</b><br><br>
+        All four colours are targets:<br>
+        🔴 RED &nbsp;
+        🟢 GREEN &nbsp;
+        🔵 BLUE &nbsp;
+        🟡 YELLOW
+        `;
+
+    }else{
+
+        missionType="color";
+
+        targetColor=
+        colorNames[
+            Math.floor(
+                Math.random()*colorNames.length
+            )
+        ];
+
+        command.innerHTML=
+        `
+        <b>LEVEL ${level}</b><br><br>
+        🎯 <b>ELIMINATE ONLY THE ${targetColor} STICKMEN.</b><br><br>
+        Do NOT shoot the other colours.
+        `;
     }
 }
 
-function setupLevel() {
 
-    enemies = [];
+function createEnemies(){
 
-    const amount = Math.min(4 + level, 35);
+    enemies=[];
 
-    for (let i = 0; i < amount; i++) {
+    /*
+      More enemies as levels increase.
+      Level 1 = 7
+      Level 50 = 31
+    */
 
-        const c = randomColor();
+    const amount=
+    Math.min(
+        7+Math.floor(level*.5),
+        31
+    );
+
+    /*
+      Make sure that a colour mission
+      ALWAYS contains at least one
+      correct target.
+    */
+
+    if(missionType==="color"){
+
+        const first={
+            x:120+Math.random()*760,
+            y:150+Math.random()*330,
+            size:28+Math.random()*8,
+            color:targetColor,
+            alive:true,
+            vx:(Math.random()-.5)*
+                (.4+level*.015),
+            vy:(Math.random()-.5)*
+                (.25+level*.01)
+        };
+
+        enemies.push(first);
+    }
+
+    while(enemies.length<amount){
+
+        const c=
+        colorNames[
+            Math.floor(
+                Math.random()*colorNames.length
+            )
+        ];
 
         enemies.push({
-            x: 80 + Math.random() * 740,
-            y: 120 + Math.random() * 260,
-            color: c.color,
-            name: c.name,
-            alive: true,
 
-            speedX:
-                (Math.random() - 0.5) *
-                (0.4 + level * 0.025),
+            x:80+Math.random()*840,
 
-            speedY:
-                (Math.random() - 0.5) *
-                (0.25 + level * 0.015),
+            y:130+Math.random()*370,
 
-            size: 18 + Math.random() * 7
+            size:28+Math.random()*8,
+
+            color:c,
+
+            alive:true,
+
+            vx:(Math.random()-.5)*
+               (.4+level*.015),
+
+            vy:(Math.random()-.5)*
+               (.25+level*.01)
         });
     }
 
     updateHUD();
 }
 
-function updateHUD() {
 
-    levelText.textContent = level;
+function updateHUD(){
+
+    const alive=
+    enemies.filter(e=>e.alive);
 
     let targets;
 
-    if (missionType === "all") {
+    if(missionType==="all"){
 
-        targets =
-            enemies.filter(e => e.alive).length;
+        targets=alive.length;
 
-    } else {
+    }else{
 
-        targets =
-            enemies.filter(e =>
-                e.alive &&
-                e.name === targetColor.name
-            ).length;
+        targets=
+        alive.filter(
+            e=>e.color===targetColor
+        ).length;
     }
 
-    const remaining =
-        enemies.filter(e => e.alive).length;
-
-    targetsText.textContent = targets;
-    remainingText.textContent = remaining;
+    levelText.textContent=level;
+    targetsText.textContent=targets;
+    leftText.textContent=alive.length;
 }
 
-function startLevel() {
+
+function startLevel(){
 
     briefing.classList.add("hidden");
 
-    missionStarted = true;
+    hud.style.display="flex";
 
-    setupLevel();
+    playing=true;
 
-    if (missionType === "all") {
+    createEnemies();
 
-        message.textContent =
-            "🎯 Eliminate everyone!";
+    message.textContent=
+    missionType==="all"
+    ?"🎯 Shoot EVERY Stickman!"
+    :"🎯 Target ONLY "+targetColor+"!";
 
-    } else {
-
-        message.textContent =
-            "🎯 Only target the " +
-            targetColor.name +
-            " Stickmen!";
-    }
+    requestAnimationFrame(gameLoop);
 }
 
-function drawBackground() {
 
-    ctx.fillStyle = "#263238";
-    ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
+begin.addEventListener(
+    "click",
+    startLevel
+);
+
+
+function drawBackground(){
+
+    const w=canvas.clientWidth;
+    const h=canvas.clientHeight;
+
+    /*
+      Night sky
+    */
+
+    const sky=
+    ctx.createLinearGradient(
+        0,0,0,h
     );
 
-    // Ground
+    sky.addColorStop(
+        0,
+        "#101923"
+    );
 
-    ctx.fillStyle = "#455a64";
+    sky.addColorStop(
+        1,
+        "#303b42"
+    );
+
+    ctx.fillStyle=sky;
+    ctx.fillRect(0,0,w,h);
+
+    /*
+      Moon
+    */
+
+    ctx.fillStyle="#e8e6cf";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        w*.82,
+        h*.15,
+        38,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+      Ground
+    */
+
+    ctx.fillStyle="#222a2e";
 
     ctx.fillRect(
         0,
-        390,
-        canvas.width,
-        130
+        h*.68,
+        w,
+        h*.32
     );
 
-    // Buildings
+    /*
+      Buildings
+    */
 
-    ctx.fillStyle = "#37474f";
+    ctx.fillStyle="#1b2227";
 
     ctx.fillRect(
         40,
-        70,
+        h*.34,
         180,
-        250
+        h*.34
     );
 
     ctx.fillRect(
-        260,
-        120,
-        220,
-        200
+        w-240,
+        h*.28,
+        190,
+        h*.40
     );
 
-    ctx.fillRect(
-        540,
-        55,
-        300,
-        265
-    );
+    /*
+      Windows
+    */
 
-    // Windows
+    ctx.fillStyle="#70736b";
 
-    ctx.fillStyle = "#90a4ae";
+    for(let x=65;x<200;x+=45){
 
-    for (
-        let x = 65;
-        x < 200;
-        x += 45
-    ) {
-
-        for (
-            let y = 100;
-            y < 280;
-            y += 45
-        ) {
+        for(
+            let y=h*.39;
+            y<h*.62;
+            y+=45
+        ){
 
             ctx.fillRect(
-                x,
-                y,
-                20,
-                25
-            );
-        }
-    }
-
-    for (
-        let x = 580;
-        x < 810;
-        x += 50
-    ) {
-
-        for (
-            let y = 90;
-            y < 280;
-            y += 45
-        ) {
-
-            ctx.fillRect(
-                x,
-                y,
-                25,
-                25
+                x,y,20,25
             );
         }
     }
 }
 
-function drawEnemy(e) {
 
-    if (!e.alive) return;
+function drawStickman(e){
+
+    if(!e.alive)return;
 
     ctx.save();
 
-    ctx.strokeStyle = e.color;
-    ctx.fillStyle = e.color;
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
+    ctx.strokeStyle=
+    colors[e.color];
 
-    // Head
+    ctx.fillStyle=
+    colors[e.color];
+
+    ctx.lineWidth=6;
+
+    ctx.lineCap="round";
+
+    /*
+      Head
+    */
 
     ctx.beginPath();
 
     ctx.arc(
         e.x,
-        e.y - e.size * 1.4,
-        e.size * 0.48,
+        e.y-e.size*1.45,
+        e.size*.45,
         0,
-        Math.PI * 2
+        Math.PI*2
     );
 
     ctx.fill();
 
-    // Body
+    /*
+      Body
+    */
 
     ctx.beginPath();
 
     ctx.moveTo(
         e.x,
-        e.y - e.size
+        e.y-e.size
     );
 
     ctx.lineTo(
         e.x,
-        e.y + e.size
+        e.y+e.size
     );
 
     ctx.stroke();
 
-    // Arms
+    /*
+      Arms
+    */
 
     ctx.beginPath();
 
     ctx.moveTo(
-        e.x - e.size,
-        e.y - e.size * 0.5
+        e.x-e.size,
+        e.y-e.size*.4
     );
 
     ctx.lineTo(
-        e.x + e.size,
-        e.y - e.size * 0.5
+        e.x+e.size,
+        e.y-e.size*.4
     );
 
     ctx.stroke();
 
-    // Legs
+    /*
+      Legs
+    */
 
     ctx.beginPath();
 
     ctx.moveTo(
         e.x,
-        e.y + e.size
+        e.y+e.size
     );
 
     ctx.lineTo(
-        e.x - e.size * 0.7,
-        e.y + e.size * 1.9
+        e.x-e.size*.7,
+        e.y+e.size*1.9
     );
 
     ctx.moveTo(
         e.x,
-        e.y + e.size
+        e.y+e.size
     );
 
     ctx.lineTo(
-        e.x + e.size * 0.7,
-        e.y + e.size * 1.9
+        e.x+e.size*.7,
+        e.y+e.size*1.9
     );
 
     ctx.stroke();
@@ -456,232 +669,269 @@ function drawEnemy(e) {
     ctx.restore();
 }
 
-function draw() {
+
+function updateEnemies(){
+
+    for(const e of enemies){
+
+        if(!e.alive)continue;
+
+        e.x+=e.vx;
+        e.y+=e.vy;
+
+        const w=canvas.clientWidth;
+        const h=canvas.clientHeight;
+
+        if(
+            e.x<40 ||
+            e.x>w-40
+        ){
+
+            e.vx*=-1;
+        }
+
+        if(
+            e.y<h*.25 ||
+            e.y>h*.65
+        ){
+
+            e.vy*=-1;
+        }
+    }
+}
+
+
+function draw(){
 
     drawBackground();
 
-    for (const enemy of enemies) {
+    for(const e of enemies){
 
-        drawEnemy(enemy);
-    }
-
-    if (missionStarted) {
-
-        ctx.strokeStyle =
-            "rgba(255,255,255,.6)";
-
-        ctx.lineWidth = 2;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            canvas.width / 2,
-            canvas.height / 2,
-            18,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.stroke();
+        drawStickman(e);
     }
 }
 
-function update() {
 
-    if (!missionStarted) return;
+function gameLoop(){
 
-    for (const e of enemies) {
+    if(!playing)return;
 
-        if (!e.alive) continue;
-
-        e.x += e.speedX;
-        e.y += e.speedY;
-
-        if (
-            e.x < 25 ||
-            e.x > canvas.width - 25
-        ) {
-
-            e.speedX *= -1;
-        }
-
-        if (
-            e.y < 100 ||
-            e.y > 380
-        ) {
-
-            e.speedY *= -1;
-        }
-    }
-
-    updateHUD();
-}
-
-function gameLoop() {
-
-    update();
+    updateEnemies();
 
     draw();
 
-    requestAnimationFrame(gameLoop);
+    updateHUD();
+
+    requestAnimationFrame(
+        gameLoop
+    );
 }
 
-function shoot(x, y) {
 
-    if (!missionStarted) return;
+function shoot(clientX,clientY){
 
-    for (
-        let i = enemies.length - 1;
-        i >= 0;
-        i--
-    ) {
+    if(!playing)return;
 
-        const e = enemies[i];
+    const rect=
+    canvas.getBoundingClientRect();
 
-        if (!e.alive) continue;
+    const x=
+    clientX-rect.left;
 
-        const distance =
-            Math.hypot(
-                e.x - x,
-                e.y - y
-            );
+    const y=
+    clientY-rect.top;
 
-        const hitRadius =
-            e.size * 2.2;
+    /*
+      Find the closest Stickman
+      to where the player tapped.
+    */
 
-        if (distance <= hitRadius) {
+    let hit=null;
+    let best=Infinity;
 
-            // Wrong colour
+    for(const e of enemies){
 
-            if (
-                missionType === "color" &&
-                e.name !== targetColor.name
-            ) {
+        if(!e.alive)continue;
 
-                message.textContent =
-                    "❌ WRONG TARGET! Commander ordered you to target only " +
-                    targetColor.name +
-                    ".";
+        const distance=
+        Math.hypot(
+            e.x-x,
+            (e.y-e.size*.6)-y
+        );
 
-                return;
-            }
+        const hitRadius=
+        e.size*1.8;
 
-            // Correct target
+        if(
+            distance<hitRadius &&
+            distance<best
+        ){
 
-            e.alive = false;
-
-            message.textContent =
-                "🎯 TARGET CLEARED!";
-
-            checkLevelComplete();
-
-            return;
+            best=distance;
+            hit=e;
         }
     }
 
-    message.textContent =
-        "Missed!";
+    /*
+      Gun flash
+    */
+
+    muzzle.classList.remove("flash");
+
+    void muzzle.offsetWidth;
+
+    muzzle.classList.add("flash");
+
+
+    if(!hit){
+
+        message.textContent=
+        "💨 MISSED!";
+
+        return;
+    }
+
+
+    /*
+      Wrong colour
+    */
+
+    if(
+        missionType==="color" &&
+        hit.color!==targetColor
+    ){
+
+        message.textContent=
+        "❌ WRONG COLOUR! TARGET "+
+        targetColor+
+        ".";
+
+        return;
+    }
+
+
+    /*
+      Correct target
+    */
+
+    hit.alive=false;
+
+    message.textContent=
+    "🎯 TARGET CLEARED!";
+
+    checkMission();
 }
 
-canvas.addEventListener(
-    "pointerdown",
-    function(event) {
 
-        const rect =
-            canvas.getBoundingClientRect();
+function checkMission(){
 
-        const x =
-            (event.clientX - rect.left) *
-            (canvas.width / rect.width);
+    const alive=
+    enemies.filter(
+        e=>e.alive
+    );
 
-        const y =
-            (event.clientY - rect.top) *
-            (canvas.height / rect.height);
+    let targetsLeft;
 
-        shoot(x, y);
-    }
-);
+    if(missionType==="all"){
 
-function checkLevelComplete() {
+        targetsLeft=alive.length;
 
-    let remainingTargets;
+    }else{
 
-    if (missionType === "all") {
-
-        remainingTargets =
-            enemies.filter(
-                e => e.alive
-            ).length;
-
-    } else {
-
-        remainingTargets =
-            enemies.filter(
-                e =>
-                    e.alive &&
-                    e.name === targetColor.name
-            ).length;
+        targetsLeft=
+        alive.filter(
+            e=>e.color===targetColor
+        ).length;
     }
 
-    if (remainingTargets > 0) return;
+    if(targetsLeft>0){
 
-    missionStarted = false;
+        updateHUD();
 
-    if (level >= 50) {
+        return;
+    }
+
+    playing=false;
+
+    setTimeout(
+        nextLevel,
+        700
+    );
+}
+
+
+function nextLevel(){
+
+    if(level>=50){
 
         briefing.classList.remove(
             "hidden"
         );
 
-        briefingText.innerHTML = `
-            🏆 <b>MISSION COMPLETE!</b><br><br>
-            You completed all
-            <b>50 levels</b> of
-            <b>Commands of Shooting 2D</b>!
-            <br><br>
-            Commander is impressed.
+        hud.style.display="none";
+
+        command.innerHTML=
+        `
+        🏆 <b>ALL 50 LEVELS COMPLETE!</b><br><br>
+        You followed every commander order
+        and completed the entire mission.
         `;
 
-        startButton.textContent =
-            "PLAY AGAIN";
+        begin.textContent=
+        "PLAY AGAIN";
 
-        startButton.onclick =
-            function() {
+        begin.onclick=function(){
 
-                level = 1;
+            level=1;
 
-                startButton.textContent =
-                    "BEGIN MISSION";
+            begin.textContent=
+            "BEGIN MISSION";
 
-                startButton.onclick =
-                    startLevel;
+            begin.onclick=
+            startLevel;
 
-                createMission();
-            };
+            makeMission();
+        };
 
         return;
     }
 
     level++;
 
+    makeMission();
+
     briefing.classList.remove(
         "hidden"
     );
 
-    createMission();
-
-    startButton.textContent =
-        "BEGIN NEXT LEVEL";
+    begin.textContent=
+    "BEGIN LEVEL "+level;
 }
 
-startButton.onclick =
-    startLevel;
 
-createMission();
+/*
+  Shooting controls
+*/
 
-gameLoop();
+canvas.addEventListener(
+    "pointerdown",
+    function(e){
+
+        shoot(
+            e.clientX,
+            e.clientY
+        );
+    }
+);
+
+
+/*
+  Start first briefing
+*/
+
+makeMission();
 
 </script>
 
 </body>
-  </html>
+</html>
