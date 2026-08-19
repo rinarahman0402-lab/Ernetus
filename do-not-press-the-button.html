@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DO NOT PRESS THE BUTTON</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      user-select: none;
+      transition: background-color 0.5s ease;
+    }
+
+    #counter {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #888;
+    }
+
+    #message {
+      font-size: 1.8rem;
+      margin-bottom: 40px;
+      min-height: 80px;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+
+    #red-btn {
+      background-color: #ff3333;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: bold;
+      padding: 30px 60px;
+      border: 8px solid #990000;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 0 #880000;
+      transition: all 0.1s ease;
+    }
+
+    #red-btn:active {
+      box-shadow: 0 2px 0 #880000;
+      transform: translateY(8px);
+    }
+
+    /* Animation effects */
+    .shake {
+      animation: shake 0.2s ease-in-out;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="counter">Clicks: 0</div>
+  <div id="message">DO NOT PRESS THE BUTTON.</div>
+  <button id="red-btn">DON'T CLICK</button>
+
+  <script>
+    const button = document.getElementById('red-btn');
+    const message = document.getElementById('message');
+    const counter = document.getElementById('counter');
+
+    let clicks = 0;
+
+    // --- SOUND SYNTHESIZER (No external MP3 files required) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      // Resume context if browser paused it
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        // High-pitched funny pop sound
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } 
+      else if (type === 'alarm') {
+        // Low error buzz sound
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } 
+      else if (type === 'win') {
+        // 3-note victory chime
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const noteOsc = audioCtx.createOscillator();
+          const noteGain = audioCtx.createGain();
+          noteOsc.connect(noteGain);
+          noteGain.connect(audioCtx.destination);
+
+          noteOsc.type = 'triangle';
+          noteOsc.frequency.setValueAtTime(freq, now + (i * 0.12));
+          noteGain.gain.setValueAtTime(0.3, now + (i * 0.12));
+          noteGain.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.12) + 0.3);
+
+          noteOsc.start(now + (i * 0.12));
+          noteOsc.stop(now + (i * 0.12) + 0.3);
+        });
+      }
+    }
+
+    // List of dialogue events
+    const dialogue = [
+      { count: 1, text: "Hey! I told you NOT to press it!", sound: 'click' },
+      { count: 2, text: "Stop that. Seriously.", sound: 'click' },
+      { count: 3, text: "What did the button ever do to you?", sound: 'click' },
+      { count: 5, text: "Warning: Every click drains 1% of your battery. (Not really!)", sound: 'alarm' },
+      { count: 8, text: "Okay, you made your point. Now leave.", sound: 'click' },
+      { count: 12, text: "Is this fun for you? Just tapping a red circle?", sound: 'click' },
+      { count: 15, text: "If you click 5 more times, bad things will happen...", sound: 'alarm' },
+      { count: 20, text: "SYSTEM ERROR: Self-destruct activated!", sound: 'alarm' },
+      { count: 21, text: "Just kidding. But seriously, go play another game on Eternetus.", sound: 'click' },
+      { count: 25, text: "You must really have nothing else to do right now.", sound: 'click' },
+      { count: 30, text: "Fine. You win a prize! Your prize is... MORE CLICKS.", sound: 'click' },
+      { count: 50, text: "🏆 UNLOCKED ACHIEVEMENT: Absolute Persistence!", sound: 'win' },
+      { count: 80, text: "Okay, go away now.", sound: 'click' },
+      { count: 100, text: "100 CLICKS?! You officially beat the button!", sound: 'win' }
+    ];
+
+    button.addEventListener('click', () => {
+      clicks++;
+      counter.innerText = `Clicks: ${clicks}`;
+
+      // Find dialogue match
+      const foundMessage = dialogue.find(item => item.count === clicks);
+
+      if (foundMessage) {
+        message.innerText = foundMessage.text;
+        playSound(foundMessage.sound);
+      } else {
+        playSound('click'); // Default pop sound
+      }
+
+      // Visual Shake
+      button.classList.add('shake');
+      setTimeout(() => button.classList.remove('shake'), 200);
+
+      // Background color upgrades
+      if (clicks === 20) {
+        document.body.style.backgroundColor = '#8b0000';
+      } else if (clicks === 50) {
+        document.body.style.backgroundColor = '#114b11';
+      } else if (clicks === 100) {
+        document.body.style.backgroundColor = '#4a148c';
+      }
+    });
+  </script>
+
+</body>
+</html>
