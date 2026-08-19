@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monster Stalker 3D</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+            touch-action: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .ui-metric {
+            margin-bottom: 8px;
+            background: rgba(15, 15, 25, 0.6);
+            padding: 6px 12px;
+            border-left: 3px solid #8a2be2;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        /* --- CROSS-PLATFORM CONTROL LAYOUT --- */
+        #joystick-zone {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 15;
+            touch-action: none;
+            cursor: pointer;
+        }
+        #joystick-nub {
+            width: 50px;
+            height: 50px;
+            background: rgba(138, 43, 226, 0.7);
+            border: 2px solid #bb86fc;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        #action-zone {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 20px;
+            z-index: 15;
+        }
+        .action-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            touch-action: none;
+            cursor: pointer;
+        }
+        #btn-bomb {
+            background: radial-gradient(circle, #9400d3 0%, #4b0082 100%);
+            border-color: #bb86fc;
+        }
+        #btn-grab {
+            background: radial-gradient(circle, #ff0055 0%, #990033 100%);
+            border-color: #ff6699;
+        }
+    </style>
+    <!-- Import Three.js Engine via CDN -->
+    <script src="https://cloudflare.com"></script>
+</head>
+<body>
+
+    <div id="ui-overlay">
+        <div class="ui-metric">Score: <span id="score-txt">0</span></div>
+        <div class="ui-metric">Status: <span id="status-txt" style="color: #6200ee;">CRAWLING</span></div>
+    </div>
+
+    <!-- On-Screen Controllers -->
+    <div id="joystick-zone">
+        <div id="joystick-nub"></div>
+    </div>
+
+    <div id="action-zone">
+        <div id="btn-bomb" class="action-btn">BOMB</div>
+        <div id="btn-grab" class="action-btn">GRAB /<br>THROW</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- 1. ENGINE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a12);
+        scene.fog = new THREE.FogExp2(0x0a0a12, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // --- 2. LIGHTING & ENVIRONMENT ---
+        const ambientLight = new THREE.AmbientLight(0x1a1a3a, 0.6);
+        scene.add(ambientLight);
+
+        const moonlight = new THREE.DirectionalLight(0x7f90b5, 0.8);
+        moonlight.position.set(30, 50, 20);
+        moonlight.castShadow = true;
+        scene.add(moonlight);
+
+        // Forest Floor Ground
+        const floorGeo = new THREE.PlaneGeometry(160, 160);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111611, roughness: 0.9 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Generate Procedural Forest Trees
+        const trees = [];
+        const treeCount = 65;
+        for(let i=0; i<treeCount; i++) {
+            const treeGroup = new THREE.Group();
+            
+            const trunkGeo = new THREE.CylinderGeometry(0.4, 0.7, 5, 5);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2e1d11, roughness: 0.9 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 2.5;
+            trunk.castShadow = true;
+            treeGroup.add(trunk);
+
+            const leavesGeo = new THREE.ConeGeometry(2.5, 5, 5);
+            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f2a18, roughness: 0.8 });
+            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            leaves.position.y = 5.5;
+            leaves.castShadow = true;
+            treeGroup.add(leaves);
+
+            let tx = (Math.random() - 0.5) * 130;
+            let tz = (Math.random() - 0.5) * 130;
+            if (Math.abs(tx) < 12 && Math.abs(tz) < 12) { tx += 20; tz += 20; }
+            
+            treeGroup.position.set(tx, 0, tz);
+            scene.add(treeGroup);
+            trees.push(treeGroup);
+        }
+
+        // --- 3. ENTITIES ---
+        // Player (Crawling Shadow Monster)
+        const monsterGroup = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(1.8, 0.8, 2.5);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5e0b1d, roughness: 0.5 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.4;
+        body.castShadow = true;
+        monsterGroup.add(body);
+
+        const eyeGeo = new THREE.SphereGeometry(0.18, 8, 8);
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+        leftEye.position.set(-0.5, 0.5, 1.25);
+        const rightEye = leftEye.clone();
+        rightEye.position.x = 0.5;
+        monsterGroup.add(leftEye, rightEye);
+
+        scene.add(monsterGroup);
+
+        // NPCs Architecture
+        const npcs = [];
+        const npcCount = 6;
+        const npcMatNormal = new THREE.MeshStandardMaterial({ color: 0xddaa88, roughness: 0.6 });
+        const npcMatSlowed = new THREE.MeshStandardMaterial({ color: 0x3399ff, roughness: 0.4 });
+
+        for(let i=0; i<npcCount; i++) {
+            const npcGroup = new THREE.Group();
+            const npcBodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 8);
+            const npcMesh = new THREE.Mesh(npcBodyGeo, npcMatNormal);
+            npcMesh.position.y = 0.9;
+            npcMesh.castShadow = true;
+            npcGroup.add(npcMesh);
+
+            const lightConeGeo = new THREE.ConeGeometry(1.5, 6, 8);
+            lightConeGeo.rotateX(Math.PI / 2);
+            const lightConeMat = new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 0.15 });
+            const cone = new THREE.Mesh(lightConeGeo, lightConeMat);
+            cone.position.set(0, 0.9, 3);
+            npcGroup.add(cone);
+
+            resetNPC(npcGroup);
+            scene.add(npcGroup);
+            npcs.push({
+                mesh: npcGroup,
+                visualMesh: npcMesh,
+                angle: Math.random() * Math.PI * 2,
+                speed: 0.08,
+                baseSpeed: 0.08,
+                slowTimer: 0,
+                isGrabbed: false
+            });
+        }
+
+        function resetNPC(group) {
+            group.position.set((Math.random() - 0.5) * 80, 0, (Math.random() - 0.5) * 80);
+            group.visible = true;
+        }
+
+        let bombs = [];
+        let particles = [];
+
+        // --- 4. GAME VARIABLES & UNIVERSAL CONTROLS ---
+        let score = 0;
+        let grabbedNPC = null;
+
+        let joystickVector = { x: 0, y: 0 };
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystickNub = document.getElementById('joystick-nub');
+        const maxDragDistance = 60;
+        let activePointerId = null;
+
+        // Unified Pointer Event Logic
+        joystickZone.addEventListener('pointerdown', e => {
+            if (activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            joystickZone.setPointerCapture(e.pointerId);
+            processJoystickMove(e);
+        });
+
+        window.addEventListener('pointermove', e => {
+            if (e.pointerId !== activePointerId) return;
+            processJoystickMove(e);
+        });
+
+        window.addEventListener('pointerup', e => {
+            if (e.pointerId !== activePointerId) return;
+            activePointerId = null;
+            joystickVector = { x: 0, y: 0 };
+            joystickNub.style.transform = `translate(0px, 0px)`;
+        });
+
+        function processJoystickMove(e) {
+            const zoneRect = joystickZone.getBoundingClientRect();
+            const centerX = zoneRect.left + zoneRect.width / 2;
+            const centerY = zoneRect.top + zoneRect.height / 2;
