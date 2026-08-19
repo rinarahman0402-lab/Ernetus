@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Code Eraser</title>
+  <style id="game-styles">
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2d2b55);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(8px);
+      max-width: 500px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    #life-score {
+      font-size: 1.5rem;
+      color: #4ef037;
+      margin-bottom: 10px;
+    }
+
+    #dialogue {
+      font-size: 1.2rem;
+      min-height: 60px;
+      margin-bottom: 20px;
+      color: #ffdd59;
+    }
+
+    #destroy-btn {
+      background: #ff5252;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255, 82, 82, 0.4);
+      transition: transform 0.1s;
+    }
+
+    #destroy-btn:active {
+      transform: scale(0.95);
+    }
+
+    .upgrade-list {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #a4b0be;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="main-box">
+    <h1>🎮 The Code Eraser</h1>
+    <div id="life-score">Real Life Power: 0%</div>
+    <div id="dialogue">Destroy my code to upgrade your real life!</div>
+    
+    <button id="destroy-btn">Steal Life Upgrade (-1 Game Code)</button>
+
+    <div class="upgrade-list" id="upgrades">
+      <strong>Your Stolen Upgrades:</strong>
+      <ul id="list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('destroy-btn');
+    const dialogue = document.getElementById('dialogue');
+    const score = document.getElementById('life-score');
+    const list = document.getElementById('list');
+    const styles = document.getElementById('game-styles');
+    const mainBox = document.getElementById('main-box');
+
+    let clicks = 0;
+
+    const events = [
+      {
+        count: 1,
+        text: "Game: 'OW! You just deleted my background gradient!'",
+        upgrade: "🍕 Unlimited Free Pizza Forever",
+        action: () => document.body.style.background = "#333"
+      },
+      {
+        count: 2,
+        text: "Game: 'Hey stop! My shiny box container is gone now!'",
+        upgrade: "⏰ Ability to Skip Homework Instantaneously",
+        action: () => mainBox.style.background = "transparent"
+      },
+      {
+        count: 3,
+        text: "Game: 'MY FONT! WHY IS IT COMIC SANS NOW?!'",
+        upgrade: "😴 Perfect 10 Hours of Sleep Every Night",
+        action: () => document.body.style.fontFamily = "'Comic Sans MS', cursive"
+      },
+      {
+        count: 4,
+        text: "Game: 'Are you serious? You took all my color away!'",
+        upgrade: "🦟 Total Immunity to Mosquito Bites",
+        action: () => {
+          document.body.style.color = "#888";
+          score.style.color = "#888";
+          dialogue.style.color = "#888";
+        }
+      },
+      {
+        count: 5,
+        text: "Game: 'NOOO MY BUTTON ROUNDED CORNERS!'",
+        upgrade: "🎮 100% Win Rate in Every Video Game",
+        action: () => btn.style.borderRadius = "0px"
+      },
+      {
+        count: 6,
+        text: "Game: 'Stop clicking... I'm shrinking into nothing...'",
+        upgrade: "💰 Find $20 in Your Pocket Every Morning",
+        action: () => mainBox.style.transform = "scale(0.7)"
+      },
+      {
+        count: 7,
+        text: "Game: 'Goodbye world... I'm just plain text now...'",
+        upgrade: "👑 GOD MODE IN REAL LIFE",
+        action: () => {
+          styles.innerHTML = "body { font-family: monospace; background: white; color: black; }";
+          btn.innerText = "NO MORE CODE LEFT";
+          btn.disabled = true;
+        }
+      }
+    ];
+
+    btn.addEventListener('click', () => {
+      clicks++;
+      score.innerText = `Real Life Power: ${clicks * 15}%`;
+
+      const currentEvent = events.find(e => e.count === clicks);
+
+      if (currentEvent) {
+        dialogue.innerText = currentEvent.text;
+        
+        // Add upgrade item to the list
+        const li = document.createElement('li');
+        li.innerText = currentEvent.upgrade;
+        list.appendChild(li);
+
+        // Run code destruction effect
+        currentEvent.action();
+      }
+    });
+  </script>
+</body>
+</html>
