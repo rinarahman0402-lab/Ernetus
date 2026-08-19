@@ -4,1519 +4,1879 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
 <title>Stalker: The Long Night</title>
 
 <style>
 *{box-sizing:border-box}
 
 html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#080b0f;
-    font-family:Arial,sans-serif;
-    touch-action:none;
+margin:0;
+width:100%;
+height:100%;
+background:#080b10;
+font-family:Arial,sans-serif;
+color:white;
 }
 
-#game{
-    position:fixed;
-    inset:0;
+body{overflow:hidden}
+
+button{
+font-family:Arial,sans-serif;
+cursor:pointer;
+-webkit-tap-highlight-color:transparent;
 }
 
 #startScreen{
-    position:fixed;
-    inset:0;
-    z-index:100;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    background:
-        radial-gradient(circle at center,#303943,#080b0f 75%);
-    color:white;
-    text-align:center;
-    padding:20px;
+position:fixed;
+inset:0;
+z-index:1000;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+overflow-y:auto;
+overflow-x:hidden;
+-webkit-overflow-scrolling:touch;
+touch-action:pan-y;
+padding:25px 15px 45px;
+background:radial-gradient(circle at 50% 20%,#303a45 0%,#121820 40%,#05070a 100%);
 }
 
-.panel{
-    width:92%;
-    max-width:600px;
-    margin:auto;
-    background:#0d1117;
-    border:2px solid #59636d;
-    border-radius:20px;
-    padding:22px;
-    box-shadow:0 20px 60px #000;
+.startBox{
+width:100%;
+max-width:650px;
+margin:auto;
+padding:25px;
+background:rgba(12,16,22,.97);
+border:2px solid #59636e;
+border-radius:20px;
+box-shadow:0 20px 70px #000;
+text-align:center;
 }
 
-h1{
-    font-size:clamp(36px,9vw,62px);
-    line-height:1;
-    margin:8px 0 20px;
+.houseIcon{
+font-size:55px;
+margin-bottom:5px;
+}
+
+.startTitle{
+font-size:clamp(35px,10vw,64px);
+line-height:.95;
+margin:5px 0 25px;
+letter-spacing:2px;
 }
 
 .story{
-    text-align:left;
-    line-height:1.55;
-    background:#171d24;
-    padding:18px;
-    border-radius:12px;
-    margin-bottom:22px;
+text-align:left;
+padding:20px;
+border-radius:14px;
+background:#181e26;
+border:1px solid #303944;
+line-height:1.6;
+font-size:17px;
+margin-bottom:25px;
 }
 
-#startButton,
-#restartButton{
-    border:0;
-    border-radius:14px;
-    padding:16px 30px;
-    background:#d7b84d;
-    color:#17130a;
-    font-weight:bold;
-    font-size:20px;
+.story p{
+margin:0 0 18px;
 }
 
-#startButton:active,
-#restartButton:active,
-.action:active{
-    transform:scale(.96);
+.story p:last-child{
+margin-bottom:0;
 }
 
-#error{
-    display:none;
-    margin-top:15px;
-    padding:12px;
-    border-radius:10px;
-    background:#511818;
-    color:#ffb5b5;
+.warning{
+color:#e5c85a;
+font-weight:bold;
+}
+
+#startButton{
+display:block;
+width:100%;
+padding:18px 20px;
+border:0;
+border-radius:14px;
+background:#e2c44d;
+color:#171208;
+font-size:22px;
+font-weight:bold;
+box-shadow:0 6px 0 #8b7623;
+}
+
+#startButton:active{
+transform:translateY(4px);
+box-shadow:0 2px 0 #8b7623;
+}
+
+#startError{
+display:none;
+margin-top:15px;
+padding:12px;
+border-radius:10px;
+background:#541c1c;
+color:#ffbcbc;
+font-size:14px;
+}
+
+#game{
+position:fixed;
+inset:0;
+z-index:1;
+background:#080b10;
+}
+
+#game canvas{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+display:block;
 }
 
 #hud{
-    position:fixed;
-    z-index:20;
-    top:8px;
-    left:8px;
-    right:8px;
-    display:none;
-    justify-content:space-between;
-    gap:5px;
-    color:white;
-    pointer-events:none;
+position:fixed;
+z-index:50;
+top:10px;
+left:10px;
+right:10px;
+display:none;
+justify-content:center;
+gap:6px;
+pointer-events:none;
 }
 
 .stat{
-    background:#000c;
-    padding:7px 8px;
-    border-radius:8px;
-    font-size:11px;
+padding:8px 10px;
+border-radius:9px;
+background:rgba(0,0,0,.72);
+border:1px solid #ffffff22;
+font-size:11px;
+white-space:nowrap;
 }
 
 #message{
-    position:fixed;
-    z-index:20;
-    top:55px;
-    left:50%;
-    transform:translateX(-50%);
-    color:white;
-    background:#000d;
-    padding:9px 14px;
-    border-radius:9px;
-    display:none;
-    text-align:center;
-    max-width:90%;
+position:fixed;
+z-index:50;
+left:50%;
+top:62px;
+transform:translateX(-50%);
+display:none;
+max-width:90%;
+padding:9px 14px;
+border-radius:10px;
+background:rgba(0,0,0,.78);
+text-align:center;
+font-size:14px;
 }
 
 #joystick{
-    position:fixed;
-    z-index:30;
-    left:15px;
-    bottom:15px;
-    width:140px;
-    height:140px;
-    border:3px solid #ffffff55;
-    border-radius:50%;
-    background:#ffffff12;
-    display:none;
-    touch-action:none;
+position:fixed;
+z-index:60;
+left:15px;
+bottom:18px;
+width:135px;
+height:135px;
+display:none;
+border-radius:50%;
+border:3px solid #ffffff40;
+background:#ffffff10;
+touch-action:none;
 }
 
-#knob{
-    position:absolute;
-    left:38px;
-    top:38px;
-    width:58px;
-    height:58px;
-    border-radius:50%;
-    background:#d7b84d;
-    border:3px solid white;
+#joystickKnob{
+position:absolute;
+left:37px;
+top:37px;
+width:58px;
+height:58px;
+border-radius:50%;
+background:#e2c44d;
+border:3px solid #fff;
+box-shadow:0 4px 12px #0008;
 }
 
 .action{
-    position:fixed;
-    z-index:30;
-    right:15px;
-    border:0;
-    border-radius:12px;
-    padding:12px 15px;
-    background:#d7b84d;
-    color:#17130a;
-    font-weight:bold;
-    display:none;
+position:fixed;
+z-index:60;
+right:15px;
+display:none;
+min-width:105px;
+padding:12px 15px;
+border:0;
+border-radius:12px;
+background:#e2c44d;
+color:#171208;
+font-size:14px;
+font-weight:bold;
+box-shadow:0 4px 12px #0008;
 }
 
-#interact{bottom:150px}
-#camera{bottom:95px}
-#hide{bottom:40px}
+.action:active{transform:scale(.95)}
 
-#cameraPanel,
-#obbyPanel,
-#gameOver{
-    position:fixed;
-    inset:0;
-    z-index:80;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    background:#000d;
-    color:white;
-    padding:15px;
+#interactButton{bottom:155px}
+#cameraButton{bottom:100px}
+#hideButton{bottom:45px}
+
+.modalScreen{
+position:fixed;
+inset:0;
+z-index:500;
+display:none;
+align-items:center;
+justify-content:center;
+padding:15px;
+background:rgba(0,0,0,.84);
 }
 
 .modal{
-    width:92%;
-    max-width:600px;
-    background:#10151b;
-    border:2px solid #59636d;
-    border-radius:18px;
-    padding:18px;
-    text-align:center;
+width:100%;
+max-width:650px;
+max-height:92vh;
+overflow:auto;
+padding:20px;
+border-radius:18px;
+background:#10151b;
+border:2px solid #505b66;
+box-shadow:0 20px 70px #000;
+text-align:center;
+}
+
+.modal h2{margin-top:0}
+
+.modalButton{
+padding:11px 18px;
+margin:5px;
+border:0;
+border-radius:10px;
+font-weight:bold;
+background:#e2c44d;
+color:#171208;
 }
 
 #cameraCanvas{
-    width:100%;
-    display:block;
-    background:#050505;
-    border-radius:10px;
-    border:2px solid #555;
-}
-
-.closeButton{
-    margin-top:12px;
-    padding:11px 20px;
-    border:0;
-    border-radius:10px;
-    font-weight:bold;
+width:100%;
+max-height:55vh;
+display:block;
+background:#030405;
+border-radius:10px;
+border:2px solid #444;
 }
 
 #obbyArea{
-    height:260px;
-    position:relative;
-    overflow:hidden;
-    background:linear-gradient(#101820,#18202a);
-    border-radius:12px;
-    border:2px solid #555;
+position:relative;
+width:100%;
+height:270px;
+overflow:hidden;
+border-radius:12px;
+border:2px solid #444;
+background:linear-gradient(#111923,#1d2630);
 }
 
 .platform{
-    position:absolute;
-    height:18px;
-    border-radius:6px;
-    background:#d7b84d;
+position:absolute;
+height:18px;
+border-radius:6px;
+background:#e2c44d;
 }
 
 #obbyPlayer{
-    position:absolute;
-    width:25px;
-    height:25px;
-    border-radius:50%;
-    background:#55aaff;
-    left:20px;
-    bottom:25px;
+position:absolute;
+width:25px;
+height:25px;
+border-radius:50%;
+background:#55aaff;
+left:18px;
+bottom:25px;
 }
 
-#obbyText{
-    min-height:35px;
-    margin:8px;
-}
+#gameOverTitle{font-size:45px}
 
-.obbyButton{
-    padding:11px 18px;
-    border:0;
-    border-radius:10px;
-    margin:4px;
-    font-weight:bold;
+#restartButton{
+padding:15px 25px;
+border:0;
+border-radius:12px;
+background:#e2c44d;
+color:#171208;
+font-size:18px;
+font-weight:bold;
 }
 
 @media(max-width:500px){
-    .panel{padding:17px}
-    .story{font-size:16px}
+.startBox{padding:18px}
+.story{font-size:16px;padding:17px}
+.stat{font-size:9px;padding:7px 6px}
+#joystick{width:125px;height:125px}
+#joystickKnob{left:34px;top:34px}
 }
 </style>
 </head>
 
 <body>
 
-<div id="game"></div>
-
 <div id="startScreen">
-<div class="panel">
+<div class="startBox">
 
-<div style="font-size:55px">🏠</div>
+<div class="houseIcon">🏠</div>
 
-<h1>STALKER:<br>THE LONG NIGHT</h1>
+<div class="startTitle">
+STALKER:<br>
+THE LONG NIGHT
+</div>
 
 <div class="story">
+
 <p><b>The house was supposed to be empty.</b></p>
 
 <p>Six months ago, your older brother disappeared.</p>
 
-<p>Before he vanished, he told you that someone was walking through the house every night.</p>
+<p>
+Before he vanished, he told you that someone
+was walking through the house every night.
+</p>
 
-<p>The police found no intruder. They found only an old security system, a computer that was still running, and a note.</p>
+<p>
+The police found no intruder.
+They found only an old security system,
+a computer that was still running,
+and a note.
+</p>
 
-<p><i>"If you hear footsteps, don't open the door. If you see him on a camera, hide. He knows this house better than you do."</i></p>
+<p>
+<i>
+"If you hear footsteps, don't open the door.
+If you see him on a camera, hide.
+He knows this house better than you do."
+</i>
+</p>
 
-<p>Tonight you returned to the house. At exactly 10:00 PM, the front door locked itself.</p>
+<p>
+Tonight you returned to the house.
+At exactly 10:00 PM, the front door locked itself.
+</p>
 
-<p><b>Survive until 6:00 AM.</b></p>
+<p class="warning">SURVIVE UNTIL 6:00 AM.</p>
 
-<p>Find food. Find water. Keep your sanity. Check the cameras. Hide when necessary.</p>
+<p>
+Find food in the fridge.
+Find water at the sink.
+Keep your sanity by using the computer.
+Watch the security cameras.
+Hide under the bed when the stalker gets close.
+</p>
 
-<p><b>And whatever you do, don't let the stalker catch you.</b></p>
+<p><b>The night has just begun.</b></p>
+
 </div>
 
 <button id="startButton">START NIGHT</button>
 
-<div id="error"></div>
+<div id="startError"></div>
 
 </div>
 </div>
+
+<div id="game"></div>
 
 <div id="hud">
-<div class="stat">TIME: <span id="time">10:00 PM</span></div>
-<div class="stat">FOOD: <span id="food">100</span></div>
-<div class="stat">WATER: <span id="water">100</span></div>
-<div class="stat">SANITY: <span id="sanity">100</span></div>
+
+<div class="stat">
+TIME:
+<span id="timeDisplay">10:00 PM</span>
+</div>
+
+<div class="stat">
+FOOD:
+<span id="foodDisplay">100</span>
+</div>
+
+<div class="stat">
+WATER:
+<span id="waterDisplay">100</span>
+</div>
+
+<div class="stat">
+SANITY:
+<span id="sanityDisplay">100</span>
+</div>
+
 </div>
 
 <div id="message">Explore the house.</div>
 
 <div id="joystick">
-<div id="knob"></div>
+<div id="joystickKnob"></div>
 </div>
 
-<button id="interact" class="action">INTERACT</button>
-<button id="camera" class="action">CAMERAS</button>
-<button id="hide" class="action">HIDE</button>
+<button id="interactButton" class="action">INTERACT</button>
+<button id="cameraButton" class="action">CAMERAS</button>
+<button id="hideButton" class="action">HIDE</button>
 
-<div id="cameraPanel">
+<div id="cameraScreen" class="modalScreen">
+
 <div class="modal">
+
 <h2>SECURITY CAMERAS</h2>
+
 <canvas id="cameraCanvas" width="640" height="360"></canvas>
-<div id="cameraStatus">Camera 1 — Living Room</div>
-<button class="obbyButton" onclick="changeCamera(-1)">◀ CAMERA</button>
-<button class="obbyButton" onclick="changeCamera(1)">CAMERA ▶</button>
-<button class="closeButton" onclick="closeCameras()">CLOSE</button>
+
+<p id="cameraName">Camera 1 — Living Room</p>
+
+<button class="modalButton" id="previousCamera">◀ CAMERA</button>
+<button class="modalButton" id="nextCamera">CAMERA ▶</button>
+
+<br>
+
+<button class="modalButton" id="closeCamera">CLOSE</button>
+
 </div>
 </div>
 
-<div id="obbyPanel">
+<div id="computerScreen" class="modalScreen">
+
 <div class="modal">
-<h2>COMPUTER — TINY OBBY</h2>
-<div id="obbyText">Jump across the platforms.</div>
+
+<h2>COMPUTER</h2>
+
+<p id="obbyText">
+Complete the tiny obby to restore your sanity.
+</p>
+
 <div id="obbyArea">
-<div class="platform" style="left:15px;bottom:18px;width:70px"></div>
-<div class="platform" style="left:145px;bottom:65px;width:70px"></div>
-<div class="platform" style="left:275px;bottom:115px;width:70px"></div>
-<div class="platform" style="left:405px;bottom:165px;width:70px"></div>
+
+<div class="platform"
+style="left:15px;bottom:18px;width:70px"></div>
+
+<div class="platform"
+style="left:145px;bottom:68px;width:70px"></div>
+
+<div class="platform"
+style="left:275px;bottom:118px;width:70px"></div>
+
+<div class="platform"
+style="left:405px;bottom:168px;width:70px"></div>
+
 <div id="obbyPlayer"></div>
+
 </div>
-<button class="obbyButton" onclick="obbyJump()">JUMP</button>
-<button class="closeButton" onclick="closeObby()">EXIT COMPUTER</button>
+
+<button class="modalButton" id="obbyJump">JUMP</button>
+
+<button class="modalButton" id="closeComputer">
+EXIT COMPUTER
+</button>
+
 </div>
 </div>
 
-<div id="gameOver">
+<div id="gameOverScreen" class="modalScreen">
+
 <div class="modal">
+
 <h1 id="gameOverTitle">GAME OVER</h1>
+
 <p id="gameOverText">The night is over.</p>
+
 <button id="restartButton">RESTART NIGHT</button>
+
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
 
 <script>
-"use strict";
 
 let scene;
 let camera;
 let renderer;
-let camRenderer;
-let cameraCanvas;
 
-let started=false;
-let gameOver=false;
-let hidden=false;
+let securityCamera;
+let cameraRenderer;
 
-let player={
-    x:-6,
-    y:1.6,
-    z:6
-};
+let stalker;
 
-let rotationY=0;
-let rotationX=0;
+let gameStarted=false;
+let gameFinished=false;
+let playerHidden=false;
+
+let lastFrame=0;
+let nightTime=0;
 
 let food=100;
 let water=100;
 let sanity=100;
 
-let nightMinutes=0;
-let lastTime=0;
+let player={
+x:-6,
+y:1.6,
+z:6
+};
+
+let rotationY=0;
+let rotationX=0;
 
 let moveX=0;
 let moveY=0;
 
 let joystickPointer=null;
 let lookPointer=null;
-let lastLookX=0;
-let lastLookY=0;
 
-let objects=[];
-let obstacles=[];
+let lookX=0;
+let lookY=0;
 
-let stalker=null;
-let stalkerTarget=0;
+let cameraNumber=0;
+let obbyStep=0;
 
-let cameraIndex=0;
+const objects=[];
+const solidObjects=[];
 
 const startScreen=document.getElementById("startScreen");
 const startButton=document.getElementById("startButton");
-const errorBox=document.getElementById("error");
+const startError=document.getElementById("startError");
 const game=document.getElementById("game");
-
 const hud=document.getElementById("hud");
-const joystick=document.getElementById("joystick");
-const knob=document.getElementById("knob");
-
-const interactButton=document.getElementById("interact");
-const cameraButton=document.getElementById("camera");
-const hideButton=document.getElementById("hide");
-
 const message=document.getElementById("message");
+const joystick=document.getElementById("joystick");
+const joystickKnob=document.getElementById("joystickKnob");
+const interactButton=document.getElementById("interactButton");
+const cameraButton=document.getElementById("cameraButton");
+const hideButton=document.getElementById("hideButton");
 
-const cameraPanel=document.getElementById("cameraPanel");
+const cameraScreen=document.getElementById("cameraScreen");
 const cameraCanvas=document.getElementById("cameraCanvas");
-const cameraStatus=document.getElementById("cameraStatus");
+const cameraName=document.getElementById("cameraName");
 
-const obbyPanel=document.getElementById("obbyPanel");
+const computerScreen=document.getElementById("computerScreen");
 const obbyPlayer=document.getElementById("obbyPlayer");
 const obbyText=document.getElementById("obbyText");
 
-const gameOverPanel=document.getElementById("gameOver");
+const gameOverScreen=document.getElementById("gameOverScreen");
 const gameOverTitle=document.getElementById("gameOverTitle");
 const gameOverText=document.getElementById("gameOverText");
 const restartButton=document.getElementById("restartButton");
 
-function mat(color){
-    return new THREE.MeshStandardMaterial({
-        color:color,
-        roughness:.8
-    });
+function material(color){
+return new THREE.MeshStandardMaterial({
+color:color,
+roughness:.82
+});
 }
 
-const wallMat=mat(0x555c63);
-const floorMat=mat(0x3c332c);
-const woodMat=mat(0x573622);
-const whiteMat=mat(0xbfc1bd);
-const darkMat=mat(0x171a1d);
-const metalMat=mat(0x72777b);
-const redMat=mat(0x72252b);
-const screenMat=mat(0x07506a);
-const skinMat=mat(0x77716a);
-const blackMat=mat(0x090909);
+const wallMaterial=material(0x565d64);
+const floorMaterial=material(0x40372f);
+const woodMaterial=material(0x5b3823);
+const whiteMaterial=material(0xbfc3c5);
+const darkMaterial=material(0x111416);
+const redMaterial=material(0x713238);
+const metalMaterial=material(0x747a7d);
 
-function addBox(
-    x,y,z,
-    w,h,d,
-    material,
-    solid=true
-){
-    const mesh=new THREE.Mesh(
-        new THREE.BoxGeometry(w,h,d),
-        material
-    );
+const screenMaterial=
+new THREE.MeshBasicMaterial({color:0x08779c});
 
-    mesh.position.set(x,y,z);
-    mesh.castShadow=true;
-    mesh.receiveShadow=true;
+const stalkerMaterial=material(0x08090a);
+const skinMaterial=material(0x6f6964);
 
-    scene.add(mesh);
-    objects.push(mesh);
+function box(x,y,z,width,height,depth,mat,solid=true){
 
-    if(solid){
-        obstacles.push({
-            x:x,
-            z:z,
-            w:w,
-            d:d
-        });
-    }
+const mesh=
+new THREE.Mesh(
+new THREE.BoxGeometry(
+width,
+height,
+depth
+),
+mat
+);
 
-    return mesh;
+mesh.position.set(x,y,z);
+
+mesh.castShadow=true;
+mesh.receiveShadow=true;
+
+scene.add(mesh);
+objects.push(mesh);
+
+if(solid){
+solidObjects.push({
+x:x,
+z:z,
+width:width,
+depth:depth
+});
+}
+
+return mesh;
 }
 
 function createHouse(){
 
-    addBox(0,-.1,0,20,.2,20,floorMat,false);
+box(0,-.1,0,20,.2,20,floorMaterial,false);
 
-    /* OUTER WALLS */
+box(-10,1.5,0,.3,3,20,wallMaterial);
+box(10,1.5,0,.3,3,20,wallMaterial);
+box(0,1.5,-10,20,3,.3,wallMaterial);
 
-    addBox(-10,1.5,0,.3,3,20,wallMat);
-    addBox(10,1.5,0,.3,3,20,wallMat);
+box(-6.5,1.5,10,7,3,.3,wallMaterial);
+box(6.5,1.5,10,7,3,.3,wallMaterial);
 
-    addBox(0,1.5,-10,20,3,.3,wallMat);
+box(-4,1.5,4,.3,3,8,wallMaterial);
 
-    /* FRONT WALL WITH DOOR OPENING */
+box(-7,1.5,0,6,3,.3,wallMaterial);
+box(-1,1.5,0,6,3,.3,wallMaterial);
 
-    addBox(-6.5,1.5,10,7,3,.3,wallMat);
-    addBox(6.5,1.5,10,7,3,.3,wallMat);
+box(4,1.5,-5,.3,3,10,wallMaterial);
 
-    /* INNER BEDROOM WALL */
+box(-4,1.5,6,.2,3,2,woodMaterial,false);
+box(0,1.5,9.8,2.5,3,.2,woodMaterial,false);
 
-    addBox(-4,1.5,4,.3,3,8,wallMat);
+box(-7,.55,7,3.5,.8,2,woodMaterial);
+box(-7,1.02,7,3.1,.18,1.6,whiteMaterial,false);
 
-    addBox(-7,1.5,0,6,3,.3,wallMat);
-    addBox(-1,1.5,0,6,3,.3,wallMat);
+box(7,1.6,-7,2,3.2,1.5,whiteMaterial);
+box(7,1.65,-6.2,1.6,2.7,.08,metalMaterial,false);
+box(7.75,1.7,-6.1,.08,.8,.08,woodMaterial,false);
 
-    /* KITCHEN WALL */
+box(5.8,.9,-7,2,.2,1,metalMaterial);
+box(5.8,.65,-7,1.5,.5,.7,whiteMaterial);
 
-    addBox(4,1.5,-5,.3,3,10,wallMat);
+box(7,.7,-5,3,.9,.8,woodMaterial);
 
-    /* BEDROOM DOOR */
+box(-7,.8,5.8,3,.15,1.2,woodMaterial);
 
-    addBox(-4,1.5,6,.25,3,2.2,woodMat,false);
+box(-8.1,.4,5.8,.12,.8,.12,woodMaterial,false);
+box(-5.9,.4,5.8,.12,.8,.12,woodMaterial,false);
 
-    /* FRONT DOOR */
+box(-7,1.65,5.5,1.8,1.2,.18,darkMaterial);
+box(-7,1.65,5.38,1.45,.78,.04,screenMaterial,false);
 
-    addBox(0,1.5,9.8,2.5,3,.2,woodMat,false);
+box(-7,.98,5.8,1.3,.08,.5,darkMaterial,false);
 
-    /* BED */
+box(6,.65,6,3.5,1.1,1.4,redMaterial);
 
-    addBox(-7,.55,7,3.5,.8,2,woodMat);
-    addBox(-7,1.05,7,3.1,.2,1.6,whiteMat);
+box(2,.55,6,2,.1,1.2,woodMaterial);
 
-    /* FRIDGE */
-
-    addBox(7,1.6,-7,2,3.2,1.5,whiteMat);
-    addBox(7,1.6,-6.2,1.6,2.7,.08,metalMat,false);
-    addBox(7.75,1.7,-6.1,.08,.8,.08,woodMat,false);
-
-    /* SINK */
-
-    addBox(5.8,.9,-7,2,.2,1,metalMat);
-    addBox(5.8,.65,-7,1.5,.5,.7,whiteMat);
-
-    /* KITCHEN CABINET */
-
-    addBox(7,.7,-5,3,.9,.8,woodMat);
-
-    /* COMPUTER DESK */
-
-    addBox(-7,.8,5.8,3,.15,1.2,woodMat);
-    addBox(-8.1,1.55,5.8,.1,1.4,.1,woodMat);
-    addBox(-5.9,1.55,5.8,.1,1.4,.1,woodMat);
-
-    /* COMPUTER */
-
-    addBox(-7,1.65,5.5,1.8,1.2,.18,darkMat);
-    addBox(-7,1.65,5.38,1.5,.8,.04,screenMat,false);
-    addBox(-7,.95,5.8,1.3,.08,.5,darkMat);
-
-    /* SOFA */
-
-    addBox(6,.65,6,3.5,1.1,1.4,redMat);
-
-    /* COFFEE TABLE */
-
-    addBox(2,.55,6,2,.1,1.2,woodMat);
-
-    /* LAMPS */
-
-    addBox(0,2.9,5,.4,.1,.4,whiteMat,false);
-
-    /* CEILING */
-
-    addBox(0,3.15,0,20,.15,20,darkMat,false);
+box(0,3.1,0,20,.15,20,darkMaterial,false);
 }
 
 function createStalker(){
 
-    const g=new THREE.Group();
+const group=new THREE.Group();
 
-    const head=new THREE.Mesh(
-        new THREE.SphereGeometry(.38,18,14),
-        skinMat
-    );
+const head=
+new THREE.Mesh(
+new THREE.SphereGeometry(.38,18,14),
+skinMaterial
+);
 
-    head.position.y=2.55;
-    g.add(head);
+head.position.y=2.55;
+group.add(head);
 
-    const body=new THREE.Mesh(
-        new THREE.BoxGeometry(.72,1.35,.42),
-        blackMat
-    );
+const body=
+new THREE.Mesh(
+new THREE.BoxGeometry(.7,1.35,.42),
+stalkerMaterial
+);
 
-    body.position.y=1.7;
-    g.add(body);
+body.position.y=1.65;
+group.add(body);
 
-    const armGeo=
-        new THREE.CapsuleGeometry(.09,1.55,6,8);
+const armGeometry=
+new THREE.CapsuleGeometry(.09,1.55,6,8);
 
-    const leftArm=new THREE.Mesh(armGeo,blackMat);
-    leftArm.position.set(-.58,1.45,0);
-    leftArm.rotation.z=-.15;
-    g.add(leftArm);
+const leftArm=
+new THREE.Mesh(
+armGeometry,
+stalkerMaterial
+);
 
-    const rightArm=new THREE.Mesh(armGeo,blackMat);
-    rightArm.position.set(.58,1.45,0);
-    rightArm.rotation.z=.15;
-    g.add(rightArm);
+leftArm.position.set(-.55,1.45,0);
+leftArm.rotation.z=-.12;
+group.add(leftArm);
 
-    const legGeo=
-        new THREE.CapsuleGeometry(.11,1.55,6,8);
+const rightArm=
+new THREE.Mesh(
+armGeometry,
+stalkerMaterial
+);
 
-    const leftLeg=new THREE.Mesh(legGeo,blackMat);
-    leftLeg.position.set(-.2,.45,0);
-    g.add(leftLeg);
+rightArm.position.set(.55,1.45,0);
+rightArm.rotation.z=.12;
+group.add(rightArm);
 
-    const rightLeg=new THREE.Mesh(legGeo,blackMat);
-    rightLeg.position.set(.2,.45,0);
-    g.add(rightLeg);
+const legGeometry=
+new THREE.CapsuleGeometry(.11,1.55,6,8);
 
-    const eyeMat=
-        new THREE.MeshBasicMaterial({color:0xff2020});
+const leftLeg=
+new THREE.Mesh(
+legGeometry,
+stalkerMaterial
+);
 
-    const e1=new THREE.Mesh(
-        new THREE.SphereGeometry(.05,8,8),
-        eyeMat
-    );
+leftLeg.position.set(-.2,.45,0);
+group.add(leftLeg);
 
-    e1.position.set(-.13,2.6,-.35);
-    g.add(e1);
+const rightLeg=
+new THREE.Mesh(
+legGeometry,
+stalkerMaterial
+);
 
-    const e2=new THREE.Mesh(
-        new THREE.SphereGeometry(.05,8,8),
-        eyeMat
-    );
+rightLeg.position.set(.2,.45,0);
+group.add(rightLeg);
 
-    e2.position.set(.13,2.6,-.35);
-    g.add(e2);
+const eyeMaterial=
+new THREE.MeshBasicMaterial({
+color:0xff2222
+});
 
-    g.position.set(7,0,7);
+const eye1=
+new THREE.Mesh(
+new THREE.SphereGeometry(.055,8,8),
+eyeMaterial
+);
 
-    scene.add(g);
+eye1.position.set(-.13,2.6,-.35);
+group.add(eye1);
 
-    stalker=g;
+const eye2=
+new THREE.Mesh(
+new THREE.SphereGeometry(.055,8,8),
+eyeMaterial
+);
+
+eye2.position.set(.13,2.6,-.35);
+group.add(eye2);
+
+group.position.set(7,0,7);
+
+scene.add(group);
+
+stalker=group;
 }
 
-function clearWorld(){
+function isBlocked(x,z){
 
-    objects.forEach(o=>scene.remove(o));
+const radius=.35;
 
-    objects=[];
+for(let i=0;i<solidObjects.length;i++){
 
-    obstacles=[];
+const o=solidObjects[i];
 
-    if(stalker){
-        scene.remove(stalker);
-        stalker=null;
-    }
+if(
+x>o.x-o.width/2-radius &&
+x<o.x+o.width/2+radius &&
+z>o.z-o.depth/2-radius &&
+z<o.z+o.depth/2+radius
+){
+return true;
 }
 
-function startGame(){
-
-    try{
-
-        if(typeof THREE==="undefined"){
-            throw new Error("Three.js did not load.");
-        }
-
-        gameOver=false;
-        hidden=false;
-
-        food=100;
-        water=100;
-        sanity=100;
-        nightMinutes=0;
-
-        player.x=-6;
-        player.z=6;
-
-        rotationY=0;
-        rotationX=0;
-
-        scene=new THREE.Scene();
-
-        scene.background=
-            new THREE.Color(0x121820);
-
-        scene.fog=
-            new THREE.Fog(0x121820,3,35);
-
-        camera=new THREE.PerspectiveCamera(
-            70,
-            window.innerWidth/window.innerHeight,
-            .05,
-            100
-        );
-
-        camera.position.set(
-            player.x,
-            player.y,
-            player.z
-        );
-
-        renderer=new THREE.WebGLRenderer({
-            antialias:true
-        });
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-
-        renderer.setPixelRatio(
-            Math.min(window.devicePixelRatio,2)
-        );
-
-        renderer.shadowMap.enabled=true;
-
-        game.innerHTML="";
-        game.appendChild(renderer.domElement);
-
-        const hemi=
-            new THREE.HemisphereLight(
-                0xc7d8e8,
-                0x15100c,
-                1.1
-            );
-
-        scene.add(hemi);
-
-        const lamp=
-            new THREE.PointLight(
-                0xffd6a0,
-                12,
-                22
-            );
-
-        lamp.position.set(0,2.7,5);
-        lamp.castShadow=true;
-        scene.add(lamp);
-
-        const kitchenLight=
-            new THREE.PointLight(
-                0xffe1a8,
-                8,
-                15
-            );
-
-        kitchenLight.position.set(7,2.5,-6);
-        scene.add(kitchenLight);
-
-        createHouse();
-        createStalker();
-
-        startScreen.style.display="none";
-
-        hud.style.display="flex";
-        joystick.style.display="block";
-
-        interactButton.style.display="block";
-        cameraButton.style.display="block";
-        hideButton.style.display="block";
-
-        message.style.display="block";
-        message.textContent=
-            "10:00 PM — The front door locked.";
-
-        started=true;
-        lastTime=performance.now();
-
-        requestAnimationFrame(gameLoop);
-
-    }catch(err){
-
-        errorBox.style.display="block";
-        errorBox.textContent=
-            "The game could not start: "+err.message;
-
-    }
 }
 
-startButton.onclick=startGame;
-restartButton.onclick=startGame;
-```
- 
-function gameLoop(){
-
-    if(!started)return;
-
-    requestAnimationFrame(gameLoop);
-
-    const now=performance.now();
-
-    const delta=Math.min(
-        .05,
-        (now-lastTime)/1000
-    );
-
-    lastTime=now;
-
-    updateGame(delta);
-    updateStalker(delta);
-    updateCameraFeed();
-
-    camera.position.set(
-        player.x,
-        player.y,
-        player.z
-    );
-
-    camera.rotation.order="YXZ";
-
-    camera.rotation.y=rotationY;
-    camera.rotation.x=rotationX;
-
-    renderer.render(scene,camera);
-}
-
-function collides(x,z){
-
-    const radius=.38;
-
-    for(const o of obstacles){
-
-        if(
-            x>o.x-o.w/2-radius &&
-            x<o.x+o.w/2+radius &&
-            z>o.z-o.d/2-radius &&
-            z<o.z+o.d/2+radius
-        ){
-            return true;
-        }
-    }
-
-    return false;
+return false;
 }
 
 function movePlayer(dx,dz){
 
-    const nx=player.x+dx;
-    const nz=player.z+dz;
+const newX=player.x+dx;
+const newZ=player.z+dz;
 
-    if(!collides(nx,player.z)){
-        player.x=nx;
-    }
-
-    if(!collides(player.x,nz)){
-        player.z=nz;
-    }
+if(!isBlocked(newX,player.z)){
+player.x=newX;
 }
 
-function updateGame(delta){
+if(!isBlocked(player.x,newZ)){
+player.z=newZ;
+}
+}
+```
+/* =========================
+   START GAME
+========================= */
 
-    if(hidden){
-        moveX=0;
-        moveY=0;
-    }
+function startGame(){
 
-    const speed=2.1;
+startError.style.display="none";
 
-    const forwardX=Math.sin(rotationY);
-    const forwardZ=-Math.cos(rotationY);
+if(typeof THREE==="undefined"){
 
-    const rightX=Math.cos(rotationY);
-    const rightZ=Math.sin(rotationY);
+startError.style.display="block";
 
-    const dx=
-        (rightX*moveX+
-        forwardX*moveY)*
-        speed*delta;
+startError.textContent=
+"The 3D engine did not load. Check your internet connection and reload the page.";
 
-    const dz=
-        (rightZ*moveX+
-        forwardZ*moveY)*
-        speed*delta;
-
-    movePlayer(dx,dz);
-
-    if(!hidden){
-
-        food-=delta*.09;
-        water-=delta*.13;
-        sanity-=delta*.025;
-
-    }else{
-
-        sanity+=delta*.01;
-
-    }
-
-    food=Math.max(0,Math.min(100,food));
-    water=Math.max(0,Math.min(100,water));
-    sanity=Math.max(0,Math.min(100,sanity));
-
-    document.getElementById("food").textContent=
-        Math.floor(food);
-
-    document.getElementById("water").textContent=
-        Math.floor(water);
-
-    document.getElementById("sanity").textContent=
-        Math.floor(sanity);
-
-    nightMinutes+=delta*.55;
-
-    let totalMinutes=
-        22*60+
-        Math.floor(nightMinutes);
-
-    if(totalMinutes>=30*60){
-
-        winGame();
-        return;
-    }
-
-    const displayTotal=
-        totalMinutes%(24*60);
-
-    let hour=
-        Math.floor(displayTotal/60);
-
-    const minute=
-        displayTotal%60;
-
-    const suffix=
-        hour>=12?"PM":"AM";
-
-    hour=hour%12||12;
-
-    document.getElementById("time").textContent=
-        hour+
-        ":"+
-        String(minute).padStart(2,"0")+
-        " "+
-        suffix;
-
-    if(food<=0){
-
-        message.textContent=
-            "You're starving. Find the fridge.";
-
-    }else if(water<=0){
-
-        message.textContent=
-            "You're thirsty. Find the sink.";
-
-    }else if(sanity<30){
-
-        message.textContent=
-            "Your sanity is dropping. Use the computer.";
-
-    }
+return;
 }
 
-function updateStalker(delta){
+try{
 
-    if(!stalker)return;
+gameFinished=false;
+gameStarted=false;
+playerHidden=false;
 
-    const sx=stalker.position.x;
-    const sz=stalker.position.z;
+food=100;
+water=100;
+sanity=100;
+nightTime=0;
 
-    const dx=player.x-sx;
-    const dz=player.z-sz;
+player.x=-6;
+player.y=1.6;
+player.z=6;
 
-    const distance=Math.hypot(dx,dz);
+rotationY=0;
+rotationX=0;
 
-    let targetX;
-    let targetZ;
+scene=new THREE.Scene();
 
-    if(hidden){
+scene.background=
+new THREE.Color(0x101820);
 
-        targetX=sx;
-        targetZ=sz;
+scene.fog=
+new THREE.Fog(
+0x101820,
+3,
+35
+);
 
-    }else if(distance<8){
+camera=
+new THREE.PerspectiveCamera(
+70,
+window.innerWidth/window.innerHeight,
+.05,
+100
+);
 
-        targetX=player.x;
-        targetZ=player.z;
+camera.position.set(
+player.x,
+player.y,
+player.z
+);
 
-    }else{
+renderer=
+new THREE.WebGLRenderer({
+antialias:true
+});
 
-        const patrol=[
-            [7,7],
-            [7,-7],
-            [-7,-7],
-            [-7,1],
-            [2,6]
-        ];
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
 
-        const p=patrol[stalkerTarget];
+renderer.setPixelRatio(
+Math.min(
+window.devicePixelRatio||1,
+2
+)
+);
 
-        targetX=p[0];
-        targetZ=p[1];
+renderer.shadowMap.enabled=true;
 
-        if(
-            Math.hypot(
-                targetX-sx,
-                targetZ-sz
-            )<1
-        ){
+game.innerHTML="";
 
-            stalkerTarget=
-                (stalkerTarget+1)%
-                patrol.length;
-        }
-    }
+game.appendChild(
+renderer.domElement
+);
 
-    const tx=targetX-sx;
-    const tz=targetZ-sz;
+const ambient=
+new THREE.HemisphereLight(
+0xc8d8e8,
+0x16100b,
+1.2
+);
 
-    const len=Math.hypot(tx,tz)||1;
+scene.add(ambient);
 
-    const stalkerSpeed=
-        distance<8?.85:.45;
+const livingLight=
+new THREE.PointLight(
+0xffd6a0,
+10,
+22
+);
 
-    const nx=
-        sx+
-        tx/len*
-        stalkerSpeed*
-        delta;
+livingLight.position.set(
+0,
+2.7,
+5
+);
 
-    const nz=
-        sz+
-        tz/len*
-        stalkerSpeed*
-        delta;
+livingLight.castShadow=true;
 
-    if(!collides(nx,nz)){
+scene.add(livingLight);
 
-        stalker.position.x=nx;
-        stalker.position.z=nz;
+const kitchenLight=
+new THREE.PointLight(
+0xffdca5,
+8,
+15
+);
 
-    }
+kitchenLight.position.set(
+7,
+2.5,
+-6
+);
 
-    stalker.lookAt(
-        player.x,
-        1.5,
-        player.z
-    );
+scene.add(kitchenLight);
 
-    if(distance<1.25 && !hidden){
+createHouse();
+createStalker();
 
-        loseGame(
-            "The stalker found you."
-        );
+startScreen.style.display="none";
 
-    }
+hud.style.display="flex";
+message.style.display="block";
+joystick.style.display="block";
+interactButton.style.display="block";
+cameraButton.style.display="block";
+hideButton.style.display="block";
+
+message.textContent=
+"10:00 PM — The front door locked itself.";
+
+gameStarted=true;
+
+lastFrame=performance.now();
+
+renderer.render(
+scene,
+camera
+);
+
+requestAnimationFrame(
+gameLoop
+);
+
+}catch(error){
+
+console.error(error);
+
+gameStarted=false;
+
+startError.style.display="block";
+
+startError.textContent=
+"Game error: "+error.message;
+}
+}
+
+startButton.addEventListener(
+"click",
+function(event){
+
+event.preventDefault();
+event.stopPropagation();
+
+startGame();
+
+}
+);
+
+restartButton.addEventListener(
+"click",
+function(){
+location.reload();
+}
+);
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop(){
+
+if(!gameStarted)
+return;
+
+requestAnimationFrame(
+gameLoop
+);
+
+const now=
+performance.now();
+
+const delta=
+Math.min(
+.05,
+(now-lastFrame)/1000
+);
+
+lastFrame=now;
+
+updatePlayer(delta);
+updateStalker(delta);
+updateClock(delta);
+updateCameraFeed();
+
+camera.position.set(
+player.x,
+player.y,
+player.z
+);
+
+camera.rotation.order="YXZ";
+
+camera.rotation.y=rotationY;
+camera.rotation.x=rotationX;
+
+renderer.render(
+scene,
+camera
+);
 }
 
 
 /* =========================
-   TOUCH JOYSTICK
+   PLAYER
 ========================= */
 
-function setJoystick(e){
+function updatePlayer(delta){
 
-    const r=
-        joystick.getBoundingClientRect();
+if(playerHidden){
 
-    const cx=
-        r.left+r.width/2;
+moveX=0;
+moveY=0;
+}
 
-    const cy=
-        r.top+r.height/2;
+const speed=2.0;
 
-    let dx=e.clientX-cx;
-    let dy=e.clientY-cy;
+const forwardX=
+Math.sin(rotationY);
 
-    const max=42;
-    const d=Math.hypot(dx,dy);
+const forwardZ=
+-Math.cos(rotationY);
 
-    if(d>max){
+const rightX=
+Math.cos(rotationY);
 
-        dx=dx/d*max;
-        dy=dy/d*max;
+const rightZ=
+Math.sin(rotationY);
 
-    }
+const dx=
+(
+rightX*moveX+
+forwardX*moveY
+)*
+speed*
+delta;
 
-    moveX=dx/max;
+const dz=
+(
+rightZ*moveX+
+forwardZ*moveY
+)*
+speed*
+delta;
 
-    /* UP = FORWARD */
+movePlayer(dx,dz);
 
-    moveY=-dy/max;
+if(!playerHidden){
 
-    knob.style.transform=
-        "translate("+dx+"px,"+dy+"px)";
+food-=delta*.10;
+water-=delta*.14;
+sanity-=delta*.025;
+
+}else{
+
+sanity+=delta*.01;
+
+}
+
+food=Math.max(
+0,
+Math.min(100,food)
+);
+
+water=Math.max(
+0,
+Math.min(100,water)
+);
+
+sanity=Math.max(
+0,
+Math.min(100,sanity)
+);
+
+document.getElementById(
+"foodDisplay"
+).textContent=
+Math.floor(food);
+
+document.getElementById(
+"waterDisplay"
+).textContent=
+Math.floor(water);
+
+document.getElementById(
+"sanityDisplay"
+).textContent=
+Math.floor(sanity);
+
+if(food<=0){
+
+message.textContent=
+"You are starving. Find the fridge.";
+
+}
+
+if(water<=0){
+
+message.textContent=
+"You are thirsty. Find the sink.";
+
+}
+
+if(sanity<30){
+
+message.textContent=
+"Your sanity is getting low. Use the computer.";
+
+}
+}
+
+
+/* =========================
+   CLOCK
+========================= */
+
+function updateClock(delta){
+
+nightTime+=delta*.55;
+
+const startMinutes=22*60;
+
+const currentMinutes=
+startMinutes+
+Math.floor(nightTime);
+
+if(currentMinutes>=30*60){
+
+winGame();
+return;
+
+}
+
+const shown=
+currentMinutes%(24*60);
+
+let hour=
+Math.floor(shown/60);
+
+const minute=shown%60;
+
+const suffix=
+hour>=12?"PM":"AM";
+
+hour=hour%12||12;
+
+document.getElementById(
+"timeDisplay"
+).textContent=
+hour+
+":"+
+String(minute).padStart(2,"0")+
+" "+
+suffix;
+}
+
+
+/* =========================
+   STALKER
+========================= */
+
+let patrolIndex=0;
+
+const patrolPoints=[
+[7,7],
+[7,-7],
+[6,-3],
+[1,2],
+[-2,6],
+[-7,7]
+];
+
+function updateStalker(delta){
+
+if(!stalker)
+return;
+
+const sx=stalker.position.x;
+const sz=stalker.position.z;
+
+const dx=player.x-sx;
+const dz=player.z-sz;
+
+const distance=
+Math.hypot(dx,dz);
+
+let targetX;
+let targetZ;
+
+if(playerHidden){
+
+targetX=sx;
+targetZ=sz;
+
+}else if(distance<9){
+
+targetX=player.x;
+targetZ=player.z;
+
+}else{
+
+const point=
+patrolPoints[patrolIndex];
+
+targetX=point[0];
+targetZ=point[1];
+
+if(
+Math.hypot(
+targetX-sx,
+targetZ-sz
+)<1
+){
+
+patrolIndex=
+(patrolIndex+1)%
+patrolPoints.length;
+
+}
+}
+
+const tx=targetX-sx;
+const tz=targetZ-sz;
+
+const length=
+Math.hypot(tx,tz)||1;
+
+const speed=
+distance<9?.75:.42;
+
+const newX=
+sx+
+tx/length*
+speed*
+delta;
+
+const newZ=
+sz+
+tz/length*
+speed*
+delta;
+
+if(!isBlocked(newX,newZ)){
+
+stalker.position.x=newX;
+stalker.position.z=newZ;
+
+}
+
+stalker.lookAt(
+player.x,
+1.5,
+player.z
+);
+
+if(
+distance<1.25 &&
+!playerHidden
+){
+
+loseGame(
+"The stalker found you."
+);
+
+}
+
+if(
+distance<5 &&
+!playerHidden
+){
+
+message.textContent=
+"FOOTSTEPS... HIDE!";
+
+}
+}
+
+
+/* =========================
+   JOYSTICK
+========================= */
+
+function updateJoystick(event){
+
+const rect=
+joystick.getBoundingClientRect();
+
+const centerX=
+rect.left+
+rect.width/2;
+
+const centerY=
+rect.top+
+rect.height/2;
+
+let dx=
+event.clientX-centerX;
+
+let dy=
+event.clientY-centerY;
+
+const max=42;
+
+const distance=
+Math.hypot(dx,dy);
+
+if(distance>max){
+
+dx=dx/distance*max;
+dy=dy/distance*max;
+
+}
+
+moveX=dx/max;
+moveY=-dy/max;
+
+joystickKnob.style.transform=
+"translate("+dx+"px,"+dy+"px)";
 }
 
 joystick.addEventListener(
-    "pointerdown",
-    function(e){
+"pointerdown",
+function(event){
 
-        joystickPointer=e.pointerId;
+joystickPointer=
+event.pointerId;
 
-        joystick.setPointerCapture(
-            e.pointerId
-        );
+joystick.setPointerCapture(
+event.pointerId
+);
 
-        setJoystick(e);
-    }
+updateJoystick(event);
+
+}
 );
 
 joystick.addEventListener(
-    "pointermove",
-    function(e){
+"pointermove",
+function(event){
 
-        if(e.pointerId===joystickPointer){
-            setJoystick(e);
-        }
-    }
+if(
+event.pointerId===
+joystickPointer
+){
+
+updateJoystick(event);
+
+}
+
+}
 );
 
 function resetJoystick(){
 
-    moveX=0;
-    moveY=0;
+moveX=0;
+moveY=0;
 
-    knob.style.transform=
-        "translate(0,0)";
+joystickKnob.style.transform=
+"translate(0,0)";
 }
 
 joystick.addEventListener(
-    "pointerup",
-    resetJoystick
+"pointerup",
+resetJoystick
 );
 
 joystick.addEventListener(
-    "pointercancel",
-    resetJoystick
+"pointercancel",
+resetJoystick
 );
 
 
 /* =========================
-   TOUCH LOOK
+   LOOK AROUND
 ========================= */
 
 document.addEventListener(
-    "pointerdown",
-    function(e){
+"pointerdown",
+function(event){
 
-        if(!started)return;
+if(!gameStarted)
+return;
 
-        if(
-            e.target===joystick ||
-            joystick.contains(e.target)
-        )return;
+if(joystick.contains(event.target))
+return;
 
-        if(
-            e.target.closest("button") ||
-            e.target.closest("#cameraPanel") ||
-            e.target.closest("#obbyPanel")
-        )return;
+if(event.target.closest("button"))
+return;
 
-        lookPointer=e.pointerId;
+if(event.target.closest(".modalScreen"))
+return;
 
-        lastLookX=e.clientX;
-        lastLookY=e.clientY;
-    }
+lookPointer=
+event.pointerId;
+
+lookX=event.clientX;
+lookY=event.clientY;
+
+}
 );
 
 document.addEventListener(
-    "pointermove",
-    function(e){
+"pointermove",
+function(event){
 
-        if(e.pointerId!==lookPointer)
-            return;
+if(event.pointerId!==lookPointer)
+return;
 
-        const dx=e.clientX-lastLookX;
-        const dy=e.clientY-lastLookY;
+const dx=
+event.clientX-lookX;
 
-        rotationY-=dx*.004;
-        rotationX-=dy*.003;
+const dy=
+event.clientY-lookY;
 
-        rotationX=Math.max(
-            -.8,
-            Math.min(.8,rotationX)
-        );
+rotationY-=dx*.004;
+rotationX-=dy*.003;
 
-        lastLookX=e.clientX;
-        lastLookY=e.clientY;
-    }
+rotationX=
+Math.max(
+-.8,
+Math.min(.8,rotationX)
+);
+
+lookX=event.clientX;
+lookY=event.clientY;
+
+}
 );
 
 document.addEventListener(
-    "pointerup",
-    function(e){
+"pointerup",
+function(event){
 
-        if(e.pointerId===lookPointer){
-            lookPointer=null;
-        }
-    }
+if(event.pointerId===lookPointer){
+lookPointer=null;
+}
+
+}
 );
-
-
+```
 /* =========================
    INTERACTION
 ========================= */
 
-interactButton.onclick=function(){
+interactButton.addEventListener(
+"click",
+function(){
 
-    if(hidden){
+if(playerHidden){
 
-        hidden=false;
+playerHidden=false;
 
-        message.textContent=
-            "You came out of hiding.";
+message.textContent=
+"You came out of hiding.";
 
-        return;
-    }
+return;
+}
 
-    const fridge=
-        Math.hypot(
-            player.x-7,
-            player.z+7
-        );
+const fridgeDistance=
+Math.hypot(
+player.x-7,
+player.z+7
+);
 
-    const sink=
-        Math.hypot(
-            player.x-5.8,
-            player.z+7
-        );
+const sinkDistance=
+Math.hypot(
+player.x-5.8,
+player.z+7
+);
 
-    const computer=
-        Math.hypot(
-            player.x+7,
-            player.z-5.5
-        );
+const computerDistance=
+Math.hypot(
+player.x+7,
+player.z-5.5
+);
 
-    const bed=
-        Math.hypot(
-            player.x+7,
-            player.z-7
-        );
+if(fridgeDistance<2.8){
 
-    if(fridge<2.5){
+food=Math.min(
+100,
+food+45
+);
 
-        food=Math.min(
-            100,
-            food+45
-        );
+message.textContent=
+"You got food from the fridge.";
 
-        message.textContent=
-            "You took food from the fridge.";
+return;
+}
 
-    }else if(sink<2.5){
+if(sinkDistance<2.8){
 
-        water=Math.min(
-            100,
-            water+50
-        );
+water=Math.min(
+100,
+water+50
+);
 
-        message.textContent=
-            "You drank water from the sink.";
+message.textContent=
+"You drank water from the sink.";
 
-    }else if(computer<2.5){
+return;
+}
 
-        openObby();
+if(computerDistance<2.8){
 
-    }else if(bed<2.5){
+openComputer();
 
-        message.textContent=
-            "This is your hiding place.";
+return;
+}
 
-    }else{
+message.textContent=
+"There is nothing useful nearby.";
 
-        message.textContent=
-            "There is nothing useful nearby.";
-
-    }
-};
+}
+);
 
 
 /* =========================
    HIDE
 ========================= */
 
-hideButton.onclick=function(){
+hideButton.addEventListener(
+"click",
+function(){
 
-    const bed=
-        Math.hypot(
-            player.x+7,
-            player.z-7
-        );
+const bedDistance=
+Math.hypot(
+player.x+7,
+player.z-7
+);
 
-    if(bed<3){
+if(bedDistance<3.2){
 
-        hidden=true;
+playerHidden=true;
 
-        message.textContent=
-            "You are hiding under the bed. Stay quiet.";
+message.textContent=
+"You are hiding under the bed.";
 
-    }else{
+}else{
 
-        message.textContent=
-            "You need to be near the bed to hide.";
+message.textContent=
+"Get closer to the bed to hide.";
 
-    }
-};
+}
+
+}
+);
 
 
 /* =========================
-   SECURITY CAMERAS
+   CAMERAS
 ========================= */
 
 const cameraLocations=[
-    {
-        name:"Camera 1 — Living Room",
-        x:6,
-        y:2.6,
-        z:7,
-        lookX:4,
-        lookY:1,
-        lookZ:3
-    },
-    {
-        name:"Camera 2 — Kitchen",
-        x:8,
-        y:2.6,
-        z:-8,
-        lookX:6,
-        lookY:1,
-        lookZ:-5
-    },
-    {
-        name:"Camera 3 — Hallway",
-        x:0,
-        y:2.5,
-        z:2,
-        lookX:0,
-        lookY:1,
-        lookZ:-5
-    },
-    {
-        name:"Camera 4 — Bedroom",
-        x:-8,
-        y:2.6,
-        z:8,
-        lookX:-5,
-        lookY:1,
-        lookZ:5
-    }
+{
+name:"Camera 1 — Living Room",
+x:6,
+y:2.7,
+z:7,
+lookX:3,
+lookY:1,
+lookZ:3
+},
+{
+name:"Camera 2 — Kitchen",
+x:8,
+y:2.7,
+z:-8,
+lookX:6,
+lookY:1,
+lookZ:-5
+},
+{
+name:"Camera 3 — Hallway",
+x:0,
+y:2.7,
+z:2,
+lookX:0,
+lookY:1,
+lookZ:-5
+},
+{
+name:"Camera 4 — Bedroom",
+x:-8,
+y:2.7,
+z:8,
+lookX:-5,
+lookY:1,
+lookZ:5
+}
 ];
-
-let securityCamera;
 
 function openCameras(){
 
-    cameraPanel.style.display="flex";
+cameraScreen.style.display="flex";
 
-    if(!camRenderer){
+if(!cameraRenderer){
 
-        camRenderer=
-            new THREE.WebGLRenderer({
-                canvas:cameraCanvas,
-                antialias:true
-            });
+cameraRenderer=
+new THREE.WebGLRenderer({
+canvas:cameraCanvas,
+antialias:true
+});
 
-        camRenderer.setSize(
-            640,
-            360,
-            false
-        );
+cameraRenderer.setSize(
+640,
+360,
+false
+);
 
-        securityCamera=
-            new THREE.PerspectiveCamera(
-                65,
-                640/360,
-                .05,
-                100
-            );
-    }
+securityCamera=
+new THREE.PerspectiveCamera(
+65,
+640/360,
+.05,
+100
+);
 
-    updateCameraPosition();
 }
 
-function updateCameraPosition(){
+updateSecurityCamera();
 
-    if(!securityCamera)return;
+}
 
-    const c=
-        cameraLocations[cameraIndex];
+function updateSecurityCamera(){
 
-    securityCamera.position.set(
-        c.x,c.y,c.z
-    );
+if(!securityCamera)
+return;
 
-    securityCamera.lookAt(
-        c.lookX,
-        c.lookY,
-        c.lookZ
-    );
+const data=
+cameraLocations[cameraNumber];
 
-    cameraStatus.textContent=
-        c.name;
+securityCamera.position.set(
+data.x,
+data.y,
+data.z
+);
+
+securityCamera.lookAt(
+data.lookX,
+data.lookY,
+data.lookZ
+);
+
+cameraName.textContent=
+data.name;
+
 }
 
 function updateCameraFeed(){
 
-    if(
-        cameraPanel.style.display!=="flex" ||
-        !camRenderer ||
-        !securityCamera
-    )return;
+if(
+cameraScreen.style.display!=="flex"
+)
+return;
 
-    updateCameraPosition();
+if(
+!cameraRenderer||
+!securityCamera
+)
+return;
 
-    camRenderer.render(
-        scene,
-        securityCamera
-    );
+updateSecurityCamera();
+
+cameraRenderer.render(
+scene,
+securityCamera
+);
+
 }
 
-function changeCamera(amount){
+cameraButton.addEventListener(
+"click",
+openCameras
+);
 
-    cameraIndex=
-        (cameraIndex+amount+
-        cameraLocations.length)%
-        cameraLocations.length;
+document.getElementById(
+"closeCamera"
+).addEventListener(
+"click",
+function(){
 
-    updateCameraPosition();
+cameraScreen.style.display="none";
+
 }
+);
 
-function closeCameras(){
+document.getElementById(
+"previousCamera"
+).addEventListener(
+"click",
+function(){
 
-    cameraPanel.style.display="none";
+cameraNumber=
+(
+cameraNumber-
+1+
+cameraLocations.length
+)%
+cameraLocations.length;
+
+updateSecurityCamera();
+
 }
+);
 
-cameraButton.onclick=openCameras;
+document.getElementById(
+"nextCamera"
+).addEventListener(
+"click",
+function(){
+
+cameraNumber=
+(
+cameraNumber+
+1
+)%
+cameraLocations.length;
+
+updateSecurityCamera();
+
+}
+);
 
 
 /* =========================
-   TINY OBBY
+   COMPUTER OBBY
 ========================= */
 
-let obbyStep=0;
+function openComputer(){
 
-function openObby(){
+computerScreen.style.display="flex";
 
-    obbyPanel.style.display="flex";
+obbyStep=0;
 
-    obbyStep=0;
+obbyPlayer.style.left="18px";
+obbyPlayer.style.bottom="25px";
 
-    obbyPlayer.style.left="20px";
-    obbyPlayer.style.bottom="25px";
-
-    obbyText.textContent=
-        "Reach the final platform. Press JUMP.";
+obbyText.textContent=
+"Reach the final platform.";
 
 }
 
-function obbyJump(){
+document.getElementById(
+"closeComputer"
+).addEventListener(
+"click",
+function(){
 
-    if(obbyStep===0){
+computerScreen.style.display="none";
 
-        obbyStep=1;
-
-        obbyPlayer.style.left="150px";
-        obbyPlayer.style.bottom="72px";
-
-        obbyText.textContent=
-            "Nice! One more jump.";
-
-    }else if(obbyStep===1){
-
-        obbyStep=2;
-
-        obbyPlayer.style.left="280px";
-        obbyPlayer.style.bottom="122px";
-
-        obbyText.textContent=
-            "You're doing it!";
-
-    }else if(obbyStep===2){
-
-        obbyStep=3;
-
-        obbyPlayer.style.left="410px";
-        obbyPlayer.style.bottom="172px";
-
-        obbyText.textContent=
-            "YOU BEAT THE OBBY!";
-
-        sanity=Math.min(
-            100,
-            sanity+30
-        );
-
-    }else{
-
-        obbyText.textContent=
-            "Obby complete. Your sanity improved.";
-
-    }
-}
-
-function closeObby(){
-
-    obbyPanel.style.display="none";
-
-    message.textContent=
-        "You left the computer.";
+message.textContent=
+"You left the computer.";
 
 }
+);
+
+document.getElementById(
+"obbyJump"
+).addEventListener(
+"click",
+function(){
+
+if(obbyStep===0){
+
+obbyStep=1;
+
+obbyPlayer.style.left="148px";
+obbyPlayer.style.bottom="75px";
+
+obbyText.textContent=
+"Good! Jump again.";
+
+}
+
+else if(obbyStep===1){
+
+obbyStep=2;
+
+obbyPlayer.style.left="278px";
+obbyPlayer.style.bottom="125px";
+
+obbyText.textContent=
+"Almost there!";
+
+}
+
+else if(obbyStep===2){
+
+obbyStep=3;
+
+obbyPlayer.style.left="408px";
+obbyPlayer.style.bottom="175px";
+
+sanity=
+Math.min(
+100,
+sanity+35
+);
+
+obbyText.textContent=
+"YOU BEAT THE OBBY! SANITY RESTORED.";
+
+}
+
+else{
+
+obbyText.textContent=
+"You already completed it.";
+
+}
+
+}
+);
 
 
 /* =========================
-   GAME OVER / WIN
+   GAME OVER
 ========================= */
 
 function loseGame(reason){
 
-    if(gameOver)return;
+if(gameFinished)
+return;
 
-    gameOver=true;
-    started=false;
+gameFinished=true;
+gameStarted=false;
 
-    gameOverTitle.textContent=
-        "GAME OVER";
+gameOverTitle.textContent=
+"GAME OVER";
 
-    gameOverText.textContent=
-        reason;
+gameOverText.textContent=
+reason;
 
-    gameOverPanel.style.display=
-        "flex";
+gameOverScreen.style.display=
+"flex";
+
 }
 
 function winGame(){
 
-    if(gameOver)return;
+if(gameFinished)
+return;
 
-    gameOver=true;
-    started=false;
+gameFinished=true;
+gameStarted=false;
 
-    gameOverTitle.textContent=
-        "6:00 AM";
+gameOverTitle.textContent=
+"6:00 AM";
 
-    gameOverText.textContent=
-        "The sun is rising. You survived the night.";
+gameOverText.textContent=
+"The sun is rising. You survived the entire night.";
 
-    gameOverPanel.style.display=
-        "flex";
+gameOverScreen.style.display=
+"flex";
+
 }
 
 
@@ -1525,23 +1885,27 @@ function winGame(){
 ========================= */
 
 window.addEventListener(
-    "resize",
-    function(){
+"resize",
+function(){
 
-        if(!renderer || !camera)
-            return;
+if(
+!camera||
+!renderer
+)
+return;
 
-        camera.aspect=
-            window.innerWidth/
-            window.innerHeight;
+camera.aspect=
+window.innerWidth/
+window.innerHeight;
 
-        camera.updateProjectionMatrix();
+camera.updateProjectionMatrix();
 
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
+
+}
 );
 
 </script>
