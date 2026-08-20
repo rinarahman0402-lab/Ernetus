@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Helix Dodge</title>
+  <style>
+    body {
+      background-color: #0d0f18;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #22d3ee; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #f472b6; margin-bottom: 15px; font-weight: bold; }
+
+    #stage {
+      width: 320px;
+      height: 320px;
+      background: #16192b;
+      border: 3px solid #22d3ee;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #player {
+      width: 16px;
+      height: 16px;
+      background: #22d3ee;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 10px #22d3ee;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 6px solid #f472b6;
+      border-top-color: transparent; /* The gap */
+      pointer-events: none;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      width: 80px;
+      height: 50px;
+      background: #22d3ee;
+      color: #0d0f18;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #67e8f9; }
+  </style>
+</head>
+<body>
+
+  <h1>🌀 Helix Dodge</h1>
+  <div id="hud">Score: <span id="score">0</span></div>
+
+  <div id="stage">
+    <div id="player"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn-left">⬅️</button>
+    <button class="btn" id="btn-right">➡️</button>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const player = document.getElementById('player');
+    const scoreText = document.getElementById('score');
+
+    let playerAngle = 0; // degrees
+    let score = 0;
+    let gameOver = false;
+
+    // Update player position on fixed outer ring radius (130px)
+    function updatePlayer() {
+      const rad = playerAngle * (Math.PI / 180);
+      const x = 160 + Math.cos(rad) * 130 - 8;
+      const y = 160 + Math.sin(rad) * 130 - 8;
+      player.style.left = x + 'px';
+      player.style.top = y + 'px';
+    }
+
+    function rotatePlayer(dir) {
+      if (gameOver) return;
+      if (dir === 'left') playerAngle = (playerAngle - 30 + 360) % 360;
+      if (dir === 'right') playerAngle = (playerAngle + 30) % 360;
+      updatePlayer();
+    }
+
+    function spawnRing() {
+      if (gameOver) return;
+
+      const ring = document.createElement('div');
+      ring.className = 'ring';
+
+      const gapAngle = Math.floor(Math.random() * 12) * 30; // Random gap angle
+      ring.style.transform = `rotate(${gapAngle}deg)`;
+
+      let size = 20;
+      ring.style.width = size + 'px';
+      ring.style.height = size + 'px';
+
+      stage.appendChild(ring);
+
+      const expand = setInterval(() => {
+        if (gameOver) {
+          clearInterval(expand);
+          ring.remove();
+          return;
+        }
+
+        size += 4;
+        ring.style.width = size + 'px';
+        ring.style.height = size + 'px';
+
+        // Check when ring reaches player orbit (size ~ 260px)
+        if (size >= 256 && size <= 268) {
+          // Normalize angles to check if player aligns with the gap
+          const normalizedPlayerAngle = (playerAngle - gapAngle + 360) % 360;
+          
+          // Gap is at top (-90 deg relative to ring rotation -> ~270 deg)
+          const inGap = (normalizedPlayerAngle >= 250 && normalizedPlayerAngle <= 290);
+
+          if (!inGap) {
+            gameOver = true;
+            scoreText.innerText = score + " (CRASH! Refresh to retry)";
+            clearInterval(expand);
+          }
+        }
+
+        if (size > 310) {
+          clearInterval(expand);
+          ring.remove();
+          score += 10;
+          scoreText.innerText = score;
+        }
+      }, 20);
+
+      const delay = Math.max(600, 1400 - (score * 10));
+      setTimeout(spawnRing, delay);
+    }
+
+    document.getElementById('btn-left').onclick = () => rotatePlayer('left');
+    document.getElementById('btn-right').onclick = () => rotatePlayer('right');
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') rotatePlayer('left');
+      if (e.key === 'ArrowRight') rotatePlayer('right');
+    });
+
+    updatePlayer();
+    spawnRing();
+  </script>
+</body>
+</html>
