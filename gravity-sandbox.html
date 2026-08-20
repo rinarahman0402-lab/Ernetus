@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extreme Gravity Sandbox</title>
+  <style>
+    body {
+      background-color: #050510;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #8e44ad; margin-bottom: 5px; }
+    p { color: #aaa; margin-bottom: 10px; }
+
+    #space {
+      width: 500px;
+      height: 320px;
+      background: radial-gradient(circle, #0f0c29, #24243e, #302b63);
+      border: 4px solid #8e44ad;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .planet {
+      font-size: 2rem;
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+
+    .black-hole {
+      font-size: 3.5rem;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    .controls { margin-top: 15px; display: flex; gap: 10px; }
+    .btn {
+      padding: 10px 20px;
+      background: #8e44ad;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🪐 Extreme Gravity Sandbox</h1>
+  <p>Click inside Space to spawn planets. Click button to drop Black Hole!</p>
+
+  <div id="space"></div>
+
+  <div class="controls">
+    <button class="btn" id="hole-btn">🕳️ Spawn Black Hole</button>
+    <button class="btn" id="clear-btn" style="background:#e74c3c;">Clear Space</button>
+  </div>
+
+  <script>
+    const space = document.getElementById('space');
+    let blackHole = null;
+    let planets = [];
+
+    // Click canvas to drop planets
+    space.addEventListener('click', (e) => {
+      const rect = space.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const p = document.createElement('div');
+      p.className = 'planet';
+      const icons = ['🪐', '🌍', '🌕', '☄️'];
+      p.innerText = icons[Math.floor(Math.random() * icons.length)];
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      
+      space.appendChild(p);
+      planets.push({ el: p, x: x, y: y });
+    });
+
+    // Spawn Black Hole in center
+    document.getElementById('hole-btn').onclick = () => {
+      if (blackHole) return;
+      blackHole = document.createElement('div');
+      blackHole.className = 'black-hole';
+      blackHole.innerText = '🕳️';
+      blackHole.style.left = '250px';
+      blackHole.style.top = '160px';
+      space.appendChild(blackHole);
+
+      // Gravity Physics Loop
+      setInterval(() => {
+        planets.forEach((p, index) => {
+          let dx = 250 - p.x;
+          let dy = 160 - p.y;
+          p.x += dx * 0.05;
+          p.y += dy * 0.05;
+          p.el.style.left = p.x + 'px';
+          p.el.style.top = p.y + 'px';
+
+          // Destroy on touch black hole
+          if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
+            p.el.remove();
+          }
+        });
+      }, 30);
+    };
+
+    document.getElementById('clear-btn').onclick = () => {
+      space.innerHTML = '';
+      planets = [];
+      blackHole = null;
+    };
+  </script>
+</body>
+</html>
