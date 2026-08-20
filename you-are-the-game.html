@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You Are The Game</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #ff0055; margin-bottom: 5px; }
+    #status { font-size: 1.2rem; margin-bottom: 15px; color: #00ffcc; }
+
+    #game-stage {
+      width: 500px;
+      height: 250px;
+      background: #1e1e2e;
+      border: 4px solid #ff0055;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    #player {
+      width: 20px;
+      height: 20px;
+      background: #00ffcc;
+      position: absolute;
+      bottom: 20px;
+      left: 10px;
+      border-radius: 3px;
+    }
+
+    #flag {
+      width: 15px;
+      height: 40px;
+      background: #ffcc00;
+      position: absolute;
+      bottom: 20px;
+      right: 10px;
+    }
+
+    .floor {
+      width: 100%;
+      height: 20px;
+      background: #444;
+      position: absolute;
+      bottom: 0;
+    }
+
+    .spike {
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 20px solid #ff0055;
+      position: absolute;
+      bottom: 20px;
+    }
+
+    .hud {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>👾 You Are The Game</h1>
+  <div id="status">Click inside the area to drop spikes and stop the Player!</div>
+
+  <div id="game-stage">
+    <div id="player"></div>
+    <div id="flag"></div>
+    <div class="floor"></div>
+  </div>
+
+  <div class="hud">
+    Player Rage: <span id="rage" style="color: #ff0055;">0%</span>
+  </div>
+
+  <script>
+    const stage = document.getElementById('game-stage');
+    const player = document.getElementById('player');
+    const rageText = document.getElementById('rage');
+    const status = document.getElementById('status');
+
+    let playerX = 10;
+    let playerSpeed = 2;
+    let rage = 0;
+    let gameOver = false;
+
+    // The AI player moves automatically toward the flag
+    const gameLoop = setInterval(() => {
+      if (gameOver) return;
+
+      playerX += playerSpeed;
+      player.style.left = playerX + 'px';
+
+      // Check spike collision
+      const spikes = document.querySelectorAll('.spike');
+      spikes.forEach(spike => {
+        let spikeX = parseInt(spike.style.left);
+        if (Math.abs(playerX - spikeX) < 15) {
+          // Player hit spike! Reset player
+          playerX = 10;
+          rage += 25;
+          rageText.innerText = rage + '%';
+          spike.remove(); // Spike destroyed on hit
+
+          if (rage >= 100) {
+            gameOver = true;
+            status.innerText = "🎉 YOU WON! The Player rage-quit the game!";
+            status.style.color = "#00ffcc";
+          }
+        }
+      });
+
+      // If player reaches the end, YOU lose
+      if (playerX >= 470) {
+        gameOver = true;
+        status.innerText = "❌ GAME OVER! The Player beat you!";
+        status.style.color = "#ff0055";
+      }
+    }, 20);
+
+    // YOU (The Game) click to drop obstacles
+    stage.addEventListener('click', (e) => {
+      if (gameOver) return;
+
+      const rect = stage.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+
+      // Drop a spike at click location
+      const spike = document.createElement('div');
+      spike.className = 'spike';
+      spike.style.left = (clickX - 10) + 'px';
+      stage.appendChild(spike);
+    });
+  </script>
+</body>
+</html>
