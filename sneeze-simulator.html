@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Sneeze Simulator</title>
+  <style>
+    body {
+      background-color: #1a1c23;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #ff9f43; margin-bottom: 5px; }
+    #status { font-size: 1.2rem; color: #00d2d3; margin-bottom: 15px; }
+
+    #stage {
+      width: 400px;
+      height: 300px;
+      background: #222f3e;
+      border: 4px solid #ff9f43;
+      border-radius: 15px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: none;
+    }
+
+    #face { font-size: 6rem; transition: transform 0.05s; }
+
+    #feather {
+      font-size: 3rem;
+      position: absolute;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    .hud { margin-top: 15px; font-weight: bold; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+
+  <h1>🤧 Tickle To Sneeze!</h1>
+  <div id="status">Rub the feather back and forth on the nose to cause a sneeze!</div>
+
+  <div id="stage">
+    <div id="face">😤</div>
+    <div id="feather">🪶</div>
+  </div>
+
+  <div class="hud">
+    Tickle Level: <span id="tickle" style="color: #ff4757;">0%</span>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const face = document.getElementById('face');
+    const feather = document.getElementById('feather');
+    const tickleText = document.getElementById('tickle');
+    const status = document.getElementById('status');
+
+    let tickle = 0;
+    let lastX = 0;
+    let done = false;
+
+    stage.addEventListener('mousemove', (e) => {
+      if (done) return;
+
+      const rect = stage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      feather.style.left = x + 'px';
+      feather.style.top = y + 'px';
+
+      // Check if rubbing near the nose
+      if (Math.abs(x - 200) < 60 && Math.abs(y - 150) < 60) {
+        if (Math.abs(x - lastX) > 5) { // Active wiggling
+          tickle += 1.5;
+          tickle = Math.min(100, tickle);
+          tickleText.innerText = Math.floor(tickle) + '%';
+          
+          // Face shakes as it gets closer
+          face.style.transform = `scale(${1 + tickle/200}) rotate(${(Math.random() - 0.5) * 10}deg)`;
+
+          if (tickle >= 100) {
+            done = true;
+            face.innerText = '🤧💨💥';
+            face.style.transform = 'scale(2)';
+            status.innerText = "ACHOOO! 🎉 You successfully made them sneeze!";
+            status.style.color = "#00d2d3";
+          }
+        }
+      }
+      lastX = x;
+    });
+  </script>
+</body>
+</html>
