@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Switch Blitz</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #f43f5e; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #fbbf24; margin-bottom: 15px; font-weight: bold; }
+
+    #stage {
+      width: 320px;
+      height: 380px;
+      background: #1e293b;
+      border: 3px solid #f43f5e;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    #hub {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      position: absolute;
+      bottom: 30px;
+      left: 130px;
+      transition: transform 0.2s ease;
+      box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    }
+
+    .ball {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎨 Color Switch Blitz</h1>
+  <div id="hud">Score: <span id="score">0</span> | Tap stage to rotate hub!</div>
+
+  <div id="stage">
+    <div id="hub"></div>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const hub = document.getElementById('hub');
+    const scoreText = document.getElementById('score');
+
+    const colors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308']; // Red, Blue, Green, Yellow
+    let activeColorIndex = 0;
+    let score = 0;
+    let gameOver = false;
+
+    // Set initial hub style
+    function updateHub() {
+      const topColor = colors[activeColorIndex];
+      hub.style.background = `conic-gradient(
+        ${colors[activeColorIndex]} 0deg 90deg,
+        ${colors[(activeColorIndex + 1) % 4]} 90deg 180deg,
+        ${colors[(activeColorIndex + 2) % 4]} 180deg 270deg,
+        ${colors[(activeColorIndex + 3) % 4]} 270deg 360deg
+      )`;
+    }
+
+    function rotateHub() {
+      if (gameOver) return;
+      activeColorIndex = (activeColorIndex + 1) % 4;
+      updateHub();
+    }
+
+    function spawnBall() {
+      if (gameOver) return;
+
+      const colorIndex = Math.floor(Math.random() * 4);
+      const ball = document.createElement('div');
+      ball.className = 'ball';
+      ball.style.background = colors[colorIndex];
+      ball.style.left = '150px';
+      ball.style.top = '-20px';
+
+      stage.appendChild(ball);
+
+      let ballY = -20;
+      const speed = 3 + Math.floor(score / 50);
+
+      const drop = setInterval(() => {
+        if (gameOver) {
+          clearInterval(drop);
+          ball.remove();
+          return;
+        }
+
+        ballY += speed;
+        ball.style.top = ballY + 'px';
+
+        // Collision Check near Hub
+        if (ballY >= 290 && ballY <= 310) {
+          clearInterval(drop);
+          ball.remove();
+
+          if (colorIndex === activeColorIndex) {
+            score += 10;
+            scoreText.innerText = score;
+            spawnBall();
+          } else {
+            gameOver = true;
+            scoreText.innerText = score + " (COLOR MISMATCH! Refresh to retry)";
+          }
+        }
+      }, 20);
+    }
+
+    stage.addEventListener('pointerdown', rotateHub);
+    updateHub();
+    spawnBall();
+  </script>
+</body>
+</html>
