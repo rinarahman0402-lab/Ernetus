@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Dodge</title>
+  <style>
+    body {
+      background-color: #030712;
+      color: #f9fafb;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #818cf8; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #fbbf24; margin-bottom: 15px; font-weight: bold; }
+
+    #space {
+      width: 320px;
+      height: 380px;
+      background: #111827;
+      border: 3px solid #818cf8;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #ship {
+      width: 28px;
+      height: 28px;
+      background: #818cf8;
+      clip-path: polygon(50% 0%, 0% 100%, 50% 80%, 100% 100%);
+      position: absolute;
+      bottom: 15px;
+      left: 146px;
+      transition: left 0.08s ease-out;
+    }
+
+    .asteroid {
+      width: 24px;
+      height: 24px;
+      background: #6b7280;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      width: 80px;
+      height: 50px;
+      background: #818cf8;
+      color: #030712;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #a5b4fc; }
+  </style>
+</head>
+<body>
+
+  <h1>🌌 Cosmic Dodge</h1>
+  <div id="hud">Score: <span id="score">0</span></div>
+
+  <div id="space">
+    <div id="ship"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn-left">⬅️</button>
+    <button class="btn" id="btn-right">➡️</button>
+  </div>
+
+  <script>
+    const space = document.getElementById('space');
+    const ship = document.getElementById('ship');
+    const scoreText = document.getElementById('score');
+
+    let shipX = 146;
+    let score = 0;
+    let gameOver = false;
+    let speed = 4;
+
+    function moveShip(dir) {
+      if (gameOver) return;
+      if (dir === 'left') shipX = Math.max(10, shipX - 30);
+      if (dir === 'right') shipX = Math.min(282, shipX + 30);
+      ship.style.left = shipX + 'px';
+    }
+
+    function spawnAsteroid() {
+      if (gameOver) return;
+
+      const roid = document.createElement('div');
+      roid.className = 'asteroid';
+
+      const startX = Math.floor(Math.random() * 280) + 10;
+      roid.style.left = startX + 'px';
+      roid.style.top = '-25px';
+
+      space.appendChild(roid);
+
+      let roidY = -25;
+      const fall = setInterval(() => {
+        if (gameOver) {
+          clearInterval(fall);
+          roid.remove();
+          return;
+        }
+
+        roidY += speed;
+        roid.style.top = roidY + 'px';
+
+        // Collision Check near ship
+        if (roidY >= 335 && roidY <= 365) {
+          if (Math.abs(startX - shipX) < 22) {
+            gameOver = true;
+            scoreText.innerText = score + " (CRASHED! Refresh to retry)";
+            clearInterval(fall);
+          }
+        }
+
+        if (roidY > 380) {
+          clearInterval(fall);
+          roid.remove();
+          score += 10;
+          scoreText.innerText = score;
+          
+          // Gradually speed up
+          if (score % 50 === 0) speed += 0.5;
+        }
+      }, 20);
+
+      const delay = Math.max(300, 1000 - (score * 5));
+      setTimeout(spawnAsteroid, delay);
+    }
+
+    document.getElementById('btn-left').onclick = () => moveShip('left');
+    document.getElementById('btn-right').onclick = () => moveShip('right');
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') moveShip('left');
+      if (e.key === 'ArrowRight') moveShip('right');
+    });
+
+    spawnAsteroid();
+  </script>
+</body>
+</html>
