@@ -19,11 +19,11 @@
     }
 
     h1 { color: #66fcf1; margin-bottom: 5px; }
-    #status { font-size: 1.2rem; color: #45a29e; margin-bottom: 15px; }
+    #status { font-size: 1.1rem; color: #45a29e; margin-bottom: 15px; text-align: center; }
 
     #maze {
-      width: 400px;
-      height: 300px;
+      width: 300px;
+      height: 250px;
       background: #1f2833;
       border: 4px solid #66fcf1;
       border-radius: 12px;
@@ -55,6 +55,7 @@
       justify-content: center;
       font-weight: bold;
       color: #0b0c10;
+      font-size: 0.8rem;
     }
 
     .wall {
@@ -62,18 +63,54 @@
       background: #c5c6c7;
       border-radius: 4px;
     }
+
+    /* On-Screen D-Pad Controls for Mobile */
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(2, 50px);
+      gap: 5px;
+    }
+
+    .btn {
+      background: #45a29e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #66fcf1; color: #000; }
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
   </style>
 </head>
 <body>
 
   <h1>🌀 The Impossible Maze</h1>
-  <div id="status">Use Arrow Keys to reach the Exit!</div>
+  <div id="status">Use the buttons to reach the Exit!</div>
 
   <div id="maze">
     <div id="player"></div>
     <div id="exit">GOAL</div>
-    <div class="wall" style="width: 200px; height: 15px; top: 100px; left: 0;"></div>
-    <div class="wall" style="width: 15px; height: 120px; top: 100px; right: 100px;"></div>
+    <div class="wall" style="width: 150px; height: 15px; top: 80px; left: 0;"></div>
+    <div class="wall" style="width: 15px; height: 100px; top: 80px; right: 80px;"></div>
+  </div>
+
+  <!-- Touch Controls -->
+  <div class="controls">
+    <button class="btn" id="btn-up">⬆️</button>
+    <button class="btn" id="btn-left">⬅️</button>
+    <button class="btn" id="btn-down">⬇️</button>
+    <button class="btn" id="btn-right">➡️</button>
   </div>
 
   <script>
@@ -86,33 +123,45 @@
     let posY = 20;
     let pranks = 0;
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') posX = Math.min(360, posX + 20);
-      if (e.key === 'ArrowLeft') posX = Math.max(0, posX - 20);
-      if (e.key === 'ArrowDown') posY = Math.min(260, posY + 20);
-      if (e.key === 'ArrowUp') posY = Math.max(0, posY - 20);
+    function move(dir) {
+      if (dir === 'right') posX = Math.min(260, posX + 20);
+      if (dir === 'left') posX = Math.max(0, posX - 20);
+      if (dir === 'down') posY = Math.min(210, posY + 20);
+      if (dir === 'up') posY = Math.max(0, posY - 20);
 
       player.style.left = posX + 'px';
       player.style.top = posY + 'px';
 
-      // Prank logic when getting close to exit
-      if (posX > 280 && posY > 200) {
+      // Prank logic
+      if (posX > 180 && posY > 150) {
         if (pranks === 0) {
-          // Exit teleports to top right!
           exit.style.bottom = 'auto';
           exit.style.top = '20px';
           status.innerText = "😜 NOPE! The exit moved!";
           pranks++;
-        } else if (pranks === 1 && posY < 60) {
-          // Whole maze spins upside down!
+        } else if (pranks === 1 && posY < 50) {
           maze.style.transform = 'rotate(180deg)';
           status.innerText = "🙃 WHOOPS! Upside down mode!";
           pranks++;
-        } else if (pranks === 2 && posX < 60) {
+        } else if (pranks === 2 && posX < 50) {
           status.innerText = "🎉 YOU BEAT THE IMPOSSIBLE MAZE!";
           status.style.color = "#66fcf1";
         }
       }
+    }
+
+    // Touch Button Listeners
+    document.getElementById('btn-up').onclick = () => move('up');
+    document.getElementById('btn-down').onclick = () => move('down');
+    document.getElementById('btn-left').onclick = () => move('left');
+    document.getElementById('btn-right').onclick = () => move('right');
+
+    // Keyboard Listeners
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') move('right');
+      if (e.key === 'ArrowLeft') move('left');
+      if (e.key === 'ArrowDown') move('down');
+      if (e.key === 'ArrowUp') move('up');
     });
   </script>
 </body>
