@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speed Precision</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 { color: #38bdf8; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #facc15; margin-bottom: 15px; font-weight: bold; }
+
+    #arena {
+      width: 320px;
+      height: 380px;
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .target {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+    }
+
+    .ring {
+      position: absolute;
+      border: 3px solid #38bdf8;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Speed Precision</h1>
+  <div id="hud">Score: <span id="score">0</span> | Streak: <span id="streak">0</span></div>
+
+  <div id="arena"></div>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const scoreText = document.getElementById('score');
+    const streakText = document.getElementById('streak');
+
+    let score = 0;
+    let streak = 0;
+    let activeTarget = null;
+    let ringInterval = null;
+
+    function spawnTarget() {
+      arena.innerHTML = '';
+
+      const x = Math.floor(Math.random() * 240) + 40;
+      const y = Math.floor(Math.random() * 300) + 40;
+
+      const target = document.createElement('div');
+      target.className = 'target';
+      target.style.left = x + 'px';
+      target.style.top = y + 'px';
+
+      const ring = document.createElement('div');
+      ring.className = 'ring';
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+
+      let size = 110;
+      ring.style.width = size + 'px';
+      ring.style.height = size + 'px';
+
+      arena.appendChild(target);
+      arena.appendChild(ring);
+
+      let tapped = false;
+
+      target.addEventListener('pointerdown', () => {
+        if (tapped) return;
+        tapped = true;
+        clearInterval(ringInterval);
+
+        // Accuracy check based on ring size vs target size (50px)
+        const diff = Math.abs(size - 50);
+        if (diff < 15) {
+          score += 100 + (streak * 10);
+          streak++;
+        } else {
+          score += 30;
+          streak = 0;
+        }
+
+        scoreText.innerText = score;
+        streakText.innerText = streak;
+        spawnTarget();
+      });
+
+      ringInterval = setInterval(() => {
+        size -= 2.5;
+        ring.style.width = size + 'px';
+        ring.style.height = size + 'px';
+
+        if (size <= 45) {
+          clearInterval(ringInterval);
+          if (!tapped) {
+            streak = 0;
+            streakText.innerText = streak;
+            spawnTarget();
+          }
+        }
+      }, 20);
+    }
+
+    spawnTarget();
+  </script>
+</body>
+  </html>
+  
