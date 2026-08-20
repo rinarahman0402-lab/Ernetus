@@ -19,7 +19,7 @@
     }
 
     h1 { color: #66fcf1; margin-bottom: 5px; }
-    #status { font-size: 1.1rem; color: #45a29e; margin-bottom: 15px; text-align: center; }
+    #status { font-size: 1.1rem; color: #45a29e; margin-bottom: 15px; text-align: center; height: 30px; }
 
     #maze {
       width: 300px;
@@ -29,33 +29,36 @@
       border-radius: 12px;
       position: relative;
       overflow: hidden;
+      transition: transform 0.5s ease;
     }
 
     #player {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       background: #45a29e;
       border-radius: 50%;
       position: absolute;
-      top: 20px;
-      left: 20px;
-      transition: all 0.05s linear;
+      top: 10px;
+      left: 10px;
+      transition: all 0.1s ease;
+      z-index: 10;
     }
 
     #exit {
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       background: #66fcf1;
-      border-radius: 6px;
+      border-radius: 8px;
       position: absolute;
-      bottom: 20px;
-      right: 20px;
+      top: 200px;
+      left: 250px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
       color: #0b0c10;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
     }
 
     .wall {
@@ -64,7 +67,6 @@
       border-radius: 4px;
     }
 
-    /* Mobile D-Pad Buttons */
     .controls {
       margin-top: 15px;
       display: grid;
@@ -96,16 +98,15 @@
 <body>
 
   <h1>🌀 The Impossible Maze</h1>
-  <div id="status">Use the buttons to reach the Exit!</div>
+  <div id="status">Guide the dot to the GOAL!</div>
 
   <div id="maze">
     <div id="player"></div>
     <div id="exit">GOAL</div>
-    <div class="wall" style="width: 150px; height: 15px; top: 80px; left: 0;"></div>
-    <div class="wall" style="width: 15px; height: 100px; top: 80px; right: 80px;"></div>
+    <div class="wall" style="width: 150px; height: 12px; top: 80px; left: 0;"></div>
+    <div class="wall" style="width: 12px; height: 100px; top: 80px; right: 80px;"></div>
   </div>
 
-  <!-- Touch Controls -->
   <div class="controls">
     <button class="btn" id="btn-up">⬆️</button>
     <button class="btn" id="btn-left">⬅️</button>
@@ -119,44 +120,67 @@
     const status = document.getElementById('status');
     const maze = document.getElementById('maze');
 
-    let posX = 20;
-    let posY = 20;
-    let pranks = 0;
+    let posX = 10;
+    let posY = 10;
+    let exitX = 250;
+    let exitY = 200;
+    let phase = 0;
+    let won = false;
 
     function move(dir) {
-      if (dir === 'right') posX = Math.min(260, posX + 20);
-      if (dir === 'left') posX = Math.max(0, posX - 20);
-      if (dir === 'down') posY = Math.min(210, posY + 20);
-      if (dir === 'up') posY = Math.max(0, posY - 20);
+      if (won) return;
+
+      if (dir === 'right') posX = Math.min(265, posX + 25);
+      if (dir === 'left') posX = Math.max(10, posX - 25);
+      if (dir === 'down') posY = Math.min(215, posY + 25);
+      if (dir === 'up') posY = Math.max(10, posY - 25);
 
       player.style.left = posX + 'px';
       player.style.top = posY + 'px';
 
-      // Prank logic
-      if (posX > 180 && posY > 150) {
-        if (pranks === 0) {
-          exit.style.bottom = 'auto';
-          exit.style.top = '20px';
-          status.innerText = "😜 NOPE! The exit moved!";
-          pranks++;
-        } else if (pranks === 1 && posY < 50) {
-          maze.style.transform = 'rotate(180deg)';
-          status.innerText = "🙃 WHOOPS! Upside down mode!";
-          pranks++;
-        } else if (pranks === 2 && posX < 50) {
-          status.innerText = "🎉 YOU BEAT THE IMPOSSIBLE MAZE!";
-          status.style.color = "#66fcf1";
-        }
+      checkPranks();
+    }
+
+    function checkPranks() {
+      let dist = Math.hypot(posX - exitX, posY - exitY);
+
+      // Phase 1: Goal runs away when close
+      if (dist < 50 && phase === 0) {
+        exitX = 250;
+        exitY = 10;
+        exit.style.left = exitX + 'px';
+        exit.style.top = exitY + 'px';
+        status.innerText = "😜 TOO SLOW! The goal ran away!";
+        phase = 1;
+        return;
+      }
+
+      // Phase 2: Screen flips upside down when close again
+      if (dist < 50 && phase === 1) {
+        maze.style.transform = 'rotate(180deg)';
+        exitX = 10;
+        exitY = 200;
+        exit.style.left = exitX + 'px';
+        exit.style.top = exitY + 'px';
+        status.innerText = "🙃 WHOOPS! Upside down mode!";
+        phase = 2;
+        return;
+      }
+
+      // Phase 3: Final Win Detection
+      if (dist < 35 && phase === 2) {
+        won = true;
+        status.innerText = "🎉 IMPOSSIBLE! YOU ACTUALLY BEAT IT!";
+        status.style.color = "#66fcf1";
+        exit.style.background = "#00ffcc";
       }
     }
 
-    // Touch Button Listeners
     document.getElementById('btn-up').onclick = () => move('up');
     document.getElementById('btn-down').onclick = () => move('down');
     document.getElementById('btn-left').onclick = () => move('left');
     document.getElementById('btn-right').onclick = () => move('right');
 
-    // Keyboard Listeners
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') move('right');
       if (e.key === 'ArrowLeft') move('left');
