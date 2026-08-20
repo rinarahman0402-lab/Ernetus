@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Don't Wake the Cat</title>
+  <style>
+    body {
+      background-color: #2d132c;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 { color: #ff4365; margin-bottom: 5px; }
+    #status { font-size: 1.1rem; color: #00d9c0; margin-bottom: 15px; }
+
+    #room {
+      width: 360px;
+      height: 280px;
+      background: #801336;
+      border: 4px solid #ff4365;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #cat {
+      font-size: 4.5rem;
+      position: absolute;
+      bottom: 10px;
+      left: 140px;
+      transition: transform 0.2s;
+    }
+
+    .noise-item {
+      font-size: 2rem;
+      position: absolute;
+      cursor: pointer;
+    }
+
+    .hud { margin-top: 15px; font-weight: bold; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+
+  <h1>🐱 Don't Wake the Cat!</h1>
+  <div id="status">Tap the falling noise-makers before they hit the floor!</div>
+
+  <div id="room">
+    <div id="cat">🐱💤</div>
+  </div>
+
+  <div class="hud">
+    Noise Level: <span id="noise" style="color: #ff4365;">0%</span>
+  </div>
+
+  <script>
+    const room = document.getElementById('room');
+    const noiseText = document.getElementById('noise');
+    const status = document.getElementById('status');
+    const cat = document.getElementById('cat');
+
+    let noise = 0;
+    let gameOver = false;
+
+    setInterval(() => {
+      if (gameOver) return;
+
+      const item = document.createElement('div');
+      item.className = 'noise-item';
+      const noiseMakers = ['⏰', '📢', '🥁', '🎸', '💥'];
+      item.innerText = noiseMakers[Math.floor(Math.random() * noiseMakers.length)];
+
+      let itemX = Math.floor(Math.random() * 320);
+      item.style.left = itemX + 'px';
+      item.style.top = '-40px';
+      room.appendChild(item);
+
+      // Tap to destroy noise maker
+      item.addEventListener('click', () => {
+        item.remove();
+      });
+
+      let itemY = -40;
+      const fall = setInterval(() => {
+        if (gameOver) { clearInterval(fall); item.remove(); return; }
+
+        itemY += 3.5;
+        item.style.top = itemY + 'px';
+
+        // Hits the floor
+        if (itemY >= 230) {
+          clearInterval(fall);
+          item.remove();
+          noise += 25;
+          noiseText.innerText = noise + '%';
+
+          if (noise >= 100) {
+            gameOver = true;
+            cat.innerText = '😾💥';
+            cat.style.transform = 'scale(1.5)';
+            status.innerText = "HISSS! 😼 You woke the cat up!";
+            status.style.color = "#ff4365";
+          }
+        }
+      }, 20);
+
+    }, 900);
+  </script>
+</body>
+</html>
