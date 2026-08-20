@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Game Maker</title>
+  <style>
+    body {
+      background-color: #181824;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #00e676; margin-bottom: 5px; }
+    p { color: #aaa; margin-bottom: 15px; font-size: 0.95rem; }
+
+    /* Builder & Canvas Area */
+    #editor-stage {
+      width: 320px;
+      height: 320px;
+      background: #242436;
+      border: 4px solid #00e676;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .entity {
+      width: 32px;
+      height: 32px;
+      font-size: 1.6rem;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    /* Designer Tool Bar */
+    .toolbar {
+      margin-top: 15px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 340px;
+    }
+
+    .tool-btn {
+      padding: 8px 12px;
+      background: #2f2f45;
+      color: #fff;
+      border: 2px solid #444466;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tool-btn.active {
+      border-color: #00e676;
+      background: #00e676;
+      color: #181824;
+    }
+
+    /* Play Controls */
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 45px);
+      grid-template-rows: repeat(2, 45px);
+      gap: 5px;
+    }
+
+    .dpad-btn {
+      background: #00e676;
+      color: #181824;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
+
+    #status { margin-top: 10px; font-weight: bold; color: #ffeb3b; }
+  </style>
+</head>
+<body>
+
+  <h1>🛠️ Mini Game Maker</h1>
+  <p>1. Select a Tool & Click Grid to Build | 2. Hit PLAY!</p>
+
+  <div id="editor-stage"></div>
+
+  <div class="toolbar">
+    <button class="tool-btn active" id="tool-player">😀 Player</button>
+    <button class="tool-btn" id="tool-goal">⭐ Goal</button>
+    <button class="tool-btn" id="tool-wall">🧱 Wall</button>
+    <button class="tool-btn" id="tool-hazard">Lava 🔥</button>
+    <button class="tool-btn" id="tool-erase">❌ Clear</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="tool-btn" id="mode-btn" style="background:#00e676; color:#181824; width:100%;">▶️ PLAY GAME</button>
+  </div>
+
+  <div id="status">Mode: EDITOR</div>
+
+  <!-- Touch Controls -->
+  <div class="controls" id="dpad" style="display:none;">
+    <button class="dpad-btn" id="btn-up">⬆️</button>
+    <button class="dpad-btn" id="btn-left">⬅️</button>
+    <button class="dpad-btn" id="btn-down">⬇️</button>
+    <button class="dpad-btn" id="btn-right">➡️</button>
+  </div>
+
+  <script>
+    const stage = document.getElementById('editor-stage');
+    const statusText = document.getElementById('status');
+    const modeBtn = document.getElementById('mode-btn');
+    const dpad = document.getElementById('dpad');
+
+    let currentTool = 'player';
+    let isPlaying = false;
+    
+    // Grid map storage (10x10 grid of 32px cells)
+    let grid = Array(10).fill(null).map(() => Array(10).fill(null));
+    let playerPos = null;
+
+    // Tool switching
+    const tools = ['player', 'goal', 'wall', 'hazard', 'erase'];
+    tools.forEach(tool => {
+      document.getElementById(`tool-${tool}`).onclick = (e) => {
+        if (isPlaying) return;
+        tools.forEach(t => document.getElementById(`tool-${t}`).classList.remove('active'));
+        e.target.classList.add('active');
+        currentTool = tool;
+      };
+    });
+
+    // Grid creation
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'entity';
+        cell.style.top = (r * 32) + 'px';
+        cell.style.left = (c * 32) + 'px';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+
+        cell.onclick = () => {
+          if (isPlaying) return;
+          placeObject(r, c, cell);
+        };
+
+        stage.appendChild(cell);
+      }
+    }
+
+    function placeObject(r, c, cell) {
+      if (currentTool === 'erase') {
+        grid[r][c] = null;
+        cell.innerText = '';
+        return;
+      }
+
+      // Enforce single player/goal
+      if (currentTool === 'player') {
+        clearType('player');
+        playerPos = { r, c };
+      }
+      if (currentTool === 'goal') clearType('goal');
+
+      grid[r][c] = currentTool;
+      renderCell(cell, currentTool);
+    }
+
+    function clearType(type) {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (grid[r][c] === type) {
+            grid[r][c] = null;
+            getDomCell(r, c).innerText = '';
+          }
+        }
+      }
+    }
+
+    function renderCell(cell, type) {
+      const icons = { player: '😀', goal: '⭐', wall: '🧱', hazard: '🔥' };
+      cell.innerText = icons[type] || '';
+    }
+
+    function getDomCell(r, c) {
+      return stage.children[r * 10 + c];
+    }
+
+    // Toggle Play / Edit Mode
+    modeBtn.onclick = () => {
+      if (!playerPos && !isPlaying) {
+        alert('Place a Player (😀) first!');
+        return;
+      }
+
+      isPlaying = !isPlaying;
+
+      if (isPlaying) {
+        modeBtn.innerText = '🛠️ EDIT LEVEL';
+        modeBtn.style.background = '#ffeb3b';
+        statusText.innerText = 'Mode: PLAYING! Reach the Star ⭐!';
+        dpad.style.display = 'grid';
+      } else {
+        modeBtn.innerText = '▶️ PLAY GAME';
+        modeBtn.style.background = '#00e676';
+        statusText.innerText = 'Mode: EDITOR';
+        dpad.style.display = 'none';
+        resetPlayer();
+      }
+    };
+
+    function resetPlayer() {
+      // Restore player to initial position
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (grid[r][c] === 'player') playerPos = { r, c };
+          renderCell(getDomCell(r, c), grid[r][c]);
+        }
+      }
+    }
+
+    // Player Movement
+    function movePlayer(dr, dc) {
+      if (!isPlaying || !playerPos) return;
+
+      let newR = playerPos.r + dr;
+      let newC = playerPos.c + dc;
+
+      // Bounds & Wall check
+      if (newR < 0 || newR >= 10 || newC < 0 || newC >= 10) return;
+      if (grid[newR][newC] === 'wall') return;
+
+      // Clear current player cell
+      getDomCell(playerPos.r, playerPos.c).innerText = '';
+
+      // Check win/lose
+      let target = grid[newR][newC];
+      playerPos = { r: newR, c: newC };
+
+      if (target === 'hazard') {
+        getDomCell(newR, newC).innerText = '💀';
+        statusText.innerText = '💥 GAME OVER! You touched lava!';
+        isPlaying = false;
+        return;
+      }
+
+      if (target === 'goal') {
+        getDomCell(newR, newC).innerText = '🎉';
+        statusText.innerText = '🏆 YOU WIN! Level Solved!';
+        isPlaying = false;
+        return;
+      }
+
+      getDomCell(newR, newC).innerText = '😀';
+    }
+
+    // Touch & Keyboard Controls
+    document.getElementById('btn-up').onclick = () => movePlayer(-1, 0);
+    document.getElementById('btn-down').onclick = () => movePlayer(1, 0);
+    document.getElementById('btn-left').onclick = () => movePlayer(0, -1);
+    document.getElementById('btn-right').onclick = () => movePlayer(0, 1);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') movePlayer(-1, 0);
+      if (e.key === 'ArrowDown') movePlayer(1, 0);
+      if (e.key === 'ArrowLeft') movePlayer(0, -1);
+      if (e.key === 'ArrowRight') movePlayer(0, 1);
+    });
+  </script>
+</body>
+</html>
