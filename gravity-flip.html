@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gravity Flip</title>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #58a6ff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 { color: #58a6ff; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #7ee787; margin-bottom: 15px; font-weight: bold; }
+
+    #track {
+      width: 320px;
+      height: 240px;
+      background: #161b22;
+      border: 3px solid #30363d;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .border-line {
+      position: absolute;
+      width: 100%;
+      height: 8px;
+      background: #58a6ff;
+    }
+    #top-line { top: 0; }
+    #bottom-line { bottom: 0; }
+
+    #runner {
+      width: 24px;
+      height: 24px;
+      background: #7ee787;
+      border-radius: 4px;
+      position: absolute;
+      left: 40px;
+      bottom: 8px;
+      transition: bottom 0.15s ease-in-out;
+    }
+
+    .hazard {
+      width: 18px;
+      height: 40px;
+      background: #f85149;
+      border-radius: 4px;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌀 Gravity Flip</h1>
+  <div id="hud">Score: <span id="score">0</span></div>
+
+  <div id="track">
+    <div class="border-line" id="top-line"></div>
+    <div id="runner"></div>
+    <div class="border-line" id="bottom-line"></div>
+  </div>
+
+  <script>
+    const track = document.getElementById('track');
+    const runner = document.getElementById('runner');
+    const scoreText = document.getElementById('score');
+
+    let isGravityInverted = false;
+    let score = 0;
+    let gameOver = false;
+
+    // Flip Gravity on Click/Tap or Space key
+    function flipGravity() {
+      if (gameOver) {
+        restartGame();
+        return;
+      }
+      isGravityInverted = !isGravityInverted;
+      if (isGravityInverted) {
+        runner.style.bottom = '208px'; // Top line
+      } else {
+        runner.style.bottom = '8px'; // Bottom line
+      }
+    }
+
+    track.addEventListener('pointerdown', flipGravity);
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') flipGravity();
+    });
+
+    // Spawn Obstacles
+    function spawnObstacle() {
+      if (gameOver) return;
+
+      const hazard = document.createElement('div');
+      hazard.className = 'hazard';
+
+      const isTop = Math.random() > 0.5;
+      hazard.style.top = isTop ? '8px' : 'auto';
+      hazard.style.bottom = isTop ? 'auto' : '8px';
+      hazard.style.left = '320px';
+
+      track.appendChild(hazard);
+
+      let posX = 320;
+      const move = setInterval(() => {
+        if (gameOver) {
+          clearInterval(move);
+          hazard.remove();
+          return;
+        }
+
+        posX -= 5;
+        hazard.style.left = posX + 'px';
+
+        // Collision Check
+        if (posX > 35 && posX < 65) {
+          if ((isTop && isGravityInverted) || (!isTop && !isGravityInverted)) {
+            gameOver = true;
+            scoreText.innerText = score + " (GAME OVER! Tap to Restart)";
+            clearInterval(move);
+          }
+        }
+
+        if (posX < -20) {
+          clearInterval(move);
+          hazard.remove();
+          score += 1;
+          scoreText.innerText = score;
+        }
+      }, 20);
+
+      const delay = Math.floor(Math.random() * 800) + 700;
+      setTimeout(spawnObstacle, delay);
+    }
+
+    function restartGame() {
+      gameOver = false;
+      score = 0;
+      scoreText.innerText = score;
+      isGravityInverted = false;
+      runner.style.bottom = '8px';
+      spawnObstacle();
+    }
+
+    spawnObstacle();
+  </script>
+</body>
+</html>
