@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supermarket Chaos</title>
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #f1c40f; margin-bottom: 5px; }
+    #list { font-size: 1.2rem; color: #00ffcc; margin-bottom: 15px; font-weight: bold; }
+
+    #conveyor-belt {
+      width: 480px;
+      height: 150px;
+      background: #333;
+      border: 4px solid #555;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .belt-line {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 20px;
+      background: repeating-linear-gradient(45deg, #111, #111 10px, #222 10px, #222 20px);
+    }
+
+    .item {
+      font-size: 2.5rem;
+      position: absolute;
+      top: 40px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .item:hover { transform: scale(1.2); }
+
+    .hud { margin-top: 15px; font-size: 1.2rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>🛒 Supermarket Chaos</h1>
+  <div id="list">Shopping List: Catch 3 Sharks 🦈!</div>
+
+  <div id="conveyor-belt">
+    <div class="belt-line"></div>
+  </div>
+
+  <div class="hud">Sharks Caught: <span id="score" style="color:#00ffcc;">0</span>/3</div>
+
+  <script>
+    const belt = document.getElementById('conveyor-belt');
+    const scoreText = document.getElementById('score');
+    const listText = document.getElementById('list');
+
+    let score = 0;
+    let gameOver = false;
+
+    setInterval(() => {
+      if (gameOver) return;
+
+      const item = document.createElement('div');
+      item.className = 'item';
+      
+      const options = ['🦈', '👞', '🍞', '🍕', '📺', '🧻'];
+      const chosen = options[Math.floor(Math.random() * options.length)];
+      item.innerText = chosen;
+
+      let itemX = -50;
+      item.style.left = itemX + 'px';
+      belt.appendChild(item);
+
+      item.addEventListener('click', () => {
+        if (chosen === '🦈') {
+          score++;
+          scoreText.innerText = score;
+          item.remove();
+
+          if (score >= 3) {
+            gameOver = true;
+            listText.innerText = "🎉 SHOPPING COMPLETE! You bagged 3 sharks!";
+            listText.style.color = "#00ffcc";
+          }
+        } else {
+          listText.innerText = "❌ WRONG ITEM! That's not a shark!";
+          listText.style.color = "#ff0055";
+          item.remove();
+        }
+      });
+
+      const move = setInterval(() => {
+        if (gameOver) { clearInterval(move); item.remove(); return; }
+        itemX += 3;
+        item.style.left = itemX + 'px';
+
+        if (itemX > 500) {
+          clearInterval(move);
+          item.remove();
+        }
+      }, 20);
+
+    }, 1000);
+  </script>
+</body>
+</html>
