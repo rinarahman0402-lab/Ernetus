@@ -1,278 +1,659 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monster Stalker 3D</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #050508;
-            font-family: 'Courier New', Courier, monospace;
-            user-select: none;
-            touch-action: none;
-        }
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-        #ui-overlay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .ui-metric {
-            margin-bottom: 8px;
-            background: rgba(15, 15, 25, 0.6);
-            padding: 6px 12px;
-            border-left: 3px solid #8a2be2;
-            border-radius: 0 6px 6px 0;
-        }
-        
-        /* --- CROSS-PLATFORM CONTROL LAYOUT --- */
-        #joystick-zone {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 15;
-            touch-action: none;
-            cursor: pointer;
-        }
-        #joystick-nub {
-            width: 50px;
-            height: 50px;
-            background: rgba(138, 43, 226, 0.7);
-            border: 2px solid #bb86fc;
-            border-radius: 50%;
-            position: absolute;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
-        }
-        #action-zone {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            display: flex;
-            gap: 20px;
-            z-index: 15;
-        }
-        .action-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-            font-size: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            touch-action: none;
-            cursor: pointer;
-        }
-        #btn-bomb {
-            background: radial-gradient(circle, #9400d3 0%, #4b0082 100%);
-            border-color: #bb86fc;
-        }
-        #btn-grab {
-            background: radial-gradient(circle, #ff0055 0%, #990033 100%);
-            border-color: #ff6699;
-        }
-    </style>
-    <!-- Import Three.js Engine via CDN -->
-    <script src="https://cloudflare.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Monster Stalker</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#05060b;
+  font-family:Arial,sans-serif;
+  color:white;
+}
+
+#game{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+  background:#101827;
+}
+
+#hud{
+  position:absolute;
+  top:15px;
+  left:15px;
+  right:15px;
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none;
+}
+
+.box{
+  background:rgba(10,10,20,.85);
+  border:2px solid #6d3bc4;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:bold;
+}
+
+#message{
+  position:absolute;
+  top:80px;
+  left:50%;
+  transform:translateX(-50%);
+  width:90%;
+  text-align:center;
+  background:rgba(0,0,0,.7);
+  padding:10px;
+  border-radius:10px;
+  font-size:16px;
+}
+
+#controls{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:20px;
+  height:150px;
+  pointer-events:none;
+}
+
+#joystick{
+  position:absolute;
+  left:25px;
+  bottom:0;
+  width:130px;
+  height:130px;
+  border:4px solid #777;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  pointer-events:auto;
+  touch-action:none;
+}
+
+#stick{
+  position:absolute;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#6d35a8;
+  border:3px solid #b88cff;
+  left:32px;
+  top:32px;
+}
+
+.action{
+  position:absolute;
+  bottom:10px;
+  width:105px;
+  height:105px;
+  border-radius:50%;
+  border:3px solid white;
+  color:white;
+  font-weight:bold;
+  font-size:16px;
+  pointer-events:auto;
+  touch-action:none;
+}
+
+#bomb{
+  right:145px;
+  background:#6c1698;
+}
+
+#grab{
+  right:25px;
+  background:#c90c45;
+}
+
+#startScreen,
+#endScreen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#070812;
+  z-index:10;
+}
+
+.panel{
+  width:min(90vw,600px);
+  padding:28px;
+  border-radius:20px;
+  background:#171326;
+  border:3px solid #743fc5;
+  text-align:center;
+}
+
+h1{
+  font-size:clamp(32px,8vw,58px);
+  margin-top:0;
+}
+
+p{
+  line-height:1.6;
+  font-size:18px;
+}
+
+.mainButton{
+  padding:16px 35px;
+  border:none;
+  border-radius:12px;
+  background:#743fc5;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
 </head>
+
 <body>
 
-    <div id="ui-overlay">
-        <div class="ui-metric">Score: <span id="score-txt">0</span></div>
-        <div class="ui-metric">Status: <span id="status-txt" style="color: #6200ee;">CRAWLING</span></div>
-    </div>
+<div id="game">
 
-    <!-- On-Screen Controllers -->
-    <div id="joystick-zone">
-        <div id="joystick-nub"></div>
-    </div>
+<canvas id="canvas"></canvas>
 
-    <div id="action-zone">
-        <div id="btn-bomb" class="action-btn">BOMB</div>
-        <div id="btn-grab" class="action-btn">GRAB /<br>THROW</div>
-    </div>
+<div id="hud">
+  <div class="box" id="score">Score: 0</div>
+  <div class="box" id="status">Status: CRAWLING</div>
+</div>
 
-    <div id="canvas-container"></div>
+<div id="message">
+  Find and grab the glowing crystals. Avoid the monsters!
+</div>
 
-    <script>
-        // --- 1. ENGINE SETUP ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a12);
-        scene.fog = new THREE.FogExp2(0x0a0a12, 0.035);
+<div id="controls">
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        container.appendChild(renderer.domElement);
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
 
-        // --- 2. LIGHTING & ENVIRONMENT ---
-        const ambientLight = new THREE.AmbientLight(0x1a1a3a, 0.6);
-        scene.add(ambientLight);
+  <button class="action" id="bomb">BOMB</button>
 
-        const moonlight = new THREE.DirectionalLight(0x7f90b5, 0.8);
-        moonlight.position.set(30, 50, 20);
-        moonlight.castShadow = true;
-        scene.add(moonlight);
+  <button class="action" id="grab">GRAB</button>
 
-        // Forest Floor Ground
-        const floorGeo = new THREE.PlaneGeometry(160, 160);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111611, roughness: 0.9 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add(floor);
+</div>
 
-        // Generate Procedural Forest Trees
-        const trees = [];
-        const treeCount = 65;
-        for(let i=0; i<treeCount; i++) {
-            const treeGroup = new THREE.Group();
-            
-            const trunkGeo = new THREE.CylinderGeometry(0.4, 0.7, 5, 5);
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2e1d11, roughness: 0.9 });
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            trunk.position.y = 2.5;
-            trunk.castShadow = true;
-            treeGroup.add(trunk);
+<div id="startScreen">
+  <div class="panel">
+    <h1>MONSTER STALKER</h1>
 
-            const leavesGeo = new THREE.ConeGeometry(2.5, 5, 5);
-            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f2a18, roughness: 0.8 });
-            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-            leaves.position.y = 5.5;
-            leaves.castShadow = true;
-            treeGroup.add(leaves);
+    <p>
+      You are trapped in a dark monster world.
+    </p>
 
-            let tx = (Math.random() - 0.5) * 130;
-            let tz = (Math.random() - 0.5) * 130;
-            if (Math.abs(tx) < 12 && Math.abs(tz) < 12) { tx += 20; tz += 20; }
-            
-            treeGroup.position.set(tx, 0, tz);
-            scene.add(treeGroup);
-            trees.push(treeGroup);
-        }
+    <p>
+      Move using the purple joystick.<br>
+      Get close to a glowing crystal and press GRAB.<br>
+      Monsters chase you. Use BOMB to scare them away!
+    </p>
 
-        // --- 3. ENTITIES ---
-        // Player (Crawling Shadow Monster)
-        const monsterGroup = new THREE.Group();
-        const bodyGeo = new THREE.BoxGeometry(1.8, 0.8, 2.5);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5e0b1d, roughness: 0.5 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.4;
-        body.castShadow = true;
-        monsterGroup.add(body);
+    <button class="mainButton" id="startButton">
+      START GAME
+    </button>
+  </div>
+</div>
 
-        const eyeGeo = new THREE.SphereGeometry(0.18, 8, 8);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
-        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-        leftEye.position.set(-0.5, 0.5, 1.25);
-        const rightEye = leftEye.clone();
-        rightEye.position.x = 0.5;
-        monsterGroup.add(leftEye, rightEye);
+<div id="endScreen" style="display:none;">
+  <div class="panel">
+    <h1 id="endTitle">YOU ESCAPED!</h1>
+    <p id="endText"></p>
 
-        scene.add(monsterGroup);
+    <button class="mainButton" id="restartButton">
+      PLAY AGAIN
+    </button>
+  </div>
+</div>
 
-        // NPCs Architecture
-        const npcs = [];
-        const npcCount = 6;
-        const npcMatNormal = new THREE.MeshStandardMaterial({ color: 0xddaa88, roughness: 0.6 });
-        const npcMatSlowed = new THREE.MeshStandardMaterial({ color: 0x3399ff, roughness: 0.4 });
+</div>
 
-        for(let i=0; i<npcCount; i++) {
-            const npcGroup = new THREE.Group();
-            const npcBodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 8);
-            const npcMesh = new THREE.Mesh(npcBodyGeo, npcMatNormal);
-            npcMesh.position.y = 0.9;
-            npcMesh.castShadow = true;
-            npcGroup.add(npcMesh);
+<script>
 
-            const lightConeGeo = new THREE.ConeGeometry(1.5, 6, 8);
-            lightConeGeo.rotateX(Math.PI / 2);
-            const lightConeMat = new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 0.15 });
-            const cone = new THREE.Mesh(lightConeGeo, lightConeMat);
-            cone.position.set(0, 0.9, 3);
-            npcGroup.add(cone);
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-            resetNPC(npcGroup);
-            scene.add(npcGroup);
-            npcs.push({
-                mesh: npcGroup,
-                visualMesh: npcMesh,
-                angle: Math.random() * Math.PI * 2,
-                speed: 0.08,
-                baseSpeed: 0.08,
-                slowTimer: 0,
-                isGrabbed: false
-            });
-        }
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
 
-        function resetNPC(group) {
-            group.position.set((Math.random() - 0.5) * 80, 0, (Math.random() - 0.5) * 80);
-            group.visible = true;
-        }
+resize();
+window.addEventListener("resize",resize);
 
-        let bombs = [];
-        let particles = [];
+const scoreText=document.getElementById("score");
+const statusText=document.getElementById("status");
+const message=document.getElementById("message");
 
-        // --- 4. GAME VARIABLES & UNIVERSAL CONTROLS ---
-        let score = 0;
-        let grabbedNPC = null;
+let running=false;
+let score=0;
+let crystals=[];
+let monsters=[];
+let moveX=0;
+let moveY=0;
 
-        let joystickVector = { x: 0, y: 0 };
-        const joystickZone = document.getElementById('joystick-zone');
-        const joystickNub = document.getElementById('joystick-nub');
-        const maxDragDistance = 60;
-        let activePointerId = null;
+const player={
+  x:0,
+  y:0,
+  r:20,
+  speed:4
+};
 
-        // Unified Pointer Event Logic
-        joystickZone.addEventListener('pointerdown', e => {
-            if (activePointerId !== null) return;
-            activePointerId = e.pointerId;
-            joystickZone.setPointerCapture(e.pointerId);
-            processJoystickMove(e);
-        });
+function setupGame(){
 
-        window.addEventListener('pointermove', e => {
-            if (e.pointerId !== activePointerId) return;
-            processJoystickMove(e);
-        });
+  score=0;
 
-        window.addEventListener('pointerup', e => {
-            if (e.pointerId !== activePointerId) return;
-            activePointerId = null;
-            joystickVector = { x: 0, y: 0 };
-            joystickNub.style.transform = `translate(0px, 0px)`;
-        });
+  player.x=canvas.width/2;
+  player.y=canvas.height/2;
 
-        function processJoystickMove(e) {
-            const zoneRect = joystickZone.getBoundingClientRect();
-            const centerX = zoneRect.left + zoneRect.width / 2;
-            const centerY = zoneRect.top + zoneRect.height / 2;
+  crystals=[];
+  monsters=[];
+
+  for(let i=0;i<8;i++){
+    crystals.push({
+      x:80+Math.random()*(canvas.width-160),
+      y:140+Math.random()*(canvas.height-330),
+      r:16,
+      taken:false
+    });
+  }
+
+  for(let i=0;i<5;i++){
+    monsters.push({
+      x:Math.random()*canvas.width,
+      y:120+Math.random()*(canvas.height-320),
+      r:25,
+      speed:0.7+Math.random()*0.5
+    });
+  }
+
+  updateHUD();
+}
+
+function updateHUD(){
+
+  scoreText.textContent="Score: "+score;
+
+  if(score>=8){
+    statusText.textContent="Status: ESCAPING";
+  }else if(score>=4){
+    statusText.textContent="Status: HUNTING";
+  }else{
+    statusText.textContent="Status: CRAWLING";
+  }
+}
+
+function drawBackground(){
+
+  ctx.fillStyle="#101827";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let i=0;i<35;i++){
+
+    const x=(i*97)%canvas.width;
+    const y=100+(i*157)%(canvas.height-200);
+
+    ctx.fillStyle="rgba(120,80,180,.12)";
+    ctx.beginPath();
+    ctx.arc(x,y,25+(i%4)*12,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawPlayer(){
+
+  ctx.save();
+  ctx.translate(player.x,player.y);
+
+  ctx.shadowColor="#a64cff";
+  ctx.shadowBlur=18;
+
+  ctx.fillStyle="#7035aa";
+  ctx.beginPath();
+  ctx.arc(0,0,player.r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+
+  ctx.fillStyle="white";
+  ctx.beginPath();
+  ctx.arc(-7,-4,4,0,Math.PI*2);
+  ctx.arc(7,-4,4,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCrystal(c){
+
+  if(c.taken)return;
+
+  ctx.save();
+
+  ctx.shadowColor="#55eaff";
+  ctx.shadowBlur=20;
+
+  ctx.fillStyle="#4de7ff";
+
+  ctx.beginPath();
+  ctx.moveTo(c.x,c.y-c.r);
+  ctx.lineTo(c.x+c.r,c.y);
+  ctx.lineTo(c.x,c.y+c.r);
+  ctx.lineTo(c.x-c.r,c.y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawMonster(m){
+
+  ctx.save();
+
+  ctx.shadowColor="#ff174f";
+  ctx.shadowBlur=15;
+
+  ctx.fillStyle="#9c1239";
+
+  ctx.beginPath();
+  ctx.arc(m.x,m.y,m.r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+
+  ctx.fillStyle="white";
+
+  ctx.beginPath();
+  ctx.arc(m.x-8,m.y-5,5,0,Math.PI*2);
+  ctx.arc(m.x+8,m.y-5,5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="#111";
+
+  ctx.beginPath();
+  ctx.arc(m.x-8,m.y-5,2,0,Math.PI*2);
+  ctx.arc(m.x+8,m.y-5,2,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function movePlayer(){
+
+  player.x+=moveX*player.speed;
+  player.y+=moveY*player.speed;
+
+  player.x=Math.max(
+    player.r,
+    Math.min(canvas.width-player.r,player.x)
+  );
+
+  player.y=Math.max(
+    100+player.r,
+    Math.min(canvas.height-170-player.r,player.y)
+  );
+}
+
+function moveMonsters(){
+
+  for(const m of monsters){
+
+    const dx=player.x-m.x;
+    const dy=player.y-m.y;
+
+    const d=Math.hypot(dx,dy);
+
+    if(d>0){
+
+      m.x+=(dx/d)*m.speed;
+      m.y+=(dy/d)*m.speed;
+    }
+
+    if(d<player.r+m.r){
+
+      gameOver();
+    }
+  }
+}
+
+function grabCrystal(){
+
+  if(!running)return;
+
+  for(const c of crystals){
+
+    if(c.taken)continue;
+
+    const d=Math.hypot(
+      player.x-c.x,
+      player.y-c.y
+    );
+
+    if(d<70){
+
+      c.taken=true;
+      score++;
+
+      updateHUD();
+
+      message.textContent=
+      "Crystal collected! Find the others.";
+
+      if(score===8){
+        winGame();
+      }
+
+      return;
+    }
+  }
+
+  message.textContent=
+  "Get closer to a glowing crystal!";
+}
+
+function useBomb(){
+
+  if(!running)return;
+
+  message.textContent=
+  "BOOM! The monsters ran away!";
+
+  for(const m of monsters){
+
+    const dx=m.x-player.x;
+    const dy=m.y-player.y;
+    const d=Math.hypot(dx,dy)||1;
+
+    m.x+=(dx/d)*180;
+    m.y+=(dy/d)*180;
+
+    m.x=Math.max(
+      m.r,
+      Math.min(canvas.width-m.r,m.x)
+    );
+
+    m.y=Math.max(
+      100+m.r,
+      Math.min(canvas.height-170-m.r,m.y)
+    );
+  }
+}
+
+function winGame(){
+
+  running=false;
+
+  document.getElementById("endTitle").textContent=
+  "YOU ESCAPED!";
+
+  document.getElementById("endText").textContent=
+  "You collected all 8 crystals and escaped the monsters!";
+
+  document.getElementById("endScreen").style.display="flex";
+}
+
+function gameOver(){
+
+  if(!running)return;
+
+  running=false;
+
+  document.getElementById("endTitle").textContent=
+  "THE MONSTERS FOUND YOU!";
+
+  document.getElementById("endText").textContent=
+  "Score: "+score+" out of 8 crystals.";
+
+  document.getElementById("endScreen").style.display="flex";
+}
+
+function draw(){
+
+  drawBackground();
+
+  for(const c of crystals){
+    drawCrystal(c);
+  }
+
+  for(const m of monsters){
+    drawMonster(m);
+  }
+
+  drawPlayer();
+}
+
+function loop(){
+
+  if(running){
+    movePlayer();
+    moveMonsters();
+  }
+
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+
+let joystickActive=false;
+
+function updateJoystick(e){
+
+  const rect=joystick.getBoundingClientRect();
+
+  const clientX=e.clientX;
+  const clientY=e.clientY;
+
+  let x=clientX-(rect.left+rect.width/2);
+  let y=clientY-(rect.top+rect.height/2);
+
+  const distance=Math.hypot(x,y);
+  const max=36;
+
+  if(distance>max){
+    x=x/distance*max;
+    y=y/distance*max;
+  }
+
+  stick.style.left=(32+x)+"px";
+  stick.style.top=(32+y)+"px";
+
+  moveX=x/max;
+  moveY=y/max;
+}
+
+joystick.addEventListener("pointerdown",function(e){
+
+  joystickActive=true;
+  joystick.setPointerCapture(e.pointerId);
+
+  updateJoystick(e);
+});
+
+joystick.addEventListener("pointermove",function(e){
+
+  if(joystickActive){
+    updateJoystick(e);
+  }
+});
+
+function resetJoystick(){
+
+  joystickActive=false;
+
+  moveX=0;
+  moveY=0;
+
+  stick.style.left="32px";
+  stick.style.top="32px";
+}
+
+joystick.addEventListener("pointerup",resetJoystick);
+joystick.addEventListener("pointercancel",resetJoystick);
+
+document.getElementById("grab").addEventListener(
+  "click",
+  grabCrystal
+);
+
+document.getElementById("bomb").addEventListener(
+  "click",
+  useBomb
+);
+
+document.getElementById("startButton").addEventListener(
+  "click",
+  function(){
+
+    document.getElementById("startScreen").style.display="none";
+
+    setupGame();
+
+    running=true;
+
+    message.textContent=
+    "Find all 8 glowing crystals!";
+  }
+);
+
+document.getElementById("restartButton").addEventListener(
+  "click",
+  function(){
+
+    document.getElementById("endScreen").style.display="none";
+
+    setupGame();
+
+    running=true;
+
+    message.textContent=
+    "Find all 8 glowing crystals!";
+  }
+);
+
+setupGame();
+loop();
+
+</script>
+
+</body>
+</html>
