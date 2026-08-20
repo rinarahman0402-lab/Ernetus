@@ -8,6 +8,8 @@
 <style>
 *{
     box-sizing:border-box;
+    user-select:none;
+    -webkit-user-select:none;
 }
 
 html,body{
@@ -15,9 +17,8 @@ html,body{
     width:100%;
     height:100%;
     overflow:hidden;
-    background:#101418;
+    background:#111;
     font-family:Arial,sans-serif;
-    touch-action:none;
 }
 
 #game{
@@ -25,107 +26,110 @@ html,body{
     width:100vw;
     height:100vh;
     overflow:hidden;
-    background:#26333b;
 }
 
 canvas{
-    display:block;
-    width:100%;
-    height:100%;
-    touch-action:none;
-}
-
-/* COMMANDER SCREEN */
-
-#briefing{
     position:absolute;
     inset:0;
-    z-index:20;
+    width:100%;
+    height:100%;
+    background:#78905c;
+}
+
+.screen{
+    position:absolute;
+    inset:0;
+    z-index:10;
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:20px;
-    background:rgba(0,0,0,.88);
+    background:#111;
 }
 
-#briefingBox{
-    width:min(620px,94vw);
+.panel{
+    width:min(600px,92vw);
     padding:28px;
+    background:#20252a;
+    border:2px solid #777;
+    border-radius:18px;
+    color:white;
     text-align:center;
-    border-radius:20px;
-    background:#20272d;
-    border:2px solid #aaa;
-    box-shadow:0 15px 50px rgba(0,0,0,.7);
 }
 
-#briefingBox h1{
-    margin:0 0 15px;
-    font-size:30px;
+.panel h1{
+    margin-top:0;
+    font-size:clamp(30px,7vw,52px);
 }
 
-#command{
-    min-height:150px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    line-height:1.55;
-    font-size:21px;
+.panel p{
+    line-height:1.5;
 }
 
-#begin{
-    border:0;
-    border-radius:12px;
-    padding:15px 28px;
-    font-size:19px;
+button{
+    border:2px solid #ddd;
+    border-radius:10px;
+    padding:15px 30px;
+    background:#e8e8e8;
+    color:#111;
+    font-size:20px;
     font-weight:bold;
     cursor:pointer;
-    background:#e5bd36;
-    color:#111;
 }
 
-/* HUD */
+button:active{
+    transform:scale(.96);
+}
 
-#hud{
-    position:absolute;
-    z-index:10;
-    top:10px;
-    left:10px;
-    right:10px;
+#gameUI{
     display:none;
-    justify-content:space-between;
-    color:white;
-    font-weight:bold;
-    font-size:17px;
-    text-shadow:0 2px 5px #000;
-    pointer-events:none;
-}
-
-#message{
     position:absolute;
-    z-index:11;
-    top:48px;
-    left:50%;
-    transform:translateX(-50%);
-    color:white;
-    font-weight:bold;
-    text-shadow:0 2px 5px #000;
+    inset:0;
+    z-index:5;
     pointer-events:none;
-    text-align:center;
 }
 
-/* CROSSHAIR */
+#levelText{
+    position:absolute;
+    left:15px;
+    top:15px;
+    padding:9px 13px;
+    background:rgba(0,0,0,.65);
+    border-radius:8px;
+    color:white;
+    font-weight:bold;
+}
+
+#targetText{
+    position:absolute;
+    right:15px;
+    top:15px;
+    padding:9px 13px;
+    background:rgba(0,0,0,.65);
+    border-radius:8px;
+    color:white;
+    font-weight:bold;
+}
+
+#commander{
+    position:absolute;
+    left:50%;
+    top:75px;
+    transform:translateX(-50%);
+    width:min(650px,90vw);
+    padding:12px 16px;
+    background:rgba(0,0,0,.75);
+    border-radius:10px;
+    text-align:center;
+    color:white;
+}
 
 #crosshair{
     position:absolute;
-    z-index:8;
     left:50%;
     top:50%;
     width:44px;
     height:44px;
     transform:translate(-50%,-50%);
-    border:2px solid rgba(255,255,255,.8);
-    border-radius:50%;
-    pointer-events:none;
 }
 
 #crosshair:before,
@@ -137,128 +141,61 @@ canvas{
 
 #crosshair:before{
     width:2px;
-    height:62px;
-    left:19px;
-    top:-11px;
+    height:44px;
+    left:21px;
 }
 
 #crosshair:after{
-    width:62px;
+    width:44px;
     height:2px;
-    left:-11px;
-    top:19px;
+    top:21px;
 }
 
-/* SNIPER */
-
-#gun{
+#shootButton{
     position:absolute;
-    z-index:9;
-    width:280px;
-    height:175px;
-    left:50%;
-    bottom:-15px;
-    transform:translateX(-50%);
-    pointer-events:none;
-}
-
-.gun-body{
-    position:absolute;
-    left:55px;
+    right:25px;
     bottom:25px;
-    width:125px;
-    height:55px;
-    background:#171717;
-    border-radius:8px;
-    transform:skewX(-10deg);
-}
-
-.gun-barrel{
-    position:absolute;
-    left:145px;
-    bottom:65px;
-    width:130px;
-    height:16px;
-    background:#090909;
-    border-radius:6px;
-}
-
-.gun-scope{
-    position:absolute;
-    left:90px;
-    bottom:78px;
-    width:72px;
-    height:18px;
-    background:#333;
-    border-radius:5px;
-}
-
-.gun-stock{
-    position:absolute;
-    left:10px;
-    bottom:30px;
-    width:75px;
-    height:35px;
-    background:#111;
-    border-radius:10px;
-}
-
-.gun-grip{
-    position:absolute;
-    left:105px;
-    bottom:-3px;
-    width:32px;
-    height:62px;
-    background:#151515;
-    transform:rotate(14deg);
-    border-radius:5px;
-}
-
-#muzzle{
-    position:absolute;
-    left:267px;
-    bottom:62px;
-    width:16px;
-    height:16px;
+    width:105px;
+    height:105px;
     border-radius:50%;
-    background:#444;
-}
-
-#muzzle.flash{
-    background:white;
-    box-shadow:
-        0 0 15px white,
-        0 0 35px orange;
-}
-
-/* LEVEL COMPLETE */
-
-#complete{
-    position:absolute;
-    inset:0;
-    z-index:19;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,.8);
-}
-
-#completeBox{
-    background:#20272d;
-    padding:30px;
-    border-radius:20px;
-    text-align:center;
-    width:min(500px,90vw);
-    border:2px solid #aaa;
-}
-
-#nextLevel{
-    border:0;
-    border-radius:12px;
-    padding:14px 25px;
+    background:#b32626;
+    border:4px solid white;
+    color:white;
     font-size:18px;
-    font-weight:bold;
-    background:#e5bd36;
+    pointer-events:auto;
+}
+
+#message{
+    position:absolute;
+    left:50%;
+    bottom:145px;
+    transform:translateX(-50%);
+    color:white;
+    background:rgba(0,0,0,.7);
+    padding:8px 14px;
+    border-radius:8px;
+}
+
+#endScreen{
+    display:none;
+}
+
+#endTitle{
+    font-size:40px;
+}
+
+@media(max-width:600px){
+    #commander{
+        top:65px;
+        font-size:14px;
+    }
+
+    #shootButton{
+        width:90px;
+        height:90px;
+        right:18px;
+        bottom:18px;
+    }
 }
 </style>
 </head>
@@ -269,64 +206,83 @@ canvas{
 
 <canvas id="canvas"></canvas>
 
-<!-- HUD -->
+<!-- START SCREEN -->
+<div id="startScreen" class="screen">
 
-<div id="hud">
-    <span>LEVEL <b id="level">1</b>/50</span>
-    <span>TARGETS: <b id="targets">0</b></span>
-    <span>LEFT: <b id="left">0</b></span>
-</div>
+    <div class="panel">
 
-<div id="message"></div>
+        <h1>COMMANDS OF SHOOTING 2D</h1>
 
-<!-- CROSSHAIR -->
+        <p>
+            You are a sniper assassin.
+        </p>
 
-<div id="crosshair"></div>
+        <p>
+            Your commander will give you an objective
+            before every mission.
+        </p>
 
-<!-- SNIPER -->
+        <p>
+            There are four Stickman colors:
+            <b>RED, GREEN, BLUE and YELLOW.</b>
+        </p>
 
-<div id="gun">
+        <p>
+            Some missions require one specific color.
+            Other missions require everyone to be eliminated.
+        </p>
 
-    <div class="gun-stock"></div>
-    <div class="gun-body"></div>
-    <div class="gun-barrel"></div>
-    <div class="gun-scope"></div>
-    <div class="gun-grip"></div>
-    <div id="muzzle"></div>
-
-</div>
-
-<!-- COMMANDER -->
-
-<div id="briefing">
-
-    <div id="briefingBox">
-
-        <h1>🧑‍✈️ COMMANDER</h1>
-
-        <div id="command"></div>
-
-        <button id="begin">
-            BEGIN MISSION
+        <button id="startButton">
+            START MISSION
         </button>
 
     </div>
 
 </div>
 
-<!-- COMPLETE -->
 
-<div id="complete">
+<!-- GAME UI -->
+<div id="gameUI">
 
-    <div id="completeBox">
+    <div id="levelText">
+        LEVEL 1 / 50
+    </div>
 
-        <h1 id="completeTitle">
-            LEVEL COMPLETE
+    <div id="targetText">
+        TARGET: RED
+    </div>
+
+    <div id="commander">
+        COMMANDER: Eliminate the RED Stickman.
+    </div>
+
+    <div id="crosshair"></div>
+
+    <div id="message">
+        Tap the target to shoot.
+    </div>
+
+    <button id="shootButton">
+        FIRE
+    </button>
+
+</div>
+
+
+<!-- END SCREEN -->
+<div id="endScreen" class="screen">
+
+    <div class="panel">
+
+        <h1 id="endTitle">
+            MISSION COMPLETE
         </h1>
 
-        <p id="completeText"></p>
+        <p id="endMessage">
+            Excellent work.
+        </p>
 
-        <button id="nextLevel">
+        <button id="nextButton">
             NEXT LEVEL
         </button>
 
@@ -336,10 +292,11 @@ canvas{
 
 </div>
 
+
 <script>
 
 /* =====================================================
-   BASIC SETUP
+   CANVAS
 ===================================================== */
 
 const canvas =
@@ -348,336 +305,222 @@ document.getElementById("canvas");
 const ctx =
 canvas.getContext("2d");
 
-const briefing =
-document.getElementById("briefing");
+function resize(){
 
-const command =
-document.getElementById("command");
+    canvas.width =
+    window.innerWidth;
 
-const begin =
-document.getElementById("begin");
+    canvas.height =
+    window.innerHeight;
+}
 
-const hud =
-document.getElementById("hud");
+window.addEventListener(
+    "resize",
+    resize
+);
+
+resize();
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const startScreen =
+document.getElementById("startScreen");
+
+const startButton =
+document.getElementById("startButton");
+
+const gameUI =
+document.getElementById("gameUI");
+
+const endScreen =
+document.getElementById("endScreen");
+
+const nextButton =
+document.getElementById("nextButton");
+
+const levelText =
+document.getElementById("levelText");
+
+const targetText =
+document.getElementById("targetText");
+
+const commander =
+document.getElementById("commander");
 
 const message =
 document.getElementById("message");
 
-const levelText =
-document.getElementById("level");
-
-const targetsText =
-document.getElementById("targets");
-
-const leftText =
-document.getElementById("left");
-
-const muzzle =
-document.getElementById("muzzle");
-
-const complete =
-document.getElementById("complete");
-
-const completeTitle =
-document.getElementById("completeTitle");
-
-const completeText =
-document.getElementById("completeText");
-
-const nextLevel =
-document.getElementById("nextLevel");
+const shootButton =
+document.getElementById("shootButton");
 
 
 /* =====================================================
    GAME VARIABLES
 ===================================================== */
 
-let level=1;
+let level = 1;
 
-let enemies=[];
+const maxLevel = 50;
 
-let missionType="color";
+let running = false;
 
-let targetColor="";
+let targets = [];
 
-let playing=false;
+let objective = "RED";
 
-let gameLoopRunning=false;
+let kills = 0;
+
+let shots = 0;
 
 
 /* =====================================================
-   ONLY FOUR COLOURS
+   COLORS
 ===================================================== */
 
-const colors={
-    RED:"#ef4444",
-    GREEN:"#22c55e",
-    BLUE:"#3b82f6",
-    YELLOW:"#facc15"
-};
-
-const colorNames=[
-    "RED",
-    "GREEN",
-    "BLUE",
-    "YELLOW"
+const colors = [
+    "red",
+    "green",
+    "blue",
+    "yellow"
 ];
 
 
 /* =====================================================
-   CANVAS SIZE
+   OBJECTIVE
 ===================================================== */
 
-function resizeCanvas(){
-
-    const rect =
-    canvas.getBoundingClientRect();
-
-    const dpr =
-    Math.min(
-        window.devicePixelRatio || 1,
-        2
-    );
-
-    canvas.width =
-    rect.width*dpr;
-
-    canvas.height =
-    rect.height*dpr;
-
-    ctx.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0
-    );
-}
-
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
-
-resizeCanvas();
-
-
-/* =====================================================
-   COMMANDER
-===================================================== */
-
-function makeMission(){
+function chooseObjective(){
 
     /*
-       Some missions require one colour.
-       Some missions require everybody.
+        Every fifth level requires
+        everyone to be eliminated.
     */
 
-    if(Math.random()<0.4){
+    if(level % 5 === 0){
 
-        missionType="all";
-
-        targetColor="";
-
-        command.innerHTML=`
-
-            <b>LEVEL ${level}</b><br><br>
-
-            🚨 <b>ELIMINATE EVERY STICKMAN.</b><br><br>
-
-            All four colours are targets:<br><br>
-
-            🔴 RED &nbsp;&nbsp;
-            🟢 GREEN &nbsp;&nbsp;
-            🔵 BLUE &nbsp;&nbsp;
-            🟡 YELLOW
-
-        `;
+        objective = "ALL";
 
     }else{
 
-        missionType="color";
-
-        targetColor =
-        colorNames[
+        objective =
+        colors[
             Math.floor(
-                Math.random()*
-                colorNames.length
+                Math.random() *
+                colors.length
             )
-        ];
-
-        command.innerHTML=`
-
-            <b>LEVEL ${level}</b><br><br>
-
-            🎯 <b>
-            ELIMINATE ONLY THE
-            ${targetColor}
-            STICKMAN.
-            </b><br><br>
-
-            The ${targetColor}
-            target will be placed
-            directly in front of you.
-
-        `;
+        ].toUpperCase();
     }
 }
 
 
 /* =====================================================
-   CREATE ENEMIES
+   CREATE TARGETS
 ===================================================== */
 
-function createEnemies(){
+function createTargets(){
 
-    enemies=[];
+    targets=[];
 
-    const w =
-    canvas.clientWidth;
-
-    const h =
-    canvas.clientHeight;
-
-
-    /*
-       Difficulty increases with level.
-    */
-
-    const amount =
+    const count =
     Math.min(
-        6 + Math.floor(level*0.55),
-        34
+        4 + Math.floor(level/4),
+        12
     );
 
 
-    /*
-       IMPORTANT:
+    for(
+        let i=0;
+        i<count;
+        i++
+    ){
 
-       For a colour mission,
-       the required Stickman is ALWAYS
-       placed directly in front of
-       the sniper.
-    */
-
-    if(missionType==="color"){
-
-        enemies.push({
-
-            x:w/2,
-
-            y:h*0.48,
-
-            size:36,
-
-            color:targetColor,
-
-            alive:true,
-
-            vx:
-            (Math.random()-.5)*
-            (0.25+level*.008),
-
-            vy:
-            (Math.random()-.5)*
-            (0.18+level*.005),
-
-            required:true
-
-        });
-    }
-
-
-    /*
-       Add the other Stickmen.
-    */
-
-    while(enemies.length<amount){
-
-        const c =
-        colorNames[
+        const color =
+        colors[
             Math.floor(
-                Math.random()*
-                colorNames.length
+                Math.random() *
+                colors.length
             )
         ];
 
 
-        enemies.push({
+        targets.push({
 
             x:
-            90 +
+            100+
             Math.random()*
-            (w-180),
+            (canvas.width-200),
 
             y:
-            h*.32 +
+            190+
             Math.random()*
-            (h*.30),
+            (canvas.height-330),
 
-            size:
-            27 +
-            Math.random()*8,
-
-            color:c,
+            color:color,
 
             alive:true,
 
-            vx:
-            (Math.random()-.5)*
-            (0.35+level*.012),
-
-            vy:
-            (Math.random()-.5)*
-            (0.20+level*.008),
-
-            required:false
-
+            size:
+            Math.max(
+                24,
+                42-
+                level*.25
+            )
         });
     }
 
-    updateHUD();
+
+    /*
+        Guarantee that the requested
+        target color actually exists.
+    */
+
+    if(objective!=="ALL"){
+
+        const hasTarget =
+        targets.some(
+            t =>
+            t.color.toUpperCase()===
+            objective
+        );
+
+
+        if(!hasTarget){
+
+            targets[0].color =
+            objective.toLowerCase();
+        }
+    }
 }
 
 
 /* =====================================================
-   HUD
+   COMMANDER MESSAGE
 ===================================================== */
 
-function updateHUD(){
+function updateCommander(){
 
-    const alive =
-    enemies.filter(
-        e=>e.alive
-    );
+    if(objective==="ALL"){
 
+        commander.textContent =
+        "COMMANDER: Eliminate EVERY Stickman.";
 
-    let targets=0;
-
-
-    if(missionType==="all"){
-
-        targets=alive.length;
+        targetText.textContent =
+        "TARGET: EVERYONE";
 
     }else{
 
-        targets =
-        alive.filter(
-            e =>
-            e.color===targetColor
-        ).length;
+        commander.textContent =
+        "COMMANDER: Eliminate the "+
+        objective+
+        " Stickman.";
+
+        targetText.textContent =
+        "TARGET: "+
+        objective;
     }
-
-
-    levelText.textContent=
-    level;
-
-    targetsText.textContent=
-    targets;
-
-    leftText.textContent=
-    alive.length;
 }
 
 
@@ -687,193 +530,126 @@ function updateHUD(){
 
 function startLevel(){
 
-    complete.style.display="none";
+    running=true;
 
-    briefing.style.display="none";
+    kills=0;
 
-    hud.style.display="flex";
+    shots=0;
 
-    playing=true;
+    chooseObjective();
 
-    createEnemies();
+    createTargets();
+
+    updateCommander();
+
+    levelText.textContent =
+    "LEVEL "+
+    level+
+    " / "+
+    maxLevel;
+
+    startScreen.style.display="none";
+
+    endScreen.style.display="none";
+
+    gameUI.style.display="block";
 
     message.textContent =
-    missionType==="all"
-    ?
-    "🎯 SHOOT EVERY COLOUR"
-    :
-    "🎯 TARGET: "+targetColor;
+    "Tap a Stickman to fire.";
 
-    if(!gameLoopRunning){
-
-        gameLoopRunning=true;
-
-        requestAnimationFrame(
-            gameLoop
-        );
-    }
+    draw();
 }
 
 
 /* =====================================================
-   BEGIN BUTTON
+   START BUTTON
 ===================================================== */
 
-begin.addEventListener(
+startButton.addEventListener(
     "click",
-    startLevel
+    function(){
+
+        startLevel();
+
+    }
 );
 
 
 /* =====================================================
-   BACKGROUND
+   DRAW BACKGROUND
 ===================================================== */
 
 function drawBackground(){
 
-    const w =
-    canvas.clientWidth;
+    const w=canvas.width;
 
-    const h =
-    canvas.clientHeight;
+    const h=canvas.height;
 
 
     /*
-       Sky
+        Sky
     */
 
-    const sky =
-    ctx.createLinearGradient(
-        0,
-        0,
-        0,
-        h
-    );
-
-    sky.addColorStop(
-        0,
-        "#0d1720"
-    );
-
-    sky.addColorStop(
-        .65,
-        "#27343c"
-    );
-
-    sky.addColorStop(
-        1,
-        "#151b1e"
-    );
-
-    ctx.fillStyle=sky;
+    ctx.fillStyle="#8da5b8";
 
     ctx.fillRect(
         0,
         0,
         w,
-        h
+        h*.55
     );
 
 
     /*
-       Moon
+        Ground
     */
 
-    ctx.fillStyle=
-    "#e9e5c8";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        w*.82,
-        h*.14,
-        38,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-
-    /*
-       Ground
-    */
-
-    ctx.fillStyle=
-    "#20282c";
+    ctx.fillStyle="#667b4e";
 
     ctx.fillRect(
         0,
-        h*.68,
+        h*.55,
         w,
-        h*.32
+        h*.45
     );
 
 
     /*
-       Distant buildings
+        Distant buildings
     */
 
-    ctx.fillStyle=
-    "#182126";
-
-    ctx.fillRect(
-        30,
-        h*.38,
-        190,
-        h*.30
-    );
-
-    ctx.fillRect(
-        w-220,
-        h*.32,
-        190,
-        h*.36
-    );
-
-
-    /*
-       Windows
-    */
-
-    ctx.fillStyle=
-    "#555d5d";
+    ctx.fillStyle="#51575b";
 
     for(
-        let x=55;
-        x<205;
-        x+=42
+        let x=0;
+        x<w;
+        x+=110
     ){
 
-        for(
-            let y=h*.42;
-            y<h*.62;
-            y+=42
-        ){
+        const height=
+        60+
+        (x*7)%100;
 
-            ctx.fillRect(
-                x,
-                y,
-                18,
-                23
-            );
-        }
+        ctx.fillRect(
+            x,
+            h*.55-height,
+            85,
+            height
+        );
     }
 
 
     /*
-       Ground lines
+        Ground lines
     */
 
     ctx.strokeStyle=
-    "rgba(255,255,255,.05)";
-
-    ctx.lineWidth=2;
+    "rgba(0,0,0,.18)";
 
     for(
-        let y=h*.70;
+        let y=h*.6;
         y<h;
-        y+=35
+        y+=45
     ){
 
         ctx.beginPath();
@@ -897,50 +673,34 @@ function drawBackground(){
    DRAW STICKMAN
 ===================================================== */
 
-function drawStickman(e){
+function drawStickman(t){
 
-    if(!e.alive)
+    if(!t.alive)
         return;
 
 
-    ctx.save();
+    const x=t.x;
+
+    const y=t.y;
+
+    const s=t.size;
 
 
     /*
-       Required target gets a subtle
-       glow so it is easy to see.
+        Shadow
     */
-
-    if(e.required){
-
-        ctx.shadowColor=
-        colors[e.color];
-
-        ctx.shadowBlur=18;
-    }
-
-
-    ctx.strokeStyle=
-    colors[e.color];
 
     ctx.fillStyle=
-    colors[e.color];
-
-    ctx.lineWidth=6;
-
-    ctx.lineCap="round";
-
-
-    /*
-       Head
-    */
+    "rgba(0,0,0,.25)";
 
     ctx.beginPath();
 
-    ctx.arc(
-        e.x,
-        e.y-e.size*1.45,
-        e.size*.45,
+    ctx.ellipse(
+        x,
+        y+s*1.25,
+        s*.65,
+        s*.18,
+        0,
         0,
         Math.PI*2
     );
@@ -949,188 +709,127 @@ function drawStickman(e){
 
 
     /*
-       Body
+        Head
     */
+
+    ctx.fillStyle=
+    t.color;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        s*.32,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+        Body
+    */
+
+    ctx.strokeStyle=
+    t.color;
+
+    ctx.lineWidth=
+    Math.max(
+        4,
+        s*.13
+    );
 
     ctx.beginPath();
 
     ctx.moveTo(
-        e.x,
-        e.y-e.size
+        x,
+        y+s*.3
     );
 
     ctx.lineTo(
-        e.x,
-        e.y+e.size
+        x,
+        y+s
     );
 
     ctx.stroke();
 
 
     /*
-       Arms
+        Arms
     */
 
     ctx.beginPath();
 
     ctx.moveTo(
-        e.x-e.size,
-        e.y-e.size*.4
+        x,
+        y+s*.48
     );
 
     ctx.lineTo(
-        e.x+e.size,
-        e.y-e.size*.4
+        x-s*.55,
+        y+s*.8
+    );
+
+    ctx.moveTo(
+        x,
+        y+s*.48
+    );
+
+    ctx.lineTo(
+        x+s*.55,
+        y+s*.8
     );
 
     ctx.stroke();
 
 
     /*
-       Legs
+        Legs
     */
 
     ctx.beginPath();
 
     ctx.moveTo(
-        e.x,
-        e.y+e.size
+        x,
+        y+s
     );
 
     ctx.lineTo(
-        e.x-e.size*.7,
-        e.y+e.size*1.9
+        x-s*.45,
+        y+s*1.55
     );
 
     ctx.moveTo(
-        e.x,
-        e.y+e.size
+        x,
+        y+s
     );
 
     ctx.lineTo(
-        e.x+e.size*.7,
-        e.y+e.size*1.9
+        x+s*.45,
+        y+s*1.55
     );
 
     ctx.stroke();
 
 
     /*
-       Required target marker
+        Small name label
     */
 
-    if(e.required){
+    ctx.fillStyle="white";
 
-        ctx.shadowBlur=0;
+    ctx.font=
+    "bold 13px Arial";
 
-        ctx.strokeStyle=
-        "rgba(255,255,255,.8)";
+    ctx.textAlign="center";
 
-        ctx.lineWidth=2;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            e.x,
-            e.y-e.size*.6,
-            e.size*1.9,
-            0,
-            Math.PI*2
-        );
-
-        ctx.stroke();
-    }
-
-
-    ctx.restore();
-}
-
-
-/* =====================================================
-   UPDATE ENEMIES
-===================================================== */
-
-function updateEnemies(){
-
-    const w =
-    canvas.clientWidth;
-
-    const h =
-    canvas.clientHeight;
-
-
-    for(const e of enemies){
-
-        if(!e.alive)
-            continue;
-
-
-        e.x += e.vx;
-
-        e.y += e.vy;
-
-
-        /*
-           Required target stays
-           near the middle.
-        */
-
-        if(e.required){
-
-            const minX =
-            w*.35;
-
-            const maxX =
-            w*.65;
-
-            const minY =
-            h*.38;
-
-            const maxY =
-            h*.58;
-
-
-            if(
-                e.x<minX ||
-                e.x>maxX
-            ){
-
-                e.vx*=-1;
-            }
-
-
-            if(
-                e.y<minY ||
-                e.y>maxY
-            ){
-
-                e.vy*=-1;
-            }
-
-        }else{
-
-            /*
-               Other Stickmen stay
-               inside the battlefield.
-            */
-
-            if(
-                e.x<50 ||
-                e.x>w-50
-            ){
-
-                e.vx*=-1;
-            }
-
-            if(
-                e.y<h*.27 ||
-                e.y>h*.66
-            ){
-
-                e.vy*=-1;
-            }
-        }
-    }
+    ctx.fillText(
+        t.color.toUpperCase(),
+        x,
+        y-s*.5
+    );
 }
 
 
@@ -1140,38 +839,143 @@ function updateEnemies(){
 
 function draw(){
 
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
     drawBackground();
 
-    for(const e of enemies){
 
-        drawStickman(e);
+    /*
+        Draw targets farthest first.
+    */
+
+    const aliveTargets =
+    targets.filter(
+        t=>t.alive
+    );
+
+
+    aliveTargets.sort(
+        (a,b)=>a.y-b.y
+    );
+
+
+    for(
+        const t of aliveTargets
+    ){
+
+        drawStickman(t);
     }
+
+
+    /*
+        Draw sniper rifle at bottom.
+    */
+
+    drawRifle();
 }
 
 
 /* =====================================================
-   GAME LOOP
+   RIFLE
 ===================================================== */
 
-function gameLoop(){
+function drawRifle(){
 
-    if(!playing){
+    const w=canvas.width;
 
-        gameLoopRunning=false;
-
-        return;
-    }
+    const h=canvas.height;
 
 
-    updateEnemies();
+    ctx.save();
 
-    draw();
-
-    updateHUD();
-
-    requestAnimationFrame(
-        gameLoop
+    ctx.translate(
+        w*.55,
+        h*.91
     );
+
+    ctx.rotate(-.12);
+
+
+    /*
+        Rifle body
+    */
+
+    ctx.fillStyle="#171717";
+
+    ctx.fillRect(
+        -70,
+        -12,
+        150,
+        24
+    );
+
+
+    /*
+        Barrel
+    */
+
+    ctx.fillRect(
+        60,
+        -7,
+        150,
+        14
+    );
+
+
+    /*
+        Scope
+    */
+
+    ctx.fillStyle="#292929";
+
+    ctx.fillRect(
+        -10,
+        -30,
+        55,
+        12
+    );
+
+
+    /*
+        Stock
+    */
+
+    ctx.fillStyle="#252525";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        -70,
+        -10
+    );
+
+    ctx.lineTo(
+        -120,
+        -35
+    );
+
+    ctx.lineTo(
+        -145,
+        -20
+    );
+
+    ctx.lineTo(
+        -85,
+        15
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    ctx.restore();
 }
 
 
@@ -1179,204 +983,270 @@ function gameLoop(){
    SHOOT
 ===================================================== */
 
-function shoot(clientX,clientY){
+function shootAt(x,y){
 
-    if(!playing)
+    if(!running)
         return;
 
 
-    const rect =
-    canvas.getBoundingClientRect();
-
-
-    const x =
-    clientX-rect.left;
-
-    const y =
-    clientY-rect.top;
+    shots++;
 
 
     let hit=null;
 
-    let best=Infinity;
+    let bestDistance=Infinity;
 
 
-    /*
-       Find the closest Stickman
-       to the shot.
-    */
+    for(
+        const t of targets
+    ){
 
-    for(const e of enemies){
-
-        if(!e.alive)
+        if(!t.alive)
             continue;
 
 
-        const hitX =
-        e.x;
+        const dx=
+        x-t.x;
 
-        const hitY =
-        e.y-e.size*.65;
+        const dy=
+        y-t.y;
 
-
-        const distance =
-        Math.hypot(
-            hitX-x,
-            hitY-y
-        );
+        const distance=
+        Math.hypot(dx,dy);
 
 
-        const hitRadius =
-        e.size*1.8;
+        /*
+            Hitbox around each Stickman.
+        */
+
+        const hitRadius=
+        t.size*1.25;
 
 
         if(
-            distance<hitRadius &&
-            distance<best
+            distance<
+            hitRadius &&
+            distance<
+            bestDistance
         ){
 
-            best=distance;
+            bestDistance=
+            distance;
 
-            hit=e;
+            hit=t;
         }
     }
-
-
-    /*
-       Gun muzzle flash
-    */
-
-    muzzle.classList.remove(
-        "flash"
-    );
-
-    void muzzle.offsetWidth;
-
-    muzzle.classList.add(
-        "flash"
-    );
 
 
     if(!hit){
 
         message.textContent=
-        "💨 MISSED!";
+        "MISS!";
+
+        draw();
 
         return;
     }
 
 
     /*
-       Wrong colour
+        Check commander order.
     */
 
     if(
-        missionType==="color" &&
-        hit.color!==targetColor
+        objective!=="ALL" &&
+        hit.color.toUpperCase()!==objective
     ){
 
         message.textContent=
-        "❌ WRONG TARGET!";
+        "WRONG TARGET! "+
+        "Commander ordered "+
+        objective+".";
+
+        draw();
 
         return;
     }
 
 
     /*
-       Correct shot
+        Correct target.
     */
 
     hit.alive=false;
 
+    kills++;
+
+
     message.textContent=
-    "🎯 TARGET HIT!";
+    "TARGET DOWN!";
 
 
-    checkMission();
+    checkLevelComplete();
+
+    draw();
 }
 
 
 /* =====================================================
-   CHECK MISSION
+   MOUSE / TOUCH SHOOTING
 ===================================================== */
 
-function checkMission(){
+canvas.addEventListener(
+    "pointerdown",
+    function(e){
 
-    const alive =
-    enemies.filter(
-        e=>e.alive
+        if(!running)
+            return;
+
+
+        /*
+            Do not fire if the user
+            touches the lower-right
+            FIRE button area.
+        */
+
+        const rect=
+        canvas.getBoundingClientRect();
+
+
+        const x=
+        (e.clientX-rect.left)*
+        canvas.width/
+        rect.width;
+
+
+        const y=
+        (e.clientY-rect.top)*
+        canvas.height/
+        rect.height;
+
+
+        shootAt(
+            x,
+            y
+        );
+    }
+);
+
+
+/* =====================================================
+   FIRE BUTTON
+===================================================== */
+
+shootButton.addEventListener(
+    "pointerdown",
+    function(e){
+
+        e.preventDefault();
+
+
+        if(!running)
+            return;
+
+
+        /*
+            Fire at the center of
+            the sniper scope.
+        */
+
+        shootAt(
+            canvas.width/2,
+            canvas.height/2
+        );
+    }
+);
+
+
+/* =====================================================
+   CHECK LEVEL
+===================================================== */
+
+function checkLevelComplete(){
+
+    const alive=
+    targets.filter(
+        t=>t.alive
     );
 
 
-    let targetsLeft;
+    if(objective==="ALL"){
 
+        if(alive.length===0){
 
-    if(missionType==="all"){
+            completeLevel();
+        }
 
-        targetsLeft=
-        alive.length;
-
-    }else{
-
-        targetsLeft=
-        alive.filter(
-            e =>
-            e.color===targetColor
-        ).length;
+        return;
     }
 
 
-    updateHUD();
-
-
-    if(targetsLeft>0)
-        return;
-
-
     /*
-       Mission complete
+        The required color must
+        be eliminated.
+
+        Other colors can remain.
     */
 
-    playing=false;
-
-
-    setTimeout(
-        showLevelComplete,
-        600
+    const requiredAlive=
+    targets.some(
+        t =>
+        t.alive &&
+        t.color.toUpperCase()===
+        objective
     );
+
+
+    if(!requiredAlive){
+
+        completeLevel();
+    }
 }
 
 
 /* =====================================================
-   LEVEL COMPLETE
+   COMPLETE
 ===================================================== */
 
-function showLevelComplete(){
+function completeLevel(){
 
-    complete.style.display=
-    "flex";
+    running=false;
+
+    gameUI.style.display="none";
+
+    endScreen.style.display="flex";
 
 
-    if(level>=50){
+    if(level>=maxLevel){
 
-        completeTitle.textContent=
-        "🏆 MISSION COMPLETE!";
+        document.getElementById(
+            "endTitle"
+        ).textContent=
+        "ALL 50 LEVELS COMPLETE!";
 
-        completeText.textContent=
-        "You completed all 50 levels.";
+        document.getElementById(
+            "endMessage"
+        ).textContent=
+        "You completed the entire mission.";
 
-        nextLevel.textContent=
+        nextButton.textContent=
         "PLAY AGAIN";
 
     }else{
 
-        completeTitle.textContent=
-        "🎯 LEVEL "+level+" COMPLETE!";
+        document.getElementById(
+            "endTitle"
+        ).textContent=
+        "MISSION COMPLETE";
 
-        completeText.textContent=
-        "The commander has another mission.";
+        document.getElementById(
+            "endMessage"
+        ).textContent=
+        "Level "+
+        level+
+        " completed.";
 
-        nextLevel.textContent=
+        nextButton.textContent=
         "NEXT LEVEL";
     }
 }
@@ -1386,8 +1256,32 @@ function showLevelComplete(){
    NEXT LEVEL
 ===================================================== */
 
-nextLevel.addEventListener(
+nextButton.addEventListener(
     "click",
     function(){
 
-        if(level>=50){
+        if(level>=maxLevel){
+
+            level=1;
+
+        }else{
+
+            level++;
+        }
+
+
+        startLevel();
+    }
+);
+
+
+/* =====================================================
+   INITIAL SCREEN
+===================================================== */
+
+draw();
+
+</script>
+
+</body>
+</html>
