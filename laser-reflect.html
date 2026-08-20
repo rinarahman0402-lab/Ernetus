@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laser Reflect</title>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #00f2fe; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #4facfe; margin-bottom: 15px; font-weight: bold; }
+
+    #board {
+      width: 300px;
+      height: 300px;
+      background: #111827;
+      border: 3px solid #00f2fe;
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-template-rows: repeat(5, 60px);
+      position: relative;
+    }
+
+    .cell {
+      border: 1px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      cursor: pointer;
+    }
+
+    .mirror {
+      transition: transform 0.2s ease;
+    }
+
+    #laser-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Laser Reflect</h1>
+  <div id="hud">Score: <span id="score">0</span> | Tap mirrors to rotate!</div>
+
+  <div id="board">
+    <canvas id="laser-canvas" width="300" height="300"></canvas>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const canvas = document.getElementById('laser-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreText = document.getElementById('score');
+
+    let score = 0;
+    // 5x5 Grid representation: null, 'target', or mirror angle degree
+    let grid = Array(5).fill(null).map(() => Array(5).fill(null));
+
+    function setupLevel() {
+      board.querySelectorAll('.cell').forEach(c => c.remove());
+      grid = Array(5).fill(null).map(() => Array(5).fill(null));
+
+      // Fixed Emitter at top-left (0,0) facing right
+      // Target at random position
+      let tr = Math.floor(Math.random() * 3) + 2;
+      let tc = Math.floor(Math.random() * 3) + 2;
+      grid[tr][tc] = 'target';
+
+      // Place 2 rotatable mirrors
+      grid[0][tc] = 45; // Top corner mirror
+      grid[tr][0] = 45; // Left corner mirror
+
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          
+          if (r === 0 && c === 0) {
+            cell.innerText = '🔫';
+          } else if (grid[r][c] === 'target') {
+            cell.innerText = '🎯';
+          } else if (typeof grid[r][c] === 'number') {
+            const mirror = document.createElement('div');
+            mirror.className = 'mirror';
+            mirror.innerText = '╱';
+            cell.appendChild(mirror);
+
+            cell.onclick = () => {
+              grid[r][c] = (grid[r][c] === 45) ? 135 : 45;
+              mirror.innerText = grid[r][c] === 45 ? '╱' : '╲';
+              drawLaser();
+            };
+          }
+
+          board.appendChild(cell);
+        }
+      }
+      drawLaser();
+    }
+
+    function drawLaser() {
+      ctx.clearRect(0, 0, 300, 300);
+      ctx.beginPath();
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 4;
+
+      let r = 0, c = 0;
+      let dr = 0, dc = 1; // Start moving right
+      let currX = 30, currY = 30;
+
+      ctx.moveTo(currX, currY);
+
+      for (let step = 0; step < 10; step++) {
+        currX += dc * 60;
+        currY += dr * 60;
+        ctx.lineTo(currX, currY);
+
+        r += dr;
+        c += dc;
+
+        if (r < 0 || r >= 5 || c < 0 || c >= 5) break;
+
+        // Hit Target
+        if (grid[r][c] === 'target') {
+          score += 100;
+          scoreText.innerText = score;
+          setTimeout(setupLevel, 300);
+          break;
+        }
+
+        // Hit Mirror
+        if (typeof grid[r][c] === 'number') {
+          const angle = grid[r][c];
+          if (angle === 45) { // ╱
+            let temp = dr;
+            dr = -dc;
+            dc = -temp;
+          } else { // ╲
+            let temp = dr;
+            dr = dc;
+            dc = temp;
+          }
+        }
+      }
+      ctx.stroke();
+    }
+
+    setupLevel();
+  </script>
+</body>
+</html>
