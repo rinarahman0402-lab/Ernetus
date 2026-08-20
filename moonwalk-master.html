@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moonwalk Master</title>
+  <style>
+    body {
+      background-color: #0a0a10;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #ff007f; margin-bottom: 5px; text-shadow: 0 0 10px #ff007f; }
+    #status { font-size: 1.2rem; color: #00f0ff; margin-bottom: 20px; }
+
+    /* Stage */
+    .stage {
+      width: 380px;
+      height: 260px;
+      background: linear-gradient(180deg, #15002a 0%, #000000 100%);
+      border: 4px solid #ff007f;
+      border-radius: 15px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(255, 0, 127, 0.4);
+      overflow: hidden;
+    }
+
+    /* Dancer Sprite */
+    #mj {
+      font-size: 5rem;
+      transition: transform 0.2s ease, left 0.3s ease;
+      position: absolute;
+      bottom: 20px;
+      left: 160px;
+    }
+
+    /* Callout Effect */
+    #callout {
+      position: absolute;
+      top: 20px;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ffe600;
+      text-shadow: 0 0 10px #ffe600;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Controls */
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      padding: 12px 25px;
+      background: #ff007f;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #99004d;
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #99004d;
+    }
+
+    .score-board {
+      margin-top: 15px;
+      font-size: 1.3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🕺 Moonwalk Master 🎩</h1>
+  <div id="status">Press Arrow Keys or Buttons to bust a move!</div>
+
+  <div class="stage">
+    <div id="callout">HEE-HEE! 🎶</div>
+    <div id="mj">🕴️</div>
+  </div>
+
+  <div class="score-board">Moonwalk Score: <span id="score" style="color:#00f0ff;">0</span></div>
+
+  <div class="controls">
+    <button class="btn" id="left-btn">⬅️ Moonwalk Left</button>
+    <button class="btn" id="spin-btn">🔄 Spin!</button>
+    <button class="btn" id="right-btn">Moonwalk Right ➡️</button>
+  </div>
+
+  <script>
+    const mj = document.getElementById('mj');
+    const callout = document.getElementById('callout');
+    const scoreText = document.getElementById('score');
+
+    let posX = 160;
+    let score = 0;
+
+    function triggerMove(type) {
+      score += 100;
+      scoreText.innerText = score;
+
+      // Pop "HEE-HEE!" callout
+      callout.style.opacity = '1';
+      setTimeout(() => callout.style.opacity = '0', 400);
+
+      if (type === 'left') {
+        posX = Math.max(20, posX - 40);
+        mj.style.left = posX + 'px';
+        mj.style.transform = 'scaleX(-1) skewX(-10deg)'; // Slide left back tilt
+      } else if (type === 'right') {
+        posX = Math.min(300, posX + 40);
+        mj.style.left = posX + 'px';
+        mj.style.transform = 'scaleX(1) skewX(10deg)'; // Slide right tilt
+      } else if (type === 'spin') {
+        mj.style.transform = 'rotate(360deg)';
+        setTimeout(() => mj.style.transform = 'rotate(0deg)', 300);
+      }
+    }
+
+    // Button Click Listeners
+    document.getElementById('left-btn').onclick = () => triggerMove('left');
+    document.getElementById('right-btn').onclick = () => triggerMove('right');
+    document.getElementById('spin-btn').onclick = () => triggerMove('spin');
+
+    // Keyboard Arrow Listeners
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') triggerMove('left');
+      if (e.key === 'ArrowRight') triggerMove('right');
+      if (e.key === 'ArrowUp' || e.key === ' ') triggerMove('spin');
+    });
+  </script>
+</body>
+</html>
