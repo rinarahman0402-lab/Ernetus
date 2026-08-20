@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forest Heist</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #2ecc71; margin-bottom: 5px; }
+    #status { font-size: 1.1rem; color: #f1c40f; margin-bottom: 15px; }
+
+    .game-container {
+      display: flex;
+      gap: 20px;
+      width: 90%;
+      max-width: 800px;
+    }
+
+    /* Forest Area */
+    #forest {
+      flex: 1;
+      height: 350px;
+      background: #27ae60;
+      border: 4px solid #1e8449;
+      border-radius: 15px;
+      position: relative;
+      transition: background 1s ease;
+      overflow: hidden;
+    }
+
+    /* The Void state for forest */
+    #forest.void {
+      background: #000000 !important;
+      border-color: #333 !important;
+    }
+
+    /* Zoo Area */
+    #zoo {
+      flex: 1;
+      height: 350px;
+      background: #34495e;
+      border: 4px solid #2c3e50;
+      border-radius: 15px;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 10px;
+    }
+
+    /* Stealable items */
+    .item {
+      font-size: 2.5rem;
+      position: absolute;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .item:hover {
+      transform: scale(1.3);
+    }
+
+    /* Items inside the Zoo */
+    .zoo-item {
+      font-size: 2rem;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px dashed #7f8c8d;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌲 Forest Heist 🦁</h1>
+  <div id="status">Click things in the forest to steal them for your empty zoo!</div>
+
+  <div class="game-container">
+    <!-- The Forest (Left) -->
+    <div id="forest">
+      <div class="item" style="top:20px; left:30px;">🌲</div>
+      <div class="item" style="top:40px; left:120px;">🐻</div>
+      <div class="item" style="top:150px; left:40px;">🦊</div>
+      <div class="item" style="top:180px; left:180px;">🍄</div>
+      <div class="item" style="top:220px; left:90px;">🦌</div>
+      <div class="item" style="top:80px; left:220px;">🦉</div>
+      <div class="item" style="top:250px; left:230px;">🐺</div>
+      <div class="item" style="top:110px; left:150px;">🌳</div>
+      <div class="item" style="top:270px; left:20px;">🐗</div>
+      <div class="item" style="top:10px; left:230px;">🦅</div>
+    </div>
+
+    <!-- The Zoo (Right) -->
+    <div id="zoo">
+      <!-- Stolen items will populate here -->
+    </div>
+  </div>
+
+  <script>
+    const forest = document.getElementById('forest');
+    const zoo = document.getElementById('zoo');
+    const status = document.getElementById('status');
+    const items = document.querySelectorAll('.item');
+
+    let stolenCount = 0;
+    const totalItems = items.length;
+
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        // Move item to zoo
+        const zooBox = document.createElement('div');
+        zooBox.className = 'zoo-item';
+        zooBox.innerText = item.innerText;
+        zoo.appendChild(zooBox);
+
+        // Remove from forest
+        item.remove();
+        stolenCount++;
+
+        status.innerText = `Stolen: ${stolenCount}/${totalItems} items!`;
+
+        // Check if forest is completely stolen
+        if (stolenCount === totalItems) {
+          forest.classList.add('void');
+          status.innerText = "🌌 THE FOREST IS NOW THE VOID! YOUR ZOO IS FULL!";
+          status.style.color = "#00ffcc";
+        }
+      });
+    });
+  </script>
+</body>
+  </html>
+  
