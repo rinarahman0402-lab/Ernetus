@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Impossible Maze</title>
+  <style>
+    body {
+      background-color: #0b0c10;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #66fcf1; margin-bottom: 5px; }
+    #status { font-size: 1.2rem; color: #45a29e; margin-bottom: 15px; }
+
+    #maze {
+      width: 400px;
+      height: 300px;
+      background: #1f2833;
+      border: 4px solid #66fcf1;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #player {
+      width: 20px;
+      height: 20px;
+      background: #45a29e;
+      border-radius: 50%;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      transition: all 0.05s linear;
+    }
+
+    #exit {
+      width: 30px;
+      height: 30px;
+      background: #66fcf1;
+      border-radius: 6px;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #0b0c10;
+    }
+
+    .wall {
+      position: absolute;
+      background: #c5c6c7;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌀 The Impossible Maze</h1>
+  <div id="status">Use Arrow Keys to reach the Exit!</div>
+
+  <div id="maze">
+    <div id="player"></div>
+    <div id="exit">GOAL</div>
+    <div class="wall" style="width: 200px; height: 15px; top: 100px; left: 0;"></div>
+    <div class="wall" style="width: 15px; height: 120px; top: 100px; right: 100px;"></div>
+  </div>
+
+  <script>
+    const player = document.getElementById('player');
+    const exit = document.getElementById('exit');
+    const status = document.getElementById('status');
+    const maze = document.getElementById('maze');
+
+    let posX = 20;
+    let posY = 20;
+    let pranks = 0;
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') posX = Math.min(360, posX + 20);
+      if (e.key === 'ArrowLeft') posX = Math.max(0, posX - 20);
+      if (e.key === 'ArrowDown') posY = Math.min(260, posY + 20);
+      if (e.key === 'ArrowUp') posY = Math.max(0, posY - 20);
+
+      player.style.left = posX + 'px';
+      player.style.top = posY + 'px';
+
+      // Prank logic when getting close to exit
+      if (posX > 280 && posY > 200) {
+        if (pranks === 0) {
+          // Exit teleports to top right!
+          exit.style.bottom = 'auto';
+          exit.style.top = '20px';
+          status.innerText = "😜 NOPE! The exit moved!";
+          pranks++;
+        } else if (pranks === 1 && posY < 60) {
+          // Whole maze spins upside down!
+          maze.style.transform = 'rotate(180deg)';
+          status.innerText = "🙃 WHOOPS! Upside down mode!";
+          pranks++;
+        } else if (pranks === 2 && posX < 60) {
+          status.innerText = "🎉 YOU BEAT THE IMPOSSIBLE MAZE!";
+          status.style.color = "#66fcf1";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
