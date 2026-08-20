@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Glitchy Piano</title>
+  <style>
+    body {
+      background-color: #0f0f1b;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 { color: #00ffcc; margin-bottom: 5px; text-shadow: 0 0 10px #00ffcc; }
+    p { color: #aaa; margin-bottom: 20px; }
+
+    #piano-container {
+      display: flex;
+      gap: 8px;
+      padding: 20px;
+      background: #1a1a2e;
+      border: 4px solid #00ffcc;
+      border-radius: 15px;
+      position: relative;
+      min-width: 320px;
+      height: 180px;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .key {
+      width: 50px;
+      height: 150px;
+      background: #fff;
+      color: #000;
+      border-radius: 0 0 8px 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .key:active {
+      background: #ff0055;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎹 The Glitchy Piano</h1>
+  <p>Play a tune... if you can control the keys!</p>
+
+  <div id="piano-container">
+    <div class="key">Do</div>
+    <div class="key">Re</div>
+    <div class="key">Mi</div>
+    <div class="key">Fa</div>
+    <div class="key">So</div>
+  </div>
+
+  <script>
+    const keys = document.querySelectorAll('.key');
+    const container = document.getElementById('piano-container');
+
+    const funnyNotes = ['🎵 HEE-HEE!', '🔊 HONK!', '💥 BOOM!', '🐈 MEOW!', '🛸 ZAP!'];
+
+    keys.forEach(key => {
+      key.addEventListener('click', () => {
+        // Randomly rotate and stretch the clicked key
+        const randomRot = Math.floor(Math.random() * 40) - 20;
+        const randomScale = (Math.random() * 0.5 + 0.8).toFixed(2);
+        key.style.transform = `rotate(${randomRot}deg) scale(${randomScale})`;
+
+        // Change text to random noise
+        key.innerText = funnyNotes[Math.floor(Math.random() * funnyNotes.length)];
+
+        // Randomly shuffle background color of the container
+        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+        container.style.borderColor = randomColor;
+      });
+    });
+  </script>
+</body>
+</html>
