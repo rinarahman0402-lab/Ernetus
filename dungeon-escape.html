@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon Escape</title>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #f59e0b; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #10b981; margin-bottom: 15px; font-weight: bold; }
+
+    #dungeon {
+      width: 300px;
+      height: 300px;
+      background: #1f2937;
+      border: 4px solid #f59e0b;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .entity {
+      width: 30px;
+      height: 30px;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(2, 50px);
+      gap: 5px;
+    }
+
+    .btn {
+      background: #f59e0b;
+      color: #0b0f19;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #fbbf24; }
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
+  </style>
+</head>
+<body>
+
+  <h1>🗝️ Dungeon Escape</h1>
+  <div id="hud">Level: <span id="level-txt">1 / 3</span> | Grab key 🔑 & reach exit 🚪!</div>
+
+  <div id="dungeon">
+    <div id="player" class="entity">🏃</div>
+    <div id="key" class="entity">🔑</div>
+    <div id="door" class="entity">🔒</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn-up">⬆️</button>
+    <button class="btn" id="btn-left">⬅️</button>
+    <button class="btn" id="btn-down">⬇️</button>
+    <button class="btn" id="btn-right">➡️</button>
+  </div>
+
+  <script>
+    const dungeon = document.getElementById('dungeon');
+    const playerEl = document.getElementById('player');
+    const keyEl = document.getElementById('key');
+    const doorEl = document.getElementById('door');
+    const levelTxt = document.getElementById('level-txt');
+
+    let currentLevel = 1;
+    let hasKey = false;
+    let player = { x: 0, y: 0 };
+    let key = { x: 0, y: 0 };
+    let door = { x: 0, y: 0 };
+    let guards = [];
+    let guardInterval = null;
+
+    const levels = [
+      // Level 1
+      {
+        player: { x: 0, y: 270 },
+        key: { x: 270, y: 0 },
+        door: { x: 0, y: 0 },
+        guards: [{ x: 120, y: 120, dx: 3, dy: 0 }]
+      },
+      // Level 2
+      {
+        player: { x: 0, y: 270 },
+        key: { x: 270, y: 270 },
+        door: { x: 0, y: 0 },
+        guards: [
+          { x: 90, y: 90, dx: 4, dy: 0 },
+          { x: 180, y: 180, dx: -4, dy: 0 }
+        ]
+      },
+      // Level 3 (Final Stage)
+      {
+        player: { x: 0, y: 270 },
+        key: { x: 135, y: 135 },
+        door: { x: 270, y: 0 },
+        guards: [
+          { x: 60, y: 60, dx: 5, dy: 0 },
+          { x: 210, y: 210, dx: -5, dy: 0 },
+          { x: 135, y: 30, dx: 0, dy: 5 }
+        ]
+      }
+    ];
+
+    function loadLevel(num) {
+      clearInterval(guardInterval);
+      hasKey = false;
+      const data = levels[num - 1];
+
+      player = { ...data.player };
+      key = { ...data.key };
+      door = { ...data.door };
+      guards = data.guards.map(g => ({ ...g }));
+
+      levelTxt.innerText = `${num} / 3`;
+      doorEl.innerText = '🔒';
+
+      renderPositions();
+      startGuardLoop();
+    }
+
+    function renderPositions() {
+      playerEl.style.left = player.x + 'px';
+      playerEl.style.top = player.y + 'px';
+
+      keyEl.style.display = hasKey ? 'none' : 'flex';
+      keyEl.style.left = key.x + 'px';
+      keyEl.style.top = key.y + 'px';
+
+      doorEl.style.left = door.x + 'px';
+      doorEl.style.top = door.y + 'px';
+
+      // Clean old guard elements
+      document.querySelectorAll('.guard').forEach(g => g.remove());
+
+      guards.forEach(g => {
+        const gel = document.createElement('div');
+        gel.className = 'entity guard';
+        gel.innerText = '👾';
+        gel.style.left = g.x + 'px';
+        gel.style.top = g.y + 'px';
+        dungeon.appendChild(gel);
+      });
+    }
+
+    function movePlayer(dx, dy) {
+      player.x = Math.max(0, Math.min(270, player.x + dx));
+      player.y = Math.max(0, Math.min(270, player.y + dy));
+
+      // Grab Key
+      if (!hasKey && Math.hypot(player.x - key.x, player.y - key.y) < 25) {
+        hasKey = true;
+        doorEl.innerText = '🚪';
+      }
+
+      // Reach Exit
+      if (hasKey && Math.hypot(player.x - door.x, player.y - door.y) < 25) {
+        if (currentLevel < 3) {
+          currentLevel++;
+          loadLevel(currentLevel);
+        } else {
+          clearInterval(guardInterval);
+          document.getElementById('hud').innerText = "🏆 YOU BEAT THE GAME! DUNGEON ESCAPED!";
+        }
+      }
+
+      renderPositions();
+    }
+
+    function startGuardLoop() {
+      guardInterval = setInterval(() => {
+        guards.forEach(g => {
+          g.x += g.dx;
+          g.y += g.dy;
+
+          if (g.x <= 0 || g.x >= 270) g.dx *= -1;
+          if (g.y <= 0 || g.y >= 270) g.dy *= -1;
+
+          // Catch check
+          if (Math.hypot(player.x - g.x, player.y - g.y) < 22) {
+            loadLevel(currentLevel); // Restart current level
+          }
+        });
+
+        renderPositions();
+      }, 30);
+    }
+
+    document.getElementById('btn-up').onclick = () => movePlayer(0, -30);
+    document.getElementById('btn-down').onclick = () => movePlayer(0, 30);
+    document.getElementById('btn-left').onclick = () => movePlayer(-30, 0);
+    document.getElementById('btn-right').onclick = () => movePlayer(30, 0);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') movePlayer(0, -30);
+      if (e.key === 'ArrowDown') movePlayer(0, 30);
+      if (e.key === 'ArrowLeft') movePlayer(-30, 0);
+      if (e.key === 'ArrowRight') movePlayer(30, 0);
+    });
+
+    loadLevel(1);
+  </script>
+</body>
+</html>
