@@ -6,190 +6,173 @@
   <title>Forest Heist</title>
   <style>
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       min-height: 100vh;
       margin: 0;
       user-select: none;
     }
 
-    h1 { color: #2ecc71; margin-bottom: 5px; }
-    #status { font-size: 1.1rem; color: #f1c40f; margin-bottom: 15px; }
+    h1 { color: #22c55e; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #facc15; margin-bottom: 15px; font-weight: bold; }
 
-    .game-container {
-      display: flex;
-      gap: 20px;
-      width: 90%;
-      max-width: 800px;
-    }
-
-    /* Forest Wrapper (The Void behind everything) */
-    #forest-container {
-      flex: 1;
-      height: 380px;
-      background: #000000; /* Pure black void */
-      border: 4px solid #333;
-      border-radius: 15px;
+    #forest {
+      width: 320px;
+      height: 320px;
+      background: #14532d;
+      border: 4px solid #22c55e;
+      border-radius: 12px;
       position: relative;
       overflow: hidden;
     }
 
-    /* Stealable Background Layers */
-    .layer {
+    #player {
+      width: 24px;
+      height: 24px;
+      background: #38bdf8;
+      border-radius: 50%;
       position: absolute;
-      width: 100%;
-      cursor: pointer;
-      transition: opacity 0.3s;
-    }
-
-    #sky-layer {
-      height: 60%;
-      top: 0;
-      background: #87CEEB;
-    }
-
-    #ground-layer {
-      height: 40%;
-      bottom: 0;
-      background: #27ae60;
-      border-top: 5px solid #1e8449;
-    }
-
-    #river-layer {
-      height: 25px;
-      bottom: 30px;
-      background: #2980b9;
-    }
-
-    /* Stealable Emoji Items */
-    .item {
-      font-size: 2.2rem;
-      position: absolute;
-      cursor: pointer;
-      transition: transform 0.2s;
-      z-index: 10;
-    }
-
-    .item:hover, .layer-label:hover {
-      transform: scale(1.1);
-    }
-
-    .layer-label {
-      position: absolute;
-      font-weight: bold;
-      font-size: 0.9rem;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 4px;
-      cursor: pointer;
-      z-index: 5;
-    }
-
-    /* Zoo Area */
-    #zoo {
-      flex: 1;
-      height: 380px;
-      background: #34495e;
-      border: 4px solid #2c3e50;
-      border-radius: 15px;
-      padding: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      gap: 8px;
-      overflow-y: auto;
-    }
-
-    /* Items inside Zoo */
-    .zoo-item {
-      font-size: 1.5rem;
-      width: 45px;
-      height: 45px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px dashed #7f8c8d;
-      border-radius: 8px;
+      top: 10px;
+      left: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 0.8rem;
+      z-index: 10;
     }
+
+    .loot {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(2, 50px);
+      gap: 5px;
+    }
+
+    .btn {
+      background: #22c55e;
+      color: #0f172a;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #4ade80; }
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
   </style>
 </head>
 <body>
 
-  <h1>🌲 Ultimate Forest Heist 🦁</h1>
-  <div id="status">Steal EVERYTHING—animals, clouds, ground, and sky!</div>
+  <h1>🌲 Forest Heist</h1>
+  <div id="hud">Loot Collected: <span id="score">0</span> / 20</div>
 
-  <div class="game-container">
-    <!-- The Forest Container -->
-    <div id="forest-container">
-      <!-- Background Layers -->
-      <div id="sky-layer" class="layer stealable" data-name="🌌 Sky">
-        <span class="layer-label" style="top:10px; left:10px;">[Steal Sky]</span>
-      </div>
+  <div id="forest">
+    <div id="player">🦊</div>
+  </div>
 
-      <div id="ground-layer" class="layer stealable" data-name="🟫 Ground">
-        <span class="layer-label" style="bottom:10px; left:10px;">[Steal Ground]</span>
-      </div>
-
-      <div id="river-layer" class="layer stealable" data-name="🌊 River">
-        <span class="layer-label" style="bottom:2px; right:10px;">[Steal River]</span>
-      </div>
-
-      <!-- Foreground Items -->
-      <div class="item stealable" data-name="☁️ Cloud" style="top:20px; left:40px;">☁️</div>
-      <div class="item stealable" data-name="☁️ Cloud" style="top:30px; left:180px;">☁️</div>
-      <div class="item stealable" data-name="☀️ Sun" style="top:15px; right:20px;">☀️</div>
-      <div class="item stealable" data-name="🐻 Bear" style="top:230px; left:30px;">🐻</div>
-      <div class="item stealable" data-name="🦊 Fox" style="top:250px; left:140px;">🦊</div>
-      <div class="item stealable" data-name="🦌 Deer" style="top:210px; right:40px;">🦌</div>
-      <div class="item stealable" data-name="🌲 Tree" style="top:170px; left:90px;">🌲</div>
-      <div class="item stealable" data-name="🌳 Tree" style="top:160px; right:100px;">🌳</div>
-      <div class="item stealable" data-name="🍄 Shroom" style="top:290px; left:110px;">🍄</div>
-      <div class="item stealable" data-name="🐟 Fish" style="bottom:32px; left:160px; font-size:1.2rem; z-index:6;">🐟</div>
-    </div>
-
-    <!-- The Zoo -->
-    <div id="zoo"></div>
+  <div class="controls">
+    <button class="btn" id="btn-up">⬆️</button>
+    <button class="btn" id="btn-left">⬅️</button>
+    <button class="btn" id="btn-down">⬇️</button>
+    <button class="btn" id="btn-right">➡️</button>
   </div>
 
   <script>
-    const zoo = document.getElementById('zoo');
-    const status = document.getElementById('status');
-    const stealables = document.querySelectorAll('.stealable');
+    const forest = document.getElementById('forest');
+    const player = document.getElementById('player');
+    const scoreText = document.getElementById('score');
 
-    let stolenCount = 0;
-    const totalItems = stealables.length;
+    let posX = 10;
+    let posY = 10;
+    let collected = 0;
+    const totalTarget = 20;
+    let lootItems = [];
 
-    stealables.forEach(target => {
-      target.addEventListener('click', (e) => {
-        e.stopPropagation(); // Stop click from hitting elements behind it
+    // Spawn exactly 20 loot items inside the forest
+    function spawnAllLoot() {
+      const items = ['💎', '💰', '👑', '💍', '🪙'];
+      for (let i = 0; i < totalTarget; i++) {
+        const item = document.createElement('div');
+        item.className = 'loot';
+        item.innerText = items[i % items.length];
 
-        const name = target.getAttribute('data-name');
+        // Random positions inside 320x320 bounds
+        const x = Math.floor(Math.random() * 280) + 20;
+        const y = Math.floor(Math.random() * 280) + 20;
 
-        // Move item representation to zoo
-        const zooBox = document.createElement('div');
-        zooBox.className = 'zoo-item';
-        zooBox.innerText = name.split(' ')[0]; // Take emoji
-        zooBox.title = name;
-        zoo.appendChild(zooBox);
+        item.style.left = x + 'px';
+        item.style.top = y + 'px';
 
-        // Hide/Remove from forest
-        target.style.display = 'none';
-        stolenCount++;
+        forest.appendChild(item);
+        lootItems.push({ element: item, x: x, y: y, active: true });
+      }
+    }
 
-        status.innerText = `Stolen: ${stolenCount}/${totalItems} elements!`;
+    function move(dir) {
+      if (collected >= totalTarget) return;
 
-        if (stolenCount === totalItems) {
-          status.innerText = "🌌 EVERYTHING IS GONE. YOU STOLE THE ENTIRE WORLD INTO THE VOID!";
-          status.style.color = "#00ffcc";
+      if (dir === 'right') posX = Math.min(286, posX + 20);
+      if (dir === 'left') posX = Math.max(10, posX - 20);
+      if (dir === 'down') posY = Math.min(286, posY + 20);
+      if (dir === 'up') posY = Math.max(10, posY - 20);
+
+      player.style.left = posX + 'px';
+      player.style.top = posY + 'px';
+
+      checkCollisions();
+    }
+
+    function checkCollisions() {
+      lootItems.forEach(item => {
+        if (item.active) {
+          const dist = Math.hypot(posX - item.x, posY - item.y);
+          if (dist < 25) {
+            item.active = false;
+            item.element.remove();
+            collected++;
+            scoreText.innerText = collected;
+
+            if (collected === totalTarget) {
+              document.getElementById('hud').innerText = "🎉 HEIST COMPLETE! All 20 items secured!";
+            }
+          }
         }
       });
+    }
+
+    document.getElementById('btn-up').onclick = () => move('up');
+    document.getElementById('btn-down').onclick = () => move('down');
+    document.getElementById('btn-left').onclick = () => move('left');
+    document.getElementById('btn-right').onclick = () => move('right');
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') move('right');
+      if (e.key === 'ArrowLeft') move('left');
+      if (e.key === 'ArrowDown') move('down');
+      if (e.key === 'ArrowUp') move('up');
     });
+
+    spawnAllLoot();
   </script>
 </body>
 </html>
