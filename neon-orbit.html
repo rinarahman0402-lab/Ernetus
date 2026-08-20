@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Orbit</title>
+  <style>
+    body {
+      background-color: #050515;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 { color: #a855f7; margin-bottom: 5px; }
+    #hud { font-size: 1.2rem; color: #ec4899; margin-bottom: 15px; font-weight: bold; }
+
+    #space {
+      width: 320px;
+      height: 380px;
+      background: #0f0d25;
+      border: 3px solid #a855f7;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    #core {
+      width: 40px;
+      height: 40px;
+      background: #a855f7;
+      border-radius: 50%;
+      position: absolute;
+      top: 170px;
+      left: 140px;
+      box-shadow: 0 0 20px #a855f7;
+    }
+
+    #ship {
+      width: 16px;
+      height: 16px;
+      background: #38bdf8;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 10px #38bdf8;
+    }
+
+    .orb {
+      width: 20px;
+      height: 20px;
+      background: #ec4899;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 12px #ec4899;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🪐 Neon Orbit</h1>
+  <div id="hud">Score: <span id="score">0</span></div>
+
+  <div id="space">
+    <div id="core"></div>
+    <div id="ship"></div>
+  </div>
+
+  <script>
+    const space = document.getElementById('space');
+    const ship = document.getElementById('ship');
+    const scoreText = document.getElementById('score');
+
+    let angle = 0;
+    let radius = 60;
+    let launching = false;
+    let score = 0;
+    let gameOver = false;
+
+    // Spawn Energy Orb
+    let orbX = 0, orbY = 0;
+    function spawnOrb() {
+      const existing = document.querySelector('.orb');
+      if (existing) existing.remove();
+
+      const orbAngle = Math.random() * Math.PI * 2;
+      const orbDist = Math.random() * 50 + 90;
+
+      orbX = 160 + Math.cos(orbAngle) * orbDist;
+      orbY = 190 + Math.sin(orbAngle) * orbDist;
+
+      const orb = document.createElement('div');
+      orb.className = 'orb';
+      orb.style.left = (orbX - 10) + 'px';
+      orb.style.top = (orbY - 10) + 'px';
+      space.appendChild(orb);
+    }
+
+    spawnOrb();
+
+    // Game Loop
+    setInterval(() => {
+      if (gameOver) return;
+
+      if (!launching) {
+        angle += 0.05;
+        radius = 60;
+      } else {
+        radius += 6;
+      }
+
+      const shipX = 160 + Math.cos(angle) * radius;
+      const shipY = 190 + Math.sin(angle) * radius;
+
+      ship.style.left = (shipX - 8) + 'px';
+      ship.style.top = (shipY - 8) + 'px';
+
+      // Orb Collect Check
+      const distToOrb = Math.hypot(shipX - orbX, shipY - orbY);
+      if (distToOrb < 20) {
+        score += 10;
+        scoreText.innerText = score;
+        launching = false;
+        spawnOrb();
+      }
+
+      // Boundary Out of Bounds
+      if (radius > 160) {
+        gameOver = true;
+        scoreText.innerText = score + " (LOST IN SPACE! Tap to restart)";
+      }
+    }, 20);
+
+    // Tap to Launch
+    space.addEventListener('pointerdown', () => {
+      if (gameOver) {
+        score = 0;
+        scoreText.innerText = score;
+        gameOver = false;
+        launching = false;
+        spawnOrb();
+        return;
+      }
+      launching = true;
+    });
+  </script>
+</body>
+</html>
