@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Cargo Lander</title>
+  <style>
+    body {
+      background-color: #05050a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #38bdf8; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #a7f3d0; margin-bottom: 15px; font-weight: bold; }
+
+    #space {
+      width: 300px;
+      height: 300px;
+      background: #0f172a;
+      border: 4px solid #38bdf8;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #ship {
+      width: 26px;
+      height: 26px;
+      position: absolute;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translate(-13px, -13px);
+    }
+
+    #pad {
+      height: 8px;
+      background: #22c55e;
+      position: absolute;
+      bottom: 10px;
+      border-radius: 4px;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #38bdf8;
+      color: #05050a;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:active { background: #7dd3fc; }
+  </style>
+</head>
+<body>
+
+  <h1>🚀 Space Lander</h1>
+  <div id="hud">Level: <span id="lvl">1 / 3</span> | Speed: <span id="speed">0.0</span> (Keep &lt; 2.5)</div>
+
+  <div id="space">
+    <div id="ship">🚀</div>
+    <div id="pad"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn-left">⬅️ Left</button>
+    <button class="btn" id="btn-thrust">🔥 Thrust</button>
+    <button class="btn" id="btn-right">➡️ Right</button>
+  </div>
+
+  <script>
+    const shipEl = document.getElementById('ship');
+    const padEl = document.getElementById('pad');
+    const lvlText = document.getElementById('lvl');
+    const speedText = document.getElementById('speed');
+
+    let currentLevel = 1;
+    let gameOver = false;
+
+    let ship = { x: 150, y: 30, vx: 0, vy: 0 };
+    const gravity = 0.08;
+
+    const levels = [
+      { padX: 100, padWidth: 100 }, // Level 1: Wide pad
+      { padX: 180, padWidth: 70 },  // Level 2: Offset pad
+      { padX: 30, padWidth: 50 }    // Level 3: Narrow pad
+    ];
+
+    function loadLevel(num) {
+      gameOver = false;
+      const data = levels[num - 1];
+
+      ship = { x: 150, y: 30, vx: 0, vy: 0 };
+      padEl.style.left = data.padX + 'px';
+      padEl.style.width = data.padWidth + 'px';
+
+      lvlText.innerText = `${num} / 3`;
+      requestAnimationFrame(update);
+    }
+
+    function applyThrust(dx, dy) {
+      if (gameOver) return;
+      ship.vx += dx;
+      ship.vy += dy;
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ship.vy += gravity;
+      ship.x += ship.vx;
+      ship.y += ship.vy;
+
+      // Keep within left/right walls
+      if (ship.x < 13) { ship.x = 13; ship.vx = 0; }
+      if (ship.x > 287) { ship.x = 287; ship.vx = 0; }
+
+      shipEl.style.left = ship.x + 'px';
+      shipEl.style.top = ship.y + 'px';
+
+      const currentSpeed = Math.abs(ship.vy).toFixed(1);
+      speedText.innerText = currentSpeed;
+
+      const padData = levels[currentLevel - 1];
+
+      // Landing Check
+      if (ship.y >= 272) {
+        gameOver = true;
+        const landedOnPad = ship.x >= padData.padX && ship.x <= (padData.padX + padData.padWidth);
+        const safeSpeed = Math.abs(ship.vy) <= 2.5;
+
+        if (landedOnPad && safeSpeed) {
+          if (currentLevel < 3) {
+            currentLevel++;
+            setTimeout(() => loadLevel(currentLevel), 800);
+          } else {
+            document.getElementById('hud').innerText = "🏆 MISSION SUCCESS! ALL CARGO DELIVERED!";
+          }
+        } else {
+          shipEl.innerText = '💥';
+          document.getElementById('hud').innerText = "💥 CRASHED! Tap Thrust to retry.";
+          setTimeout(() => {
+            shipEl.innerText = '🚀';
+            loadLevel(currentLevel);
+          }, 1200);
+        }
+        return;
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    document.getElementById('btn-thrust').onclick = () => applyThrust(0, -1.8);
+    document.getElementById('btn-left').onclick = () => applyThrust(-0.8, 0);
+    document.getElementById('btn-right').onclick = () => applyThrust(0.8, 0);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === ' ') applyThrust(0, -1.8);
+      if (e.key === 'ArrowLeft') applyThrust(-0.8, 0);
+      if (e.key === 'ArrowRight') applyThrust(0.8, 0);
+    });
+
+    loadLevel(1);
+  </script>
+</body>
+</html>
