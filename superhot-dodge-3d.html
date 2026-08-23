@@ -2,153 +2,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Time Stop Dodge 3D</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #e2e8f0; user-select: none; }
-    #ui { position: absolute; top: 15px; left: 15px; color: #ef4444; font-weight: bold; font-size: 1.2rem; text-shadow: 1px 1px 2px #fff; pointer-events: none; }
-    #instructions { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: #0f172a; font-weight: bold; background: rgba(255,255,255,0.85); padding: 12px 24px; border-radius: 8px; pointer-events: none; text-align: center; border: 2px solid #ef4444; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #090d16;
+      user-select: none;
+      touch-action: none;
+    }
+    #ui {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-shadow: 0 0 10px #0284c7;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #instructions {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #facc15;
+      font-weight: bold;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 15px #0284c7;
+      z-index: 10;
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <div id="ui">🔴 Targets Destroyed: <span id="score">0</span></div>
-  <div id="instructions">MOVE (WASD/Arrows) TO ADVANCE TIME! CLICK TO SHOOT!</div>
+  <div id="ui">⏱️ SCORE: <span id="score">0</span></div>
+  <div id="instructions" id="msg">DRAG SCREEN TO MOVE & ADVANCE TIME</div>
 
   <script>
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8fafc);
+    scene.background = new THREE.Color(0x090d16);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 12, 10);
+    camera.lookAt(0, 0, 0);
+
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
     // Lights
     const light = new THREE.DirectionalLight(0xffffff, 1.2);
-    light.position.set(20, 40, 20);
+    light.position.set(0, 20, 10);
     scene.add(light);
-    scene.add(new THREE.AmbientLight(0x94a3b8, 0.8));
+    scene.add(new THREE.AmbientLight(0x38bdf8, 0.5));
 
-    // Stark white arena floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 })
+    // Floor Grid
+    const grid = new THREE.GridHelper(20, 20, 0x38bdf8, 0x1e293b);
+    scene.add(grid);
+
+    // Player Object
+    const player = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 32, 32),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, roughness: 0.2 })
     );
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
+    player.position.set(0, 0.5, 4);
+    scene.add(player);
 
-    // Player
-    const playerGroup = new THREE.Group();
-    playerGroup.position.set(0, 1, 0);
-    scene.add(playerGroup);
+    // Obstacles
+    const obstacles = [];
+    const obsMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 });
 
-    // Enemies (Red Glass Dudes)
-    const enemies = [];
-    const enemyMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2 });
-
-    function spawnEnemy() {
-      if (enemies.length >= 5) return;
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.5, 1.2), enemyMat);
-      const angle = Math.random() * Math.PI * 2;
-      mesh.position.set(Math.cos(angle) * 20, 1.25, Math.sin(angle) * 20);
+    function spawnObstacle() {
+      if (obstacles.length >= 12) return;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), obsMat);
+      mesh.position.set((Math.random() - 0.5) * 16, 0.5, -12 - Math.random() * 10);
       scene.add(mesh);
-      enemies.push({ mesh, cooldown: 0 });
+      obstacles.push({ mesh, speed: 0.15 + Math.random() * 0.1 });
     }
 
-    // Bullets (Red hazards & Blue player shots)
-    const bullets = [];
-    const hazardMat = new THREE.MeshBasicMaterial({ color: 0xd97706 });
-    const playerBulletMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+    for (let i = 0; i < 8; i++) spawnObstacle();
 
-    function shootPlayerBullet() {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), playerBulletMat);
-      b.position.copy(playerGroup.position);
-      
-      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
-      scene.add(b);
-      bullets.push({ mesh: b, dir, isPlayer: true });
-    }
-
-    // Input state
-    const keys = { w: false, a: false, s: false, d: false };
-    window.addEventListener('keydown', e => {
-      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
-      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
-      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
-      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
-    });
-    window.addEventListener('keyup', e => {
-      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
-      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
-      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
-      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
-    });
-    window.addEventListener('pointerdown', shootPlayerBullet);
-
+    // Game Physics State
+    let isMoving = false;
     let score = 0;
     let gameOver = false;
-    setInterval(spawnEnemy, 2000);
+
+    // Mobile Drag Tracking
+    let lastTouchX = 0, lastTouchY = 0;
+
+    window.addEventListener('touchstart', (e) => {
+      if (gameOver) return restartGame();
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (gameOver) return;
+
+      const deltaX = e.touches[0].clientX - lastTouchX;
+      const deltaY = e.touches[0].clientY - lastTouchY;
+
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+
+      if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
+        player.position.x += deltaX * 0.03;
+        player.position.z += deltaY * 0.03;
+
+        // Boundaries
+        player.position.x = Math.max(-8, Math.min(8, player.position.x));
+        player.position.z = Math.max(-8, Math.min(8, player.position.z));
+
+        isMoving = true;
+      }
+    });
+
+    window.addEventListener('touchend', () => { isMoving = false; });
+
+    // Mouse Fallback
+    let isMouseDown = false;
+    window.addEventListener('mousedown', (e) => {
+      if (gameOver) return restartGame();
+      isMouseDown = true;
+      lastTouchX = e.clientX;
+      lastTouchY = e.clientY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDown || gameOver) return;
+      const deltaX = e.clientX - lastTouchX;
+      const deltaY = e.clientY - lastTouchY;
+      lastTouchX = e.clientX;
+      lastTouchY = e.clientY;
+
+      if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
+        player.position.x += deltaX * 0.03;
+        player.position.z += deltaY * 0.03;
+        player.position.x = Math.max(-8, Math.min(8, player.position.x));
+        player.position.z = Math.max(-8, Math.min(8, player.position.z));
+        isMoving = true;
+      }
+    });
+
+    window.addEventListener('mouseup', () => { isMouseDown = false; isMoving = false; });
+
+    function restartGame() {
+      score = 0;
+      gameOver = false;
+      player.position.set(0, 0.5, 4);
+      document.getElementById('score').innerText = score;
+      document.getElementById('instructions').innerText = "DRAG SCREEN TO MOVE & ADVANCE TIME";
+      obstacles.forEach(o => {
+        o.mesh.position.set((Math.random() - 0.5) * 16, 0.5, -12 - Math.random() * 10);
+      });
+    }
 
     function animate() {
       requestAnimationFrame(animate);
 
       if (!gameOver) {
-        let isMoving = keys.w || keys.a || keys.s || keys.d;
-        let timeSpeed = isMoving ? 1.0 : 0.05; // Time slows to 5% when stopped!
+        // Time Stop Mechanic: Obstacles only advance when player moves
+        if (isMoving) {
+          score++;
+          document.getElementById('score').innerText = Math.floor(score / 5);
 
-        // Player Movement
-        const speed = 0.2;
-        if (keys.w) playerGroup.position.z -= speed;
-        if (keys.s) playerGroup.position.z += speed;
-        if (keys.a) playerGroup.position.x -= speed;
-        if (keys.d) playerGroup.position.x += speed;
+          obstacles.forEach(o => {
+            o.mesh.position.z += o.speed;
 
-        // Camera Follow
-        camera.position.set(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z + 8);
-        camera.lookAt(playerGroup.position);
-
-        // Update Bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          const b = bullets[i];
-          b.mesh.position.addScaledVector(b.dir, (b.isPlayer ? 0.6 : 0.25) * timeSpeed);
-
-          // Check hit player
-          if (!b.isPlayer) {
-            if (b.mesh.position.distanceTo(playerGroup.position) < 1) {
-              gameOver = true;
-              document.getElementById('instructions').innerText = "💥 SHOT DOWN! Reload to try again.";
+            // Reset obstacle to top
+            if (o.mesh.position.z > 8) {
+              o.mesh.position.z = -12;
+              o.mesh.position.x = (Math.random() - 0.5) * 16;
             }
-          } else {
-            // Check hit enemy
-            enemies.forEach((e, eIdx) => {
-              if (b.mesh.position.distanceTo(e.mesh.position) < 1.5) {
-                scene.remove(e.mesh);
-                enemies.splice(eIdx, 1);
-                scene.remove(b.mesh);
-                bullets.splice(i, 1);
-                score++;
-                document.getElementById('score').innerText = score;
-              }
-            });
-          }
+
+            // Collision Check
+            if (player.position.distanceTo(o.mesh.position) < 0.9) {
+              gameOver = true;
+              document.getElementById('instructions').innerText = `💥 HIT! Score: ${Math.floor(score / 5)}. Tap to retry!`;
+            }
+          });
+
+          // Reset movement toggle until next drag step
+          isMoving = false;
         }
-
-        // Enemy AI & Firing
-        enemies.forEach(e => {
-          e.mesh.lookAt(playerGroup.position);
-          e.cooldown += timeSpeed;
-
-          if (e.cooldown > 60) {
-            e.cooldown = 0;
-            const b = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), hazardMat);
-            b.position.copy(e.mesh.position);
-            
-            const dir = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
-            scene.add(b);
-            bullets.push({ mesh: b, dir, isPlayer: false });
-          }
-        });
       }
 
       renderer.render(scene, camera);
