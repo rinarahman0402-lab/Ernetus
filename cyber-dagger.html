@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Dagger</title>
+  <style>
+    body {
+      background-color: #0d0f18;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #f43f5e; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #38bdf8; margin-bottom: 15px; font-weight: bold; }
+
+    #arena {
+      width: 300px;
+      height: 320px;
+      background: #181b2a;
+      border: 4px solid #f43f5e;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    #target {
+      width: 80px;
+      height: 80px;
+      background: #f43f5e;
+      border-radius: 50%;
+      position: absolute;
+      top: 60px;
+      left: 110px;
+      box-shadow: 0 0 15px #f43f5e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .dagger {
+      width: 6px;
+      height: 30px;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+      border-radius: 3px;
+      position: absolute;
+    }
+
+    #throw-dagger {
+      left: 147px;
+      bottom: 20px;
+    }
+
+    .attached-dagger {
+      width: 6px;
+      height: 30px;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+      border-radius: 3px;
+      position: absolute;
+      top: 40px;
+      left: 37px;
+      transform-origin: 3px 60px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗡️ Cyber Dagger</h1>
+  <div id="hud">Level: <span id="lvl">1 / 3</span> | Left: <span id="remaining">5</span></div>
+
+  <div id="arena">
+    <div id="target">🎯
+      <!-- Attached daggers get appended here -->
+    </div>
+    <div id="throw-dagger" class="dagger"></div>
+  </div>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const target = document.getElementById('target');
+    const lvlText = document.getElementById('lvl');
+    const remainingText = document.getElementById('remaining');
+
+    let currentLevel = 1;
+    let daggersLeft = 5;
+    let rotationAngle = 0;
+    let attachedAngles = [];
+    let isThrowing = false;
+    let gameOver = false;
+
+    const levelSettings = [
+      { daggers: 5, speed: 1.5, preAttached: [] },         // Level 1
+      { daggers: 7, speed: -2.2, preAttached: [0] },        // Level 2 (Reversed)
+      { daggers: 8, speed: 3.0, preAttached: [0, 180] }    // Level 3 (Fast)
+    ];
+
+    function loadLevel(num) {
+      gameOver = false;
+      isThrowing = false;
+      const data = levelSettings[num - 1];
+
+      daggersLeft = data.daggers;
+      attachedAngles = [...data.preAttached];
+      rotationAngle = 0;
+
+      lvlText.innerText = `${num} / 3`;
+      remainingText.innerText = daggersLeft;
+
+      renderAttachedDaggers();
+    }
+
+    function renderAttachedDaggers() {
+      target.querySelectorAll('.attached-dagger').forEach(el => el.remove());
+
+      attachedAngles.forEach(angle => {
+        const d = document.createElement('div');
+        d.className = 'attached-dagger';
+        d.style.transform = `rotate(${angle}deg)`;
+        target.appendChild(d);
+      });
+    }
+
+    function throwDagger() {
+      if (isThrowing || gameOver || daggersLeft <= 0) return;
+      isThrowing = true;
+
+      const currentTargetAngle = (360 - (rotationAngle % 360) + 90) % 360;
+
+      // Check collision with existing daggers
+      const hit = attachedAngles.some(a => {
+        const diff = Math.abs(a - currentTargetAngle);
+        return diff < 20 || diff > 340;
+      });
+
+      if (hit) {
+        gameOver = true;
+        document.getElementById('hud').innerText = "💥 CLASH! Tap anywhere to retry.";
+        setTimeout(() => loadLevel(currentLevel), 1000);
+        return;
+      }
+
+      // Successful hit
+      attachedAngles.push(currentTargetAngle);
+      renderAttachedDaggers();
+
+      daggersLeft--;
+      remainingText.innerText = daggersLeft;
+      isThrowing = false;
+
+      if (daggersLeft <= 0) {
+        if (currentLevel < 3) {
+          currentLevel++;
+          setTimeout(() => loadLevel(currentLevel), 500);
+        } else {
+          gameOver = true;
+          document.getElementById('hud').innerText = "🏆 ALL CORES CLEARED! YOU BEAT GAME 33!";
+        }
+      }
+    }
+
+    function updateRotation() {
+      if (!gameOver) {
+        rotationAngle += levelSettings[currentLevel - 1].speed;
+        target.style.transform = `rotate(${rotationAngle}deg)`;
+      }
+      requestAnimationFrame(updateRotation);
+    }
+
+    arena.addEventListener('pointerdown', throwDagger);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'ArrowUp') throwDagger();
+    });
+
+    loadLevel(1);
+    requestAnimationFrame(updateRotation);
+  </script>
+</body>
+</html>
