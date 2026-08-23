@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Pulse</title>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+    h1 { color: #f43f5e; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #38bdf8; margin-bottom: 15px; font-weight: bold; }
+    #grid {
+      width: 280px;
+      height: 280px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .pad {
+      border-radius: 16px;
+      cursor: pointer;
+      opacity: 0.4;
+      transition: opacity 0.15s ease;
+    }
+    .pad.active { opacity: 1; transform: scale(0.98); }
+    #p0 { background: #ef4444; }
+    #p1 { background: #3b82f6; }
+    #p2 { background: #22c55e; }
+    #p3 { background: #eab308; }
+  </style>
+</head>
+<body>
+  <h1>🎨 Color Pulse</h1>
+  <div id="hud">Level: <span id="lvl">1 / 3</span> | Watch the pattern!</div>
+
+  <div id="grid">
+    <div class="pad" id="p0" onclick="handleTap(0)"></div>
+    <div class="pad" id="p1" onclick="handleTap(1)"></div>
+    <div class="pad" id="p2" onclick="handleTap(2)"></div>
+    <div class="pad" id="p3" onclick="handleTap(3)"></div>
+  </div>
+
+  <script>
+    const lvlText = document.getElementById('lvl');
+    const pads = [document.getElementById('p0'), document.getElementById('p1'), document.getElementById('p2'), document.getElementById('p3')];
+
+    let currentLevel = 1;
+    let sequence = [];
+    let playerIdx = 0;
+    let isPlaying = false;
+
+    const levelLengths = [3, 5, 7];
+
+    function startLevel(num) {
+      currentLevel = num;
+      lvlText.innerText = `${num} / 3`;
+      sequence = [];
+      playerIdx = 0;
+
+      for (let i = 0; i < levelLengths[num - 1]; i++) {
+        sequence.push(Math.floor(Math.random() * 4));
+      }
+
+      setTimeout(playSequence, 800);
+    }
+
+    function flashPad(idx) {
+      pads[idx].classList.add('active');
+      setTimeout(() => pads[idx].classList.remove('active'), 300);
+    }
+
+    function playSequence() {
+      isPlaying = true;
+      document.getElementById('hud').innerText = `Level ${currentLevel}: Watch closely!`;
+      sequence.forEach((padIdx, i) => {
+        setTimeout(() => {
+          flashPad(padIdx);
+          if (i === sequence.length - 1) {
+            setTimeout(() => {
+              isPlaying = false;
+              document.getElementById('hud').innerText = `Level ${currentLevel}: Repeat the pattern!`;
+            }, 400);
+          }
+        }, i * 500);
+      });
+    }
+
+    function handleTap(idx) {
+      if (isPlaying) return;
+      flashPad(idx);
+
+      if (idx === sequence[playerIdx]) {
+        playerIdx++;
+        if (playerIdx === sequence.length) {
+          if (currentLevel < 3) {
+            document.getElementById('hud').innerText = "Correct! Next level...";
+            setTimeout(() => startLevel(currentLevel + 1), 1000);
+          } else {
+            document.getElementById('hud').innerText = "🏆 PERFECT MEMORY! YOU WIN!";
+          }
+        }
+      } else {
+        document.getElementById('hud').innerText = "💥 WRONG SEQUENCE! Retrying level...";
+        setTimeout(() => startLevel(currentLevel), 1200);
+      }
+    }
+
+    startLevel(1);
+  </script>
+</body>
+</html>
