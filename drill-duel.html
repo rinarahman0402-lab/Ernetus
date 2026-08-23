@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drill Duel Online</title>
+  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+  <style>
+    body {
+      background-color: #0c0a09;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+    h1 { color: #f97316; margin-bottom: 5px; text-align: center; }
+    
+    /* Lobby Styles */
+    #lobby {
+      background: #1c1917;
+      border: 4px solid #f97316;
+      border-radius: 12px;
+      padding: 20px;
+      width: 300px;
+      text-align: center;
+    }
+    .lobby-btn {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin: 10px 0;
+    }
+    .input-box {
+      width: 90%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: none;
+      text-align: center;
+    }
+    #room-id-display {
+      background: #000;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      color: #fde047;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+
+    /* Game Styles */
+    #game-ui { display: none; flex-direction: column; align-items: center; }
+    #hud { font-size: 1rem; color: #fde047; margin-bottom: 10px; font-weight: bold; }
+    
+    #shaft {
+      width: 300px;
+      height: 360px;
+      background: #292524;
+      border: 4px solid #f97316;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .driller {
+      position: absolute;
+      font-size: 1.5rem;
+      transform: translateX(-50%);
+      transition: all 0.15s ease;
+      z-index: 10;
+    }
+
+    .trap {
+      position: absolute;
+      font-size: 1.2rem;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+    }
+
+    #core-gem {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 10px #e11d48);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      margin-top: 15px;
+      width: 300px;
+    }
+
+    .btn {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 12px 5px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-trap { background: #dc2626; grid-column: span 3; }
+  </style>
+</head>
+<body>
+
+  <h1>⛏️ Drill Duel<br><span style="font-size:0.5em; color:#a8a29e;">Online Multiplayer</span></h1>
+
+  <!-- LOBBY SCREEN -->
+  <div id="lobby">
+    <h3>Host a Game</h3>
+    <button class="lobby-btn" id="btn-host" onclick="hostGame()">1. Create Room</button>
+    <div id="room-id-display" style="display:none;">Generating ID...</div>
+    <div id="host-status" style="font-size: 0.8rem; color:#a8a29e;"></div>
+    
+    <hr style="border-color: #44403c; margin: 20px 0;">
+    
+    <h3>Join a Game</h3>
+    <input type="text" id="join-id" class="input-box" placeholder="Paste Room ID here">
+    <button class="lobby-btn" onclick="joinGame()">2. Join Room</button>
+    <div id="join-status" style="font-size: 0.8rem; color:#a8a29e;"></div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-ui">
+    <div id="hud">You: <span id="my-depth">0</span>m | Traps: <span id="traps">3</span></div>
+
+    <div id="shaft">
+      <div id="player1" class="driller" style="left: 80px; top: 20px;">🤖</div>
+      <div id="player2" class="driller" style="left: 220px; top: 20px;">👾</div>
+      <div id="core-gem">💎</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" onclick="action('left')">⬅️</button>
+      <button class="btn" onclick="action('drill')">🔥 DRILL</button>
+      <button class="btn" onclick="action('right')">➡️</button>
+      <button class="btn btn-trap" onclick="action('trap')">💣 Drop Trap (Stuns Opponent)</button>
+    </div>
+  </div>
+
+  <script>
+    let peer = null;
+    let conn = null;
+    let isHost = false;
+
+    // Game State
+    let myX = 80, myDepth = 0;
+    let oppX = 220, oppDepth = 0;
+    let trapCount = 3;
+    let isStunned = false;
+    let gameOver = false;
+
+    const myEl = document.getElementById('player1'); // Host defaults to p1
+    const oppEl = document.getElementById('player2');
+    
+    // --- MULTIPLAYER NETWORKING LOGIC ---
+
+    function initPeer() {
+      peer = new Peer(); // Connects to free public PeerJS server
+      
+      peer.on('error', (err) => {
+        alert("Network Error: " + err.type);
+      });
+    }
+
+    function hostGame() {
+      if (!peer) initPeer();
+      document.getElementById('btn-host').disabled = true;
+      document.getElementById('room-id-display').style.display = 'block';
+      
+      peer.on('open', (id) => {
+        document.getElementById('room-id-display').innerText = id;
+        document.getElementById('host-status').innerText = "Waiting for a player to join...\n(Copy the ID and send it to a friend!)";
+      });
+
+      peer.on('connection', (connection) => {
+        conn = connection;
+        isHost = true;
+        setupConnection();
+      });
+    }
+
+    function joinGame() {
+      if (!peer) initPeer();
+      const roomId = document.getElementById('join-id').value.trim();
+      if (!roomId) return alert("Please enter a Room ID!");
+      
+      document.getElementById('join-status').innerText = "Connecting...";
+      
+      peer.on('open', () => {
+        conn = peer.connect(roomId);
+        isHost = false;
+        
+        // Swap starting positions visually for the guest so they are always the "left" character on their screen
+        myX = 220; oppX = 80;
+        
+        setupConnection();
+      });
+    }
+
+    function setupConnection() {
+      conn.on('open', () => {
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('game-ui').style.display = 'flex';
+        
+        if (isHost) {
+          myEl.innerText = '🤖'; oppEl.innerText = '👾';
+        } else {
+          myEl.innerText = '👾'; oppEl.innerText = '🤖';
+          // Swap physical elements so 'myEl' always tracks local player
+          myEl.id = 'player2'; oppEl.id = 'player1';
+        }
+
+        updateVisuals();
+      });
+
+      conn.on('data', (data) => {
+        if (data.type === 'state') {
+          oppX = data.x;
+          oppDepth = data.depth;
+          updateVisuals();
+          checkWinConditions();
+        } else if (data.type === 'trap') {
+          spawnTrap(data.x, data.depth, false);
+        }
+      });
+    }
+
+    // --- GAMEPLAY LOGIC ---
+
+    function sendState() {
+      if (conn && conn.open) {
+        conn.send({ type: 'state', x: myX, depth: myDepth });
+      }
+    }
+
+    function action(act) {
+      if (gameOver || isStunned) return;
+
+      if (act === 'left') myX = Math.max(30, myX - 40);
+      if (act === 'right') myX = Math.min(270, myX + 40);
+      if (act === 'drill') {
+        myDepth += 6;
+        checkWinConditions();
+      }
+      if (act === 'trap' && trapCount > 0) {
+        trapCount--;
+        document.getElementById('traps').innerText = trapCount;
+        spawnTrap(myX, myDepth - 10, true);
+        if (conn && conn.open) conn.send({ type: 'trap', x: myX, depth: myDepth - 10 });
+      }
+      
+      sendState();
+      updateVisuals();
+    }
+
+    function spawnTrap(x, d, isMine) {
+      const t = document.createElement('div');
+      t.className = 'trap';
+      t.innerText = isMine ? '💣' : '🧨';
+      t.style.left = x + 'px';
+      t.style.top = d + 'px';
+      document.getElementById('shaft').appendChild(t);
+
+      // Check collision ONLY if it's the opponent's trap and we hit it
+      if (!isMine) {
+        const checkInterval = setInterval(() => {
+          if (gameOver) return clearInterval(checkInterval);
+          if (!isStunned && Math.abs(x - myX) < 30 && Math.abs(d - myDepth) < 20) {
+            isStunned = true;
+            myEl.innerText = '💫';
+            t.remove();
+            clearInterval(checkInterval);
+            setTimeout(() => {
+              isStunned = false;
+              myEl.innerText = isHost ? '🤖' : '👾';
+            }, 2000);
+          }
+        }, 100);
+      }
+    }
+
+    function updateVisuals() {
+      // Keep depth capped at 300 visually
+      myEl.style.left = myX + 'px';
+      myEl.style.top = Math.min(300, 20 + myDepth) + 'px';
+      
+      oppEl.style.left = oppX + 'px';
+      oppEl.style.top = Math.min(300, 20 + oppDepth) + 'px';
+
+      document.getElementById('my-depth').innerText = myDepth;
+    }
+
+    function checkWinConditions() {
+      if (myDepth >= 300) {
+        gameOver = true;
+        document.getElementById('hud').innerText = "🏆 YOU GOT THE CORE GEM!";
+      } else if (oppDepth >= 300) {
+        gameOver = true;
+        document.getElementById('hud').innerText = "💥 OPPONENT WON! YOU LOSE!";
+      }
+    }
+  </script>
+</body>
+</html>
