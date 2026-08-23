@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alien Wave Defense</title>
+  <style>
+    body {
+      background-color: #040814;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+    h1 { color: #22c55e; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #a855f7; margin-bottom: 15px; font-weight: bold; }
+    #grid {
+      width: 300px;
+      height: 300px;
+      background: #0f172a;
+      border: 4px solid #22c55e;
+      border-radius: 12px;
+      position: relative;
+      display: flex;
+      overflow: hidden;
+    }
+    .lane {
+      flex: 1;
+      border-right: 1px dashed #334155;
+      position: relative;
+      cursor: pointer;
+    }
+    .lane:last-child { border-right: none; }
+    .alien {
+      position: absolute;
+      font-size: 1.5rem;
+      transform: translateX(-50%);
+      left: 50%;
+    }
+    #defense-line {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      height: 4px;
+      background: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <h1>👽 Alien Wave Defense</h1>
+  <div id="hud">Level: <span id="lvl">1 / 3</span> | Defeated: <span id="score">0</span> / 10</div>
+
+  <div id="grid">
+    <div id="defense-line"></div>
+    <div class="lane" onclick="shoot(0)"></div>
+    <div class="lane" onclick="shoot(1)"></div>
+    <div class="lane" onclick="shoot(2)"></div>
+  </div>
+
+  <script>
+    const lvlText = document.getElementById('lvl');
+    const scoreText = document.getElementById('score');
+    const lanes = document.querySelectorAll('.lane');
+
+    let currentLevel = 1;
+    let score = 0;
+    let gameOver = false;
+    let aliens = [];
+
+    const levelSettings = [
+      { speed: 1.2, spawnInterval: 1200 },
+      { speed: 1.8, spawnInterval: 900 },
+      { speed: 2.4, spawnInterval: 600 }
+    ];
+
+    function spawnAlien() {
+      if (gameOver || score >= 10) return;
+      const laneIdx = Math.floor(Math.random() * 3);
+      const el = document.createElement('div');
+      el.className = 'alien';
+      el.innerText = '👾';
+      el.style.top = '0px';
+      lanes[laneIdx].appendChild(el);
+
+      aliens.push({ el, lane: laneIdx, y: 0 });
+      setTimeout(spawnAlien, levelSettings[currentLevel - 1].spawnInterval);
+    }
+
+    function shoot(laneIdx) {
+      if (gameOver) return;
+      let targetIdx = -1;
+      let maxY = -1;
+
+      aliens.forEach((a, idx) => {
+        if (a.lane === laneIdx && a.y > maxY) {
+          maxY = a.y;
+          targetIdx = idx;
+        }
+      });
+
+      if (targetIdx !== -1) {
+        aliens[targetIdx].el.remove();
+        aliens.splice(targetIdx, 1);
+        score++;
+        scoreText.innerText = score;
+
+        if (score >= 10) {
+          if (currentLevel < 3) {
+            currentLevel++;
+            loadLevel(currentLevel);
+          } else {
+            gameOver = true;
+            document.getElementById('hud').innerText = "🏆 INVASION REPELLED! YOU WIN!";
+          }
+        }
+      }
+    }
+
+    function update() {
+      if (!gameOver) {
+        const speed = levelSettings[currentLevel - 1].speed;
+        for (let i = aliens.length - 1; i >= 0; i--) {
+          const a = aliens[i];
+          a.y += speed;
+          a.el.style.top = a.y + 'px';
+
+          if (a.y >= 260) {
+            gameOver = true;
+            document.getElementById('hud').innerText = "💥 DEFENSE BREACHED! Refresh to retry.";
+            break;
+          }
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    function loadLevel(num) {
+      aliens.forEach(a => a.el.remove());
+      aliens = [];
+      score = 0;
+      lvlText.innerText = `${num} / 3`;
+      scoreText.innerText = score;
+      spawnAlien();
+    }
+
+    loadLevel(1);
+    update();
+  </script>
+</body>
+</html>
