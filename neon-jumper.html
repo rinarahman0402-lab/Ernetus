@@ -72,19 +72,19 @@
 
     let currentLevel = 1;
     let gameOver = false;
-    let py = 250, px = 140, vy = 0, vx = 0;
+    let py = 0, px = 0, vy = 0;
     let onPlatform = false;
     let platforms = [];
 
     const levels = [
-      [{ x: 100, y: 220, w: 100, dx: 1 }, { x: 50, y: 150, w: 80, dx: -1.5 }, { x: 120, y: 80, w: 70, dx: 2 }],
-      [{ x: 30, y: 230, w: 70, dx: 2 }, { x: 180, y: 170, w: 60, dx: -2 }, { x: 40, y: 110, w: 60, dx: 2.5 }],
-      [{ x: 120, y: 240, w: 50, dx: 3 }, { x: 20, y: 180, w: 50, dx: -3 }, { x: 200, y: 120, w: 50, dx: 3.5 }]
+      [{ x: 100, y: 240, w: 100, dx: 1 }, { x: 50, y: 160, w: 80, dx: -1.5 }, { x: 120, y: 90, w: 70, dx: 2 }],
+      [{ x: 30, y: 240, w: 80, dx: 1.5 }, { x: 180, y: 170, w: 70, dx: -2 }, { x: 40, y: 100, w: 60, dx: 2.5 }],
+      [{ x: 120, y: 250, w: 60, dx: 2 }, { x: 20, y: 180, w: 60, dx: -2.5 }, { x: 200, y: 110, w: 50, dx: 3 }]
     ];
 
     function loadLevel(num) {
       gameOver = false;
-      py = 270; px = 140; vy = 0; vx = 0;
+      vy = 0;
       lvlText.innerText = `${num} / 3`;
 
       document.querySelectorAll('.platform').forEach(e => e.remove());
@@ -95,6 +95,12 @@
         world.appendChild(el);
         return { ...p, el };
       });
+
+      // Spawn player safely on top of the first platform
+      const startPlatform = platforms[0];
+      px = startPlatform.x + (startPlatform.w / 2) - 10;
+      py = startPlatform.y - 20;
+      onPlatform = true;
     }
 
     function jump() {
@@ -106,34 +112,34 @@
 
     function update() {
       if (!gameOver) {
-        vy += 0.35;
+        vy += 0.35; // Gravity
         py += vy;
 
         onPlatform = false;
 
-        if (py >= 270 && currentLevel === 1) {
-          py = 270; vy = 0; onPlatform = true;
-        }
-
+        // Platform Collisions
         platforms.forEach(p => {
           p.x += p.dx;
           if (p.x <= 0 || p.x + p.w >= 300) p.dx *= -1;
           p.el.style.left = p.x + 'px';
           p.el.style.top = p.y + 'px';
 
+          // Landing check
           if (vy >= 0 && py + 20 >= p.y && py + 20 <= p.y + 10 && px + 20 > p.x && px < p.x + p.w) {
             py = p.y - 20;
             vy = 0;
-            px += p.dx;
+            px += p.dx; // Move along with platform
             onPlatform = true;
           }
         });
 
+        // Fail condition (Fell off screen)
         if (py > 300) {
           gameOver = true;
-          setTimeout(() => loadLevel(currentLevel), 800);
+          setTimeout(() => loadLevel(currentLevel), 600);
         }
 
+        // Win check (Reached goal platform at top)
         if (py <= 32 && px + 20 > 135 && px < 165) {
           if (currentLevel < 3) {
             currentLevel++;
