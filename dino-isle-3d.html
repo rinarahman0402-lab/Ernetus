@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dino Isle 3D - Island Adventure</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      user-select: none;
+      background-color: #000;
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    #ui {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-shadow: 2px 2px 4px #000;
+      pointer-events: none;
+    }
+    #instructions {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #facc15;
+      font-weight: bold;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 8px;
+      pointer-events: none;
+      text-align: center;
+    }
+    #mobile-controls {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid #fff;
+      color: white;
+      font-weight: bold;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="ui">
+    🦖 Dinos Tamed: <span id="score">0</span> / 3 <br>
+    💎 Core Crystal: <span id="crystal-status">Searching...</span>
+  </div>
+
+  <div id="instructions">Use WASD or On-Screen Buttons to Move</div>
+
+  <div id="mobile-controls">
+    <button class="btn" id="btn-up">▲</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn" id="btn-left">◀</button>
+      <button class="btn" id="btn-down">▼</button>
+      <button class="btn" id="btn-right">▶</button>
+    </div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <script>
+    // --- SCENE SETUP ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x38bdf8);
+    scene.fog = new THREE.FogExp2(0x38bdf8, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // --- LIGHTING ---
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(50, 100, 50);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
+    scene.add(sun);
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+    scene.add(ambientLight);
+
+    // --- WORLD & ISLAND ---
+    const islandGeo = new THREE.CylinderGeometry(60, 70, 10, 32);
+    const islandMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
+    const island = new THREE.Mesh(islandGeo, islandMat);
+    island.position.y = -5;
+    island.receiveShadow = true;
+    scene.add(island);
+
+    // Ocean Floor
+    const oceanGeo = new THREE.PlaneGeometry(300, 300);
+    const oceanMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+    const ocean = new THREE.Mesh(oceanGeo, oceanMat);
+    ocean.rotation.x = -Math.PI / 2;
+    ocean.position.y = -8;
+    scene.add(ocean);
+
+    // Trees
+    function createTree(x, z) {
+      const group = new THREE.Group();
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.5, 3),
+        new THREE.MeshLambertMaterial({ color: 0x78350f })
+      );
+      trunk.position.y = 1.5;
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      const leaves = new THREE.Mesh(
+        new THREE.ConeGeometry(2, 4, 5),
+        new THREE.MeshLambertMaterial({ color: 0x166534 })
+      );
+      leaves.position.y = 4;
+      leaves.castShadow = true;
+      group.add(leaves);
+
+      group.position.set(x, 0, z);
+      scene.add(group);
+    }
+
+    for (let i = 0; i < 25; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 45 + 5;
+      createTree(Math.cos(angle) * dist, Math.sin(angle) * dist);
+    }
+
+    // --- GOAL: CORE CRYSTAL ---
+    const crystalGeo = new THREE.OctahedronGeometry(1.5, 0);
+    const crystalMat = new THREE.MeshPhongMaterial({ color: 0x38bdf8, emissive: 0x0284c7, shininess: 100 });
+    const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+    crystal.position.set(0, 3, 0);
+    scene.add(crystal);
+
+    // --- PLAYER CHARACTER ---
+    const playerGroup = new THREE.Group();
+    const bodyMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1.5, 1),
+      new THREE.MeshLambertMaterial({ color: 0xeab308 })
+    );
+    bodyMesh.position.y = 1.25;
+    bodyMesh.castShadow = true;
+    playerGroup.add(bodyMesh);
+
+    const headMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 8, 8),
+      new THREE.MeshLambertMaterial({ color: 0xfde047 })
+    );
+    headMesh.position.y = 2.3;
+    playerGroup.add(headMesh);
+
+    playerGroup.position.set(0, 0, 40);
+    scene.add(playerGroup);
+
+    // --- DINOSAURS ---
+    const dinos = [];
+    function spawnDino(x, z) {
+      const dinoGroup = new THREE.Group();
+      // Body
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 1.2, 2.5),
+        new THREE.MeshLambertMaterial({ color: 0xd97706 })
+      );
+      body.position.y = 1;
+      body.castShadow = true;
+      dinoGroup.add(body);
+
+      // Neck & Head
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.8, 1.2),
+        new THREE.MeshLambertMaterial({ color: 0xb45309 })
+      );
+      head.position.set(0, 1.8, -1.2);
+      dinoGroup.add(head);
+
+      dinoGroup.position.set(x, 0, z);
+      scene.add(dinoGroup);
+
+      dinos.push({
+        group: dinoGroup,
+        dirX: (Math.random() - 0.5) * 0.1,
+        dirZ: (Math.random() - 0.5) * 0.1,
+        tamed: false
+      });
+    }
+
+    spawnDino(-20, -10);
+    spawnDino(20, -20);
+    spawnDino(-15, 20);
+
+    // --- CONTROLS LOGIC ---
+    const keys = { w: false, a: false, s: false, d: false };
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+    });
+
+    // Touch controls setup
+    const bindBtn = (id, key) => {
+      const el = document.getElementById(id);
+      el.addEventListener('pointerdown', () => keys[key] = true);
+      el.addEventListener('pointerup', () => keys[key] = false);
+    };
+    bindBtn('btn-up', 'w');
+    bindBtn('btn-down', 's');
+    bindBtn('btn-left', 'a');
+    bindBtn('btn-right', 'd');
+
+    // --- GAME STATE ---
+    let score = 0;
+    let gameWon = false;
+
+    // --- GAME LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (!gameWon) {
+        // Player Movement
+        const speed = 0.35;
+        let moveX = 0, moveZ = 0;
+
+        if (keys.w) moveZ -= speed;
+        if (keys.s) moveZ += speed;
+        if (keys.a) moveX -= speed;
+        if (keys.d) moveX += speed;
+
+        if (moveX !== 0 || moveZ !== 0) {
+          playerGroup.position.x += moveX;
+          playerGroup.position.z += moveZ;
+          playerGroup.rotation.y = Math.atan2(moveX, moveZ);
+        }
+
+        // Clamp player inside island radius
+        const distFromCenter = Math.hypot(playerGroup.position.x, playerGroup.position.z);
+        if (distFromCenter > 55) {
+          playerGroup.position.x *= 55 / distFromCenter;
+          playerGroup.position.z *= 55 / distFromCenter;
+        }
+
+        // Camera Follows Player
+        camera.position.x = playerGroup.position.x;
+        camera.position.y = playerGroup.position.y + 12;
+        camera.position.z = playerGroup.position.z + 18;
+        camera.lookAt(playerGroup.position);
+
+        // Rotate Core Crystal
+        crystal.rotation.y += 0.02;
+
+        // Move Dinosaurs & Interaction Check
+        dinos.forEach(dino => {
+          if (!dino.tamed) {
+            dino.group.position.x += dino.dirX;
+            dino.group.position.z += dino.dirZ;
+
+            if (Math.abs(dino.group.position.x) > 40) dino.dirX *= -1;
+            if (Math.abs(dino.group.position.z) > 40) dino.dirZ *= -1;
+
+            // Tame Dino Check
+            const dist = playerGroup.position.distanceTo(dino.group.position);
+            if (dist < 3) {
+              dino.tamed = true;
+              dino.group.children[0].material.color.setHex(0x22c55e); // Turn green
+              score++;
+              document.getElementById('score').innerText = score;
+            }
+          }
+        });
+
+        // Crystal Win Check
+        const crystalDist = playerGroup.position.distanceTo(crystal.position);
+        if (crystalDist < 3.5) {
+          if (score >= 3) {
+            gameWon = true;
+            document.getElementById('crystal-status').innerText = "CLAIMED!";
+            document.getElementById('instructions').innerText = "🏆 YOU BEAT DINO ISLE 3D!";
+          } else {
+            document.getElementById('crystal-status').innerText = "Need 3 Dinos First!";
+          }
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Handle Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+  </html>
+  
