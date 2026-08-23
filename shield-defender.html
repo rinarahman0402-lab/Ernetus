@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shield Defender</title>
+  <title>Shield Defender 3D</title>
   <style>
     body {
       background-color: #0b0f19;
@@ -21,181 +21,197 @@
     h1 { color: #38bdf8; margin-bottom: 5px; }
     #hud { font-size: 1.2rem; color: #facc15; margin-bottom: 15px; font-weight: bold; }
 
-    #arena {
-      width: 300px;
-      height: 300px;
-      background: #1e293b;
+    #canvas-container {
+      width: 320px;
+      height: 320px;
       border: 4px solid #38bdf8;
-      border-radius: 50%;
-      position: relative;
+      border-radius: 12px;
       overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .btn {
+      background: #38bdf8;
+      color: #0b0f19;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    #core {
-      width: 30px;
-      height: 30px;
-      background: #facc15;
-      border-radius: 50%;
-      position: absolute;
-      top: 135px;
-      left: 135px;
-      box-shadow: 0 0 15px #facc15;
-    }
-
-    #shield {
-      width: 80px;
-      height: 12px;
-      background: #38bdf8;
-      border-radius: 6px;
-      position: absolute;
-      top: 144px;
-      left: 110px;
-      transform-origin: 40px -40px;
-      box-shadow: 0 0 10px #38bdf8;
-    }
-
-    .missile {
-      width: 12px;
-      height: 12px;
-      background: #ef4444;
-      border-radius: 50%;
-      position: absolute;
-      box-shadow: 0 0 8px #ef4444;
-    }
+    .btn:active { background: #7dd3fc; }
   </style>
+
+  <!-- Load 3D Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <h1>🛡️ Shield Defender</h1>
+  <h1>🛡️ Shield Defender 3D</h1>
   <div id="hud">Level: <span id="lvl">1 / 3</span> | Blocked: <span id="score">0</span> / 10</div>
 
-  <div id="arena">
-    <div id="core"></div>
-    <div id="shield"></div>
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn" id="btn-left">⬅️ Rotate Left</button>
+    <button class="btn" id="btn-right">Rotate Right ➡️</button>
   </div>
 
   <script>
-    const arena = document.getElementById('arena');
-    const shield = document.getElementById('shield');
+    const container = document.getElementById('canvas-container');
     const lvlText = document.getElementById('lvl');
     const scoreText = document.getElementById('score');
 
     let currentLevel = 1;
     let blockedCount = 0;
-    let shieldAngle = 0;
+    let shieldAngle = 0; // in radians
     let gameOver = false;
-    let activeMissiles = [];
-    let gameLoop = null;
+    let missiles = [];
 
     const levelSettings = [
-      { speed: 2, spawnRate: 1500 }, // Level 1
-      { speed: 3, spawnRate: 1100 }, // Level 2
-      { speed: 4, spawnRate: 800 }   // Level 3
+      { speed: 0.08, spawnRate: 1500 },
+      { speed: 0.12, spawnRate: 1100 },
+      { speed: 0.16, spawnRate: 800 }
     ];
 
-    // Rotate Shield on Tap/Click
-    arena.addEventListener('pointerdown', (e) => {
+    // --- 3D SCENE SETUP ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.set(0, 0, 15);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(320, 320);
+    container.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xfacc15, 2, 20);
+    scene.add(pointLight);
+
+    // 3D Power Core (Yellow Sphere)
+    const coreGeo = new THREE.SphereGeometry(1, 32, 32);
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xfacc15, emissiveIntensity: 0.5 });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(core);
+
+    // 3D Shield (Blue Arc Ring)
+    const shieldPivot = new THREE.Group();
+    scene.add(shieldPivot);
+
+    const shieldGeo = new THREE.RingGeometry(3, 3.5, 32, 1, 0, Math.PI / 2); // 90 degree arc
+    const shieldMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
+    const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    shieldMesh.rotation.x = Math.PI / 2; // Flat circle
+    shieldMesh.position.y = 0;
+    shieldPivot.add(shieldMesh);
+
+    // Rotate Shield Controls
+    function rotateShield(delta) {
       if (gameOver) return;
-      const rect = arena.getBoundingClientRect();
-      const cx = rect.left + 150;
-      const cy = rect.top + 150;
-      shieldAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI) + 90;
-      shield.style.transform = `rotate(${shieldAngle}deg) translateY(-50px)`;
-    });
+      shieldAngle += delta;
+      shieldPivot.rotation.z = shieldAngle;
+    }
 
     function spawnMissile() {
       if (gameOver) return;
 
       const angle = Math.random() * Math.PI * 2;
-      const startX = 150 + Math.cos(angle) * 140;
-      const startY = 150 + Math.sin(angle) * 140;
+      const radius = 10;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
 
-      const el = document.createElement('div');
-      el.className = 'missile';
-      el.style.left = (startX - 6) + 'px';
-      el.style.top = (startY - 6) + 'px';
-      arena.appendChild(el);
+      const mGeo = new THREE.SphereGeometry(0.3, 16, 16);
+      const mMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444 });
+      const mesh = new THREE.Mesh(mGeo, mMat);
+      mesh.position.set(x, y, 0);
+      scene.add(mesh);
 
-      activeMissiles.push({
-        el,
-        x: startX,
-        y: startY,
-        angle
-      });
+      missiles.push({ mesh, angle, dist: radius });
 
-      const delay = levelSettings[currentLevel - 1].spawnRate;
       if (blockedCount < 10 && !gameOver) {
-        setTimeout(spawnMissile, delay);
+        setTimeout(spawnMissile, levelSettings[currentLevel - 1].spawnRate);
       }
     }
 
-    function updateGame() {
-      if (gameOver) return;
+    function animate() {
+      if (!gameOver) requestAnimationFrame(animate);
 
       const speed = levelSettings[currentLevel - 1].speed;
 
-      for (let i = activeMissiles.length - 1; i >= 0; i--) {
-        const m = activeMissiles[i];
-        m.x -= Math.cos(m.angle) * speed;
-        m.y -= Math.sin(m.angle) * speed;
+      for (let i = missiles.length - 1; i >= 0; i--) {
+        const m = missiles[i];
+        m.dist -= speed;
+        m.mesh.position.x = Math.cos(m.angle) * m.dist;
+        m.mesh.position.y = Math.sin(m.angle) * m.dist;
 
-        m.el.style.left = (m.x - 6) + 'px';
-        m.el.style.top = (m.y - 6) + 'px';
+        // Shield Collision Check (Radius ~3.2)
+        if (m.dist <= 3.4 && m.dist >= 2.8) {
+          let shieldNorm = (shieldPivot.rotation.z % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+          let missileNorm = (m.angle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
-        const distToCenter = Math.hypot(m.x - 150, m.y - 150);
+          let diff = Math.abs(shieldNorm - missileNorm);
+          if (diff > Math.PI) diff = Math.PI * 2 - diff;
 
-        // Shield Collision Check (~50px radius)
-        if (distToCenter <= 55 && distToCenter >= 40) {
-          const missileAngleDeg = (Math.atan2(m.y - 150, m.x - 150) * (180 / Math.PI) + 450) % 360;
-          const currentShieldDeg = (shieldAngle % 360 + 360) % 360;
-          const diff = Math.abs(missileAngleDeg - currentShieldDeg);
-
-          if (diff < 35 || diff > 325) {
-            // Blocked!
-            m.el.remove();
-            activeMissiles.splice(i, 1);
+          // Arc length covers ~ 1.2 radians
+          if (diff < 0.8) {
+            scene.remove(m.mesh);
+            missiles.splice(i, 1);
             blockedCount++;
             scoreText.innerText = blockedCount;
 
             if (blockedCount >= 10) {
               if (currentLevel < 3) {
                 currentLevel++;
-                startLevel();
+                resetLevel();
               } else {
                 gameOver = true;
-                document.getElementById('hud').innerText = "🏆 CORE PROTECTED! YOU BEAT GAME 31!";
+                document.getElementById('hud').innerText = "🏆 3D CORE DEFENDED! YOU WIN!";
               }
             }
             continue;
           }
         }
 
-        // Core Collision Check (~15px radius)
-        if (distToCenter <= 18) {
+        // Core Collision Check (Radius ~1)
+        if (m.dist <= 1) {
           gameOver = true;
           document.getElementById('hud').innerText = "💥 CORE DESTROYED! Refresh to retry.";
-          m.el.remove();
           break;
         }
       }
 
-      if (!gameOver) requestAnimationFrame(updateGame);
+      renderer.render(scene, camera);
     }
 
-    function startLevel() {
+    function resetLevel() {
+      missiles.forEach(m => scene.remove(m.mesh));
+      missiles = [];
       blockedCount = 0;
-      activeMissiles.forEach(m => m.el.remove());
-      activeMissiles = [];
       lvlText.innerText = `${currentLevel} / 3`;
       scoreText.innerText = blockedCount;
-      shield.style.transform = `rotate(0deg) translateY(-50px)`;
-      shieldAngle = 0;
       spawnMissile();
     }
 
-    startLevel();
-    requestAnimationFrame(updateGame);
+    document.getElementById('btn-left').onclick = () => rotateShield(0.3);
+    document.getElementById('btn-right').onclick = () => rotateShield(-0.3);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') rotateShield(0.3);
+      if (e.key === 'ArrowRight') rotateShield(-0.3);
+    });
+
+    resetLevel();
+    animate();
   </script>
 </body>
 </html>
