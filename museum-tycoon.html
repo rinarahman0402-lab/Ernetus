@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Museum Tycoon: Bone Rush</title>
+  <style>
+    body {
+      background-color: #1c1917;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+    h1 { color: #f59e0b; margin-bottom: 5px; margin-top: 10px; }
+    #hud { font-size: 1rem; color: #fef08a; margin-bottom: 10px; font-weight: bold; }
+    
+    #game-box {
+      width: 320px;
+      height: 340px;
+      background: #292524;
+      border: 4px solid #f59e0b;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-bar {
+      display: flex;
+      background: #1c1917;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: #44403c;
+      color: #fff;
+      border: none;
+      padding: 8px 0;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .tab-btn.active { background: #f59e0b; color: #1c1917; }
+
+    .view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      box-sizing: border-box;
+      gap: 10px;
+      text-align: center;
+    }
+
+    /* Dig Site */
+    #dig-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      width: 220px;
+      height: 220px;
+    }
+
+    .dirt-tile {
+      background: #78350f;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .dirt-tile.dug { background: #451a03; }
+
+    /* Museum View */
+    .pricing-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .btn-sm {
+      background: #f59e0b;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .exhibit-slot {
+      background: #44403c;
+      border: 2px dashed #a8a29e;
+      border-radius: 8px;
+      width: 80%;
+      padding: 10px;
+      margin-top: 5px;
+    }
+
+    /* Event Banner */
+    #event-alert {
+      background: #dc2626;
+      color: white;
+      padding: 8px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      display: none;
+      animation: pulse 1s infinite alternate;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🦴 Museum Tycoon</h1>
+  <div id="hud">💵 Money: $<span id="cash">100</span> | 🧍 Visitors: <span id="visitors">0</span>/s</div>
+
+  <div id="game-box">
+    <div class="tab-bar">
+      <button class="tab-btn active" id="btn-dig" onclick="switchTab('dig')">⛏️ Dig Site</button>
+      <button class="tab-btn" id="btn-museum" onclick="switchTab('museum')">🏛️ Museum</button>
+    </div>
+
+    <!-- DIG SITE -->
+    <div id="view-dig" class="view" style="display: flex;">
+      <div style="font-size: 0.85rem; color: #d6d3d1;">Tap dirt to unearth rare fossils!</div>
+      <div id="dig-grid"></div>
+      <button class="btn-sm" onclick="resetDigSite()">Clear Site ($20)</button>
+    </div>
+
+    <!-- MUSEUM HALL -->
+    <div id="view-museum" class="view">
+      <div class="pricing-control">
+        <span>Ticket Price: $<span id="ticket-price">10</span></span>
+        <button class="btn-sm" onclick="changePrice(-2)">-</button>
+        <button class="btn-sm" onclick="changePrice(2)">+</button>
+      </div>
+
+      <div class="exhibit-slot">
+        <div id="exhibit-icon" style="font-size: 2.5rem;">🏺</div>
+        <div id="exhibit-name" style="font-weight: bold; margin-top: 4px;">Basic Clay Artifacts</div>
+        <div id="exhibit-status" style="font-size:0.75rem; color:#a8a29e;">Attracts visitors</div>
+      </div>
+
+      <div id="event-alert">
+        🚨 A kid broke the T-Rex Skull! 
+        <br><button class="btn-sm" style="margin-top: 5px;" onclick="fixExhibit()">Fix It ($50)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cash = 100;
+    let ticketPrice = 10;
+    let visitors = 0;
+    let exhibitLevel = 0;
+    let isBroken = false;
+
+    const exhibits = [
+      { name: "Basic Clay Artifacts", icon: "🏺", bonus: 1 },
+      { name: "Trilobite Fossil", icon: "🪨", bonus: 3 },
+      { name: "Raptor Claw", icon: "🦅", bonus: 6 },
+      { name: "Torbosaurus Rib", icon: "🦴", bonus: 10 },
+      { name: "T-Rex Skull", icon: "🦖", bonus: 20 }
+    ];
+
+    const gridEl = document.getElementById('dig-grid');
+    const cashText = document.getElementById('cash');
+    const visitorsText = document.getElementById('visitors');
+    const priceText = document.getElementById('ticket-price');
+    const alertEl = document.getElementById('event-alert');
+
+    function switchTab(tab) {
+      document.getElementById('btn-dig').className = `tab-btn ${tab === 'dig' ? 'active' : ''}`;
+      document.getElementById('btn-museum').className = `tab-btn ${tab === 'museum' ? 'active' : ''}`;
+      document.getElementById('view-dig').style.display = tab === 'dig' ? 'flex' : 'none';
+      document.getElementById('view-museum').style.display = tab === 'museum' ? 'flex' : 'none';
+    }
+
+    function generateGrid() {
+      gridEl.innerHTML = '';
+      for (let i = 0; i < 16; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'dirt-tile';
+        // Random chance to contain bone
+        tile.dataset.hasBone = Math.random() < 0.25 ? "true" : "false";
+        tile.onclick = () => digTile(tile);
+        gridEl.appendChild(tile);
+      }
+    }
+
+    function digTile(tile) {
+      if (tile.classList.contains('dug')) return;
+      tile.classList.add('dug');
+
+      if (tile.dataset.hasBone === "true") {
+        tile.innerText = '🦴';
+        if (exhibitLevel < exhibits.length - 1) {
+          exhibitLevel++;
+          updateExhibitUI();
+        } else {
+          cash += 50; // Bonus cash if max exhibit
+        }
+      } else {
+        tile.innerText = '🪨';
+      }
+      updateUI();
+    }
+
+    function resetDigSite() {
+      if (cash >= 20) {
+        cash -= 20;
+        generateGrid();
+        updateUI();
+      }
+    }
+
+    function changePrice(val) {
+      ticketPrice = Math.max(2, ticketPrice + val);
+      priceText.innerText = ticketPrice;
+      calculateVisitors();
+    }
+
+    function updateExhibitUI() {
+      const current = exhibits[exhibitLevel];
+      document.getElementById('exhibit-icon').innerText = current.icon;
+      document.getElementById('exhibit-name').innerText = current.name;
+      calculateVisitors();
+    }
+
+    function calculateVisitors() {
+      if (isBroken) {
+        visitors = 0;
+      } else {
+        const attraction = exhibits[exhibitLevel].bonus;
+        // Optimal price formula: visitors drop if price is too high for current exhibit
+        const pricePenalty = Math.max(0, ticketPrice - (attraction * 3));
+        visitors = Math.max(0, Math.floor((attraction * 2) - pricePenalty));
+      }
+      visitorsText.innerText = visitors;
+    }
+
+    function fixExhibit() {
+      if (cash >= 50 && isBroken) {
+        cash -= 50;
+        isBroken = false;
+        alertEl.style.display = 'none';
+        calculateVisitors();
+        updateUI();
+      }
+    }
+
+    // Trigger random event (Kid breaks exhibit)
+    setInterval(() => {
+      if (!isBroken && exhibitLevel >= 3 && Math.random() < 0.3) {
+        isBroken = true;
+        alertEl.style.display = 'block';
+        calculateVisitors();
+      }
+    }, 10000);
+
+    // Passive museum revenue
+    setInterval(() => {
+      if (!isBroken && visitors > 0) {
+        cash += visitors * ticketPrice;
+        updateUI();
+      }
+    }, 2000);
+
+    function updateUI() {
+      cashText.innerText = cash;
+    }
+
+    generateGrid();
+    updateExhibitUI();
+    updateUI();
+  </script>
+</body>
+</html>
