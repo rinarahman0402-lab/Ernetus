@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jurassic Handler</title>
+  <style>
+    body {
+      background-color: #06120e;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #22c55e; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #facc15; margin-bottom: 10px; font-weight: bold; }
+
+    #park {
+      width: 320px;
+      height: 320px;
+      background: #0f291e;
+      border: 4px solid #22c55e;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tab-btn {
+      background: #15803d;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active { background: #22c55e; color: #06120e; }
+
+    /* Hatchery View */
+    .view-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    .egg-btn {
+      background: #eab308;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #000;
+    }
+
+    .dino-display { font-size: 2.5rem; }
+
+    .dino-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 1.5rem;
+      max-height: 100px;
+      overflow-y: auto;
+      justify-content: center;
+    }
+
+    /* Capture Arena View */
+    #arena {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #051b11;
+      display: none;
+      cursor: pointer;
+    }
+
+    #target-dino {
+      position: absolute;
+      font-size: 2rem;
+      transform: translate(-50%, -50%);
+    }
+
+    #capture-net {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border: 2px dashed #facc15;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🦖 Jurassic Handler</h1>
+  <div id="hud">🪙 Coins: <span id="coins">50</span> | Captured: <span id="caught-count">0</span></div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="btn-hatchery" onclick="switchTab('hatchery')">🥚 Hatchery</button>
+    <button class="tab-btn" id="btn-capture" onclick="switchTab('capture')">🤠 Catch Runaways</button>
+  </div>
+
+  <div id="park">
+    <!-- HATCHERY VIEW -->
+    <div id="view-hatchery" class="view-container">
+      <div class="dino-display" id="hatched-icon">🥚</div>
+      <button class="egg-btn" id="hatch-btn" onclick="hatchEgg()">Hatch Egg (Cost: 30 Coins)</button>
+      <div style="font-size:0.9rem; color:#a7f3d0;">Park Dinosaurs:</div>
+      <div class="dino-list" id="team-list">🦎</div>
+    </div>
+
+    <!-- CAPTURE ARENA VIEW -->
+    <div id="arena">
+      <div id="target-dino">🦖</div>
+      <div id="capture-net"></div>
+    </div>
+  </div>
+
+  <script>
+    const coinsText = document.getElementById('coins');
+    const caughtText = document.getElementById('caught-count');
+    const hatchBtn = document.getElementById('hatch-btn');
+    const viewHatchery = document.getElementById('view-hatchery');
+    const viewArena = document.getElementById('arena');
+    const targetDino = document.getElementById('target-dino');
+    const net = document.getElementById('capture-net');
+    const teamList = document.getElementById('team-list');
+
+    let coins = 50;
+    let caughtTotal = 0;
+    let eggCost = 30;
+    let currentTab = 'hatchery';
+
+    // Rarity tiers
+    const dinoData = [
+      { icon: '🦎', name: 'Compsognathus', reward: 15, speed: 1.5 },
+      { icon: '🐊', name: 'Raptor', reward: 30, speed: 2.2 },
+      { icon: '🦕', name: 'Brachiosaurus', reward: 50, speed: 3.0 },
+      { icon: '🦖', name: 'T-Rex', reward: 100, speed: 4.0 },
+      { icon: '🐉', name: 'Spinosaurus', reward: 200, speed: 5.0 }
+    ];
+
+    let myDinos = [dinoData[0]];
+    let currentWildDino = dinoData[0];
+
+    // Wild movements
+    let wildX = 160, wildY = 160;
+    let targetX = 160, targetY = 160;
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('btn-hatchery').className = `tab-btn ${tab === 'hatchery' ? 'active' : ''}`;
+      document.getElementById('btn-capture').className = `tab-btn ${tab === 'capture' ? 'active' : ''}`;
+
+      if (tab === 'hatchery') {
+        viewHatchery.style.display = 'flex';
+        viewArena.style.display = 'none';
+      } else {
+        viewHatchery.style.display = 'none';
+        viewArena.style.display = 'block';
+        spawnRunawayDino();
+      }
+    }
+
+    function hatchEgg() {
+      if (coins < eggCost) return;
+      coins -= eggCost;
+
+      // Higher max tier available as your team grows
+      const maxTier = Math.min(myDinos.length, dinoData.length - 1);
+      const chosenIdx = Math.floor(Math.random() * (maxTier + 1));
+      const newDino = dinoData[chosenIdx];
+
+      myDinos.push(newDino);
+      eggCost += 15; // Incremental cost
+
+      document.getElementById('hatched-icon').innerText = newDino.icon;
+      hatchBtn.innerText = `Hatch Egg (Cost: ${eggCost} Coins)`;
+      updateUI();
+    }
+
+    function spawnRunawayDino() {
+      // Pick wild dino based on highest dino unlocked in park
+      const maxTier = Math.min(myDinos.length - 1, dinoData.length - 1);
+      const wildIdx = Math.floor(Math.random() * (maxTier + 1));
+      currentWildDino = dinoData[wildIdx];
+
+      targetDino.innerText = currentWildDino.icon;
+      wildX = Math.random() * 240 + 40;
+      wildY = Math.random() * 240 + 40;
+      pickNewTarget();
+    }
+
+    function pickNewTarget() {
+      targetX = Math.random() * 240 + 40;
+      targetY = Math.random() * 240 + 40;
+    }
+
+    viewArena.addEventListener('pointerdown', (e) => {
+      if (currentTab !== 'capture') return;
+
+      const rect = viewArena.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      net.style.left = clickX + 'px';
+      net.style.top = clickY + 'px';
+      net.style.display = 'block';
+
+      // Capture hit box check
+      const dist = Math.hypot(clickX - wildX, clickY - wildY);
+      if (dist < 38) {
+        coins += currentWildDino.reward;
+        caughtTotal++;
+        updateUI();
+        spawnRunawayDino();
+      }
+
+      setTimeout(() => net.style.display = 'none', 250);
+    });
+
+    function updateUI() {
+      coinsText.innerText = coins;
+      caughtText.innerText = caughtTotal;
+      teamList.innerText = myDinos.map(d => d.icon).join(' ');
+    }
+
+    // Passive coin generation from park dinosaurs
+    setInterval(() => {
+      coins += myDinos.length;
+      updateUI();
+    }, 3000);
+
+    function gameLoop() {
+      if (currentTab === 'capture') {
+        const dx = targetX - wildX;
+        const dy = targetY - wildY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 10) {
+          pickNewTarget();
+        } else {
+          wildX += (dx / dist) * currentWildDino.speed;
+          wildY += (dy / dist) * currentWildDino.speed;
+        }
+
+        targetDino.style.left = wildX + 'px';
+        targetDino.style.top = wildY + 'px';
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    updateUI();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
