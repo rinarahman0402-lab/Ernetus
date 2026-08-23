@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zombie Horde Swarm 3D</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      user-select: none;
+      background-color: #050505;
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    #ui {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      color: #22c55e;
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-shadow: 2px 2px 4px #000;
+      pointer-events: none;
+    }
+    #instructions {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #facc15;
+      font-weight: bold;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 8px;
+      pointer-events: none;
+      text-align: center;
+    }
+    #controls-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      background: rgba(21, 128, 61, 0.8);
+      border: 2px solid #22c55e;
+      color: white;
+      font-weight: bold;
+      padding: 12px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-troll {
+      background: rgba(202, 138, 4, 0.85);
+      border-color: #facc15;
+      color: #000;
+    }
+  </style>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="ui">
+    🧟‍♂️ Zombie Horde Swarm 3D <br>
+    ⏱️ Survived: <span id="time">0</span>s | 💥 Defeated: <span id="kills">0</span>
+  </div>
+
+  <div id="instructions">Use WASD or On-Screen Controls to Move</div>
+
+  <div id="controls-bar">
+    <button class="btn" id="btn-up">▲</button>
+    <button class="btn" id="btn-down">▼</button>
+    <button class="btn" id="btn-left">◀</button>
+    <button class="btn" id="btn-right">▶</button>
+    <button class="btn btn-troll" id="btn-smash">🧌 TROLL SMASH (<span id="cd">0</span>s)</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <script>
+    // --- TEXTURE CANVAS GENERATOR FOR EMOJI FACES ---
+    function createEmojiTexture(emojiString, bgColor = '#15803d') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, 128, 128);
+
+      ctx.font = '80px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emojiString, 64, 64);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // --- SCENE SETUP ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+    scene.fog = new THREE.FogExp2(0x020617, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // --- LIGHTING ---
+    const dirLight = new THREE.DirectionalLight(0x22c55e, 0.8);
+    dirLight.position.set(20, 40, 20);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    const ambientLight = new THREE.AmbientLight(0x1e293b, 1.2);
+    scene.add(ambientLight);
+
+    // --- GROUND ---
+    const groundGeo = new THREE.PlaneGeometry(80, 80);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Boundaries Grid Lines
+    const grid = new THREE.GridHelper(80, 20, 0x22c55e, 0x1e293b);
+    grid.position.y = 0.01;
+    scene.add(grid);
+
+    // --- PLAYER (🫈) ---
+    const playerGroup = new THREE.Group();
+    const playerTex = createEmojiTexture('🫈', '#0284c7');
+    const playerMat = new THREE.MeshLambertMaterial({ map: playerTex });
+    const playerGeo = new THREE.BoxGeometry(1.5, 2, 1.5);
+    const playerMesh = new THREE.Mesh(playerGeo, playerMat);
+    playerMesh.position.y = 1;
+    playerMesh.castShadow = true;
+    playerGroup.add(playerMesh);
+
+    playerGroup.position.set(0, 0, 0);
+    scene.add(playerGroup);
+
+    // --- TROLL (🧌) ---
+    const trollTex = createEmojiTexture('🧌', '#854d0e');
+    const trollMat = new THREE.MeshLambertMaterial({ map: trollTex });
+    const trollGeo = new THREE.BoxGeometry(4, 6, 4);
+    const trollMesh = new THREE.Mesh(trollGeo, trollMat);
+    trollMesh.position.set(0, -20, 0); // Hide beneath ground initially
+    scene.add(trollMesh);
+
+    // --- ZOMBIES (🧟‍♂️, 🧟‍♀️, 🧟) ---
+    const zombieEmojiList = ['🧟‍♂️', '🧟‍♀️', '🧟'];
+    const zombieTextures = zombieEmojiList.map(e => createEmojiTexture(e, '#15803d'));
+    const zombies = [];
+
+    function spawnZombie() {
+      if (gameOver || zombies.length >= 20) return;
+
+      const randomTex = zombieTextures[Math.floor(Math.random() * zombieTextures.length)];
+      const zMat = new THREE.MeshLambertMaterial({ map: randomTex });
+      const zGeo = new THREE.BoxGeometry(1.4, 2, 1.4);
+      const zMesh = new THREE.Mesh(zGeo, zMat);
+
+      // Spawn on outer perimeter
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 35;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+
+      zMesh.position.set(x, 1, z);
+      zMesh.castShadow = true;
+      scene.add(zMesh);
+
+      zombies.push({
+        mesh: zMesh,
+        speed: 0.08 + Math.random() * 0.05
+      });
+    }
+
+    // --- CONTROLS LOGIC ---
+    const keys = { w: false, a: false, s: false, d: false };
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+    });
+
+    const bindTouch = (id, key) => {
+      const el = document.getElementById(id);
+      el.addEventListener('pointerdown', () => keys[key] = true);
+      el.addEventListener('pointerup', () => keys[key] = false);
+    };
+    bindTouch('btn-up', 'w');
+    bindTouch('btn-down', 's');
+    bindTouch('btn-left', 'a');
+    bindTouch('btn-right', 'd');
+
+    document.getElementById('btn-smash').addEventListener('click', summonTrollSmash);
+
+    // --- GAME STATE ---
+    let survivedTime = 0;
+    let kills = 0;
+    let trollCooldown = 0;
+    let gameOver = false;
+    let trollActive = false;
+
+    function summonTrollSmash() {
+      if (gameOver || trollCooldown > 0 || trollActive) return;
+
+      trollCooldown = 8;
+      trollActive = true;
+      document.getElementById('cd').innerText = trollCooldown;
+
+      // Drop Troll onto Player's current spot
+      const targetX = playerGroup.position.x;
+      const targetZ = playerGroup.position.z;
+
+      trollMesh.position.set(targetX, 25, targetZ);
+
+      // Animate Troll Slam down
+      let dropInterval = setInterval(() => {
+        trollMesh.position.y -= 2;
+        if (trollMesh.position.y <= 3) {
+          trollMesh.position.y = 3;
+          clearInterval(dropInterval);
+
+          // Clear nearby zombies
+          for (let i = zombies.length - 1; i >= 0; i--) {
+            const z = zombies[i];
+            const dist = trollMesh.position.distanceTo(z.mesh.position);
+            if (dist < 12) {
+              scene.remove(z.mesh);
+              zombies.splice(i, 1);
+              kills++;
+            }
+          }
+          document.getElementById('kills').innerText = kills;
+
+          // Lift Troll back up after smash
+          setTimeout(() => {
+            trollMesh.position.y = -20;
+            trollActive = false;
+          }, 800);
+        }
+      }, 20);
+    }
+
+    // Timers
+    setInterval(() => {
+      if (gameOver) return;
+      survivedTime++;
+      document.getElementById('time').innerText = survivedTime;
+
+      if (trollCooldown > 0) {
+        trollCooldown--;
+        document.getElementById('cd').innerText = trollCooldown;
+      }
+    }, 1000);
+
+    setInterval(spawnZombie, 1000);
+
+    // --- MAIN GAME LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (!gameOver) {
+        // Player Movement
+        const speed = 0.25;
+        let moveX = 0, moveZ = 0;
+
+        if (keys.w) moveZ -= speed;
+        if (keys.s) moveZ += speed;
+        if (keys.a) moveX -= speed;
+        if (keys.d) moveX += speed;
+
+        if (moveX !== 0 || moveZ !== 0) {
+          playerGroup.position.x += moveX;
+          playerGroup.position.z += moveZ;
+          playerGroup.rotation.y = Math.atan2(moveX, moveZ);
+        }
+
+        // Keep inside arena boundary
+        playerGroup.position.x = Math.max(-38, Math.min(38, playerGroup.position.x));
+        playerGroup.position.z = Math.max(-38, Math.min(38, playerGroup.position.z));
+
+        // Camera Follows Player
+        camera.position.x = playerGroup.position.x;
+        camera.position.y = playerGroup.position.y + 14;
+        camera.position.z = playerGroup.position.z + 16;
+        camera.lookAt(playerGroup.position);
+
+        // Move Zombies Toward Player
+        zombies.forEach(z => {
+          z.mesh.lookAt(playerGroup.position);
+          z.mesh.translateZ(z.speed);
+
+          // Collision Check
+          const dist = playerGroup.position.distanceTo(z.mesh.position);
+          if (dist < 1.6) {
+            gameOver = true;
+            document.getElementById('instructions').innerText = `💥 OVERRUN! You survived ${survivedTime}s & killed ${kills} zombies!`;
+          }
+        });
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+  </html>
+  
