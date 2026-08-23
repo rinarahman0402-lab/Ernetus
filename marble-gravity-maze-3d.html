@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Marble Gravity Maze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>3D Marble Maze</title>
   <style>
     body {
       margin: 0;
@@ -11,6 +11,7 @@
       font-family: Arial, sans-serif;
       background: #020617;
       user-select: none;
+      touch-action: manipulation;
     }
     #ui {
       position: absolute;
@@ -21,10 +22,11 @@
       font-size: 1.2rem;
       text-shadow: 0 0 10px #0284c7;
       pointer-events: none;
+      z-index: 10;
     }
     #instructions {
       position: absolute;
-      bottom: 30px;
+      bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
       color: #facc15;
@@ -32,186 +34,192 @@
       background: rgba(15, 23, 42, 0.85);
       padding: 12px 24px;
       border-radius: 8px;
-      pointer-events: none;
       text-align: center;
       border: 2px solid #38bdf8;
       box-shadow: 0 0 15px #0284c7;
+      z-index: 10;
+      cursor: pointer;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <div id="ui">🔮 LEVEL: <span id="level">1</span> | ⏱️ TIME: <span id="time">0</span>s</div>
-  <div id="instructions">WASD or ARROW KEYS to tilt the maze plane & roll the marble!</div>
+  <div id="ui">🔮 MARBLE MAZE | TIME: <span id="time">0</span>s</div>
+  <div id="instructions" id="msg">SWIPE / DRAG ON SCREEN TO TILT BOARD</div>
 
   <script>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x020617);
-    scene.fog = new THREE.FogExp2(0x020617, 0.02);
 
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 18, 14);
+    camera.position.set(0, 16, 12);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Lighting
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(10, 25, 10);
-    scene.add(dirLight);
-    scene.add(new THREE.AmbientLight(0x334155, 1.2));
+    // Lights
+    const light = new THREE.DirectionalLight(0xffffff, 1.2);
+    light.position.set(5, 20, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x38bdf8, 0.6));
 
-    // Maze Platform Parent Group (Tilts with player input)
-    const mazeGroup = new THREE.Group();
-    scene.add(mazeGroup);
+    // Board Group (Tilts with Input)
+    const boardGroup = new THREE.Group();
+    scene.add(boardGroup);
 
-    // Base Board Floor
-    const boardGeo = new THREE.BoxGeometry(16, 0.6, 16);
-    const boardMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
-    const board = new THREE.Mesh(boardGeo, boardMat);
-    board.position.y = -0.3;
-    mazeGroup.add(board);
+    // Maze Base
+    const board = new THREE.Mesh(
+      new THREE.BoxGeometry(12, 0.4, 12),
+      new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.2 })
+    );
+    board.position.y = -0.2;
+    boardGroup.add(board);
 
-    // Marble
-    const marbleGeo = new THREE.SphereGeometry(0.5, 32, 32);
-    const marbleMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8, roughness: 0.1 });
-    const marble = new THREE.Mesh(marbleGeo, marbleMat);
-    marble.position.set(-6, 0.5, -6);
-    mazeGroup.add(marble);
+    // Goal Hole
+    const hole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    hole.position.set(4, -0.2, -4);
+    boardGroup.add(hole);
 
-    // Goal Portal
-    const goalGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 32);
-    const goalMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x166534, emissiveIntensity: 0.8 });
-    const goal = new THREE.Mesh(goalGeo, goalMat);
-    goal.position.set(6, 0.05, 6);
-    mazeGroup.add(goal);
-
-    // Trap Holes
-    const holes = [];
-    const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    function addHole(x, z) {
-      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.12, 32), holeMat);
-      hole.position.set(x, 0.06, z);
-      mazeGroup.add(hole);
-      holes.push({ x, z });
-    }
-
-    // Default Level Traps
-    addHole(0, 0);
-    addHole(-2, 4);
-    addHole(4, -2);
-
-    // Maze Wall Obstacles
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.2 });
-    const walls = [];
+    // Walls
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xa855f7 });
     function addWall(x, z, w, d) {
       const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), wallMat);
       wall.position.set(x, 0.4, z);
-      mazeGroup.add(wall);
-      walls.push({ x, z, w, d });
+      boardGroup.add(wall);
     }
 
-    // Outer Boundary Walls
-    addWall(0, -8, 16, 0.4);
-    addWall(0, 8, 16, 0.4);
-    addWall(-8, 0, 0.4, 16);
-    addWall(8, 0, 0.4, 16);
+    // Outer Boundaries
+    addWall(0, -6, 12, 0.4);
+    addWall(0, 6, 12, 0.4);
+    addWall(-6, 0, 0.4, 12);
+    addWall(6, 0, 0.4, 12);
 
     // Inner Maze Walls
-    addWall(-3, -3, 8, 0.4);
-    addWall(3, 3, 8, 0.4);
-    addWall(0, 2, 0.4, 6);
+    addWall(-2, -2, 0.4, 8);
+    addWall(2, 2, 0.4, 8);
 
-    // Physics Variables
+    // Marble Mesh
+    const marble = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 32, 32),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8, roughness: 0.1 })
+    );
+    boardGroup.add(marble);
+
+    // Physics State
+    let posX = -4, posZ = 4;
     let velX = 0, velZ = 0;
-    let targetTiltX = 0, targetTiltZ = 0;
-    let level = 1;
-    let time = 0;
-    let gameOver = false;
+    let targetRotX = 0, targetRotZ = 0;
+    let timer = 0, gameActive = true;
 
-    // Keyboard Inputs
-    const keys = { w: false, a: false, s: false, d: false };
-    window.addEventListener('keydown', e => {
-      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
-      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
-      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
-      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
-    });
-    window.addEventListener('keyup', e => {
-      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
-      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
-      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
-      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
-    });
+    function resetGame() {
+      posX = -4; posZ = 4;
+      velX = 0; velZ = 0;
+      targetRotX = 0; targetRotZ = 0;
+      marble.position.set(posX, 0.5, posZ);
+      timer = 0;
+      gameActive = true;
+      document.getElementById('instructions').innerText = "SWIPE / DRAG ON SCREEN TO TILT BOARD";
+    }
 
     setInterval(() => {
-      if (!gameOver) {
-        time++;
-        document.getElementById('time').innerText = time;
+      if (gameActive) {
+        timer++;
+        document.getElementById('time').innerText = timer;
       }
     }, 1000);
+
+    // Touch Drag Controls
+    let touchStartX = 0, touchStartY = 0;
+
+    window.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      if (!gameActive) resetGame();
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!gameActive) return;
+
+      const deltaX = e.touches[0].clientX - touchStartX;
+      const deltaY = e.touches[0].clientY - touchStartY;
+
+      targetRotZ = -Math.max(-0.25, Math.min(0.25, deltaX * 0.003));
+      targetRotX = Math.max(-0.25, Math.min(0.25, deltaY * 0.003));
+    });
+
+    window.addEventListener('touchend', () => {
+      targetRotX = 0;
+      targetRotZ = 0;
+    });
+
+    // Mouse Fallback for Desktop
+    let isMouseDown = false;
+    window.addEventListener('mousedown', (e) => {
+      isMouseDown = true;
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      if (!gameActive) resetGame();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDown || !gameActive) return;
+      const deltaX = e.clientX - touchStartX;
+      const deltaY = e.clientY - touchStartY;
+
+      targetRotZ = -Math.max(-0.25, Math.min(0.25, deltaX * 0.003));
+      targetRotX = Math.max(-0.25, Math.min(0.25, deltaY * 0.003));
+    });
+
+    window.addEventListener('mouseup', () => {
+      isMouseDown = false;
+      targetRotX = 0;
+      targetRotZ = 0;
+    });
+
+    document.getElementById('instructions').addEventListener('click', () => {
+      if (!gameActive) resetGame();
+    });
 
     function animate() {
       requestAnimationFrame(animate);
 
-      if (!gameOver) {
-        // Handle Tilting Board
-        const maxTilt = 0.22;
-        targetTiltZ = keys.a ? maxTilt : keys.d ? -maxTilt : 0;
-        targetTiltX = keys.w ? -maxTilt : keys.s ? maxTilt : 0;
+      if (gameActive) {
+        // Smooth Board Rotation
+        boardGroup.rotation.x += (targetRotX - boardGroup.rotation.x) * 0.1;
+        boardGroup.rotation.z += (targetRotZ - boardGroup.rotation.z) * 0.1;
 
-        mazeGroup.rotation.z += (targetTiltZ - mazeGroup.rotation.z) * 0.1;
-        mazeGroup.rotation.x += (targetTiltX - mazeGroup.rotation.x) * 0.1;
+        // Gravity Acceleration based on tilt
+        velX -= boardGroup.rotation.z * 0.015;
+        velZ += boardGroup.rotation.x * 0.015;
 
-        // Apply tilt physics acceleration to Marble
-        velX -= mazeGroup.rotation.z * 0.08;
-        velZ += mazeGroup.rotation.x * 0.08;
+        // Friction
+        velX *= 0.98;
+        velZ *= 0.98;
 
-        velX *= 0.96; // Friction
-        velZ *= 0.96;
+        posX += velX;
+        posZ += velZ;
 
-        let nextX = marble.position.x + velX;
-        let nextZ = marble.position.z + velZ;
+        // Boundary Collisions
+        if (posX < -5.3) { posX = -5.3; velX = -velX * 0.5; }
+        if (posX > 5.3) { posX = 5.3; velX = -velX * 0.5; }
+        if (posZ < -5.3) { posZ = -5.3; velZ = -velZ * 0.5; }
+        if (posZ > 5.3) { posZ = 5.3; velZ = -velZ * 0.5; }
 
-        // Wall Collisions
-        walls.forEach(w => {
-          const halfW = w.w / 2 + 0.5;
-          const halfD = w.d / 2 + 0.5;
+        marble.position.x = posX;
+        marble.position.z = posZ;
 
-          if (Math.abs(nextX - w.x) < halfW && Math.abs(marble.position.z - w.z) < halfD) {
-            velX = -velX * 0.5;
-            nextX = marble.position.x;
-          }
-          if (Math.abs(marble.position.x - w.x) < halfW && Math.abs(nextZ - w.z) < halfD) {
-            velZ = -velZ * 0.5;
-            nextZ = marble.position.z;
-          }
-        });
-
-        marble.position.x = nextX;
-        marble.position.z = nextZ;
-
-        // Check Goal
-        const distGoal = Math.hypot(marble.position.x - goal.position.x, marble.position.z - goal.position.z);
-        if (distGoal < 0.8) {
-          level++;
-          document.getElementById('level').innerText = level;
-          document.getElementById('instructions').innerText = `🎉 LEVEL ${level-1} CLEARED! Starting Next Maze...`;
-          // Reset marble position for next level
-          marble.position.set(-6, 0.5, -6);
-          velX = 0; velZ = 0;
+        // Win Condition
+        const distToHole = Math.hypot(posX - 4, posZ - (-4));
+        if (distToHole < 0.8) {
+          gameActive = false;
+          document.getElementById('instructions').innerText = `🎉 GOAL REACHED IN ${timer}s! Tap to Play Again!`;
         }
-
-        // Check Trap Holes
-        holes.forEach(h => {
-          const distHole = Math.hypot(marble.position.x - h.x, marble.position.z - h.z);
-          if (distHole < 0.7) {
-            gameOver = true;
-            document.getElementById('instructions').innerText = "💥 FELL INTO THE VOID! Refresh to try again.";
-          }
-        });
       }
 
       renderer.render(scene, camera);
@@ -223,6 +231,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    resetGame();
     animate();
   </script>
 </body>
