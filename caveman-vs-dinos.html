@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caveman vs Dinos</title>
+  <style>
+    body {
+      background-color: #0c0a09;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+
+    h1 { color: #f97316; margin-bottom: 2px; }
+    #hud { font-size: 0.95rem; color: #fde047; margin-bottom: 10px; font-weight: bold; }
+
+    #arena {
+      width: 320px;
+      height: 320px;
+      background: #1c1917;
+      border: 4px solid #f97316;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .entity {
+      position: absolute;
+      font-size: 1.5rem;
+      transform: translate(-50%, -50%);
+    }
+
+    #boss { font-size: 3.2rem; transition: all 0.1s linear; }
+
+    .banana {
+      position: absolute;
+      font-size: 1.3rem;
+      transform: translate(-50%, -50%);
+      animation: spin 0.6s infinite linear;
+    }
+
+    @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+      width: 320px;
+    }
+
+    .btn {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 10px 4px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .btn-funny { background: #eab308; color: #000; }
+    .btn-recruit { background: #22c55e; }
+
+    #message {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🦴 Caveman vs Dinos</h1>
+  <div id="hud">Boss HP: <span id="boss-hp">100</span>% | Tribe: <span id="tribe-size">1</span> | Rocks: <span id="rocks">5</span></div>
+
+  <div id="arena">
+    <div id="message">T-Rex is hungry!</div>
+    <div id="boss" class="entity" style="left: 160px; top: 80px;">🦖</div>
+    <div id="player" class="entity" style="left: 160px; top: 260px;">🦴</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="movePlayer(-30)">⬅️ Dodge</button>
+    <button class="btn" onclick="throwSpear()">🗡️ Spear Throw</button>
+    <button class="btn" onclick="movePlayer(30)">➡️ Dodge</button>
+    <button class="btn btn-funny" onclick="throwBanana()">🍌 Throw Banana</button>
+    <button class="btn btn-recruit" onclick="recruitBuddy()">🤝 Call Tribe ($)</button>
+    <button class="btn" onclick="craftSpear()">⚒️ Craft Spear</button>
+  </div>
+
+  <script>
+    const bossEl = document.getElementById('boss');
+    const playerEl = document.getElementById('player');
+    const bossHpText = document.getElementById('boss-hp');
+    const tribeText = document.getElementById('tribe-size');
+    const rocksText = document.getElementById('rocks');
+    const msgEl = document.getElementById('message');
+    const arena = document.getElementById('arena');
+
+    let playerX = 160;
+    let bossX = 160, bossY = 80;
+    let bossHP = 100;
+    let tribeCount = 1;
+    let rockCount = 5;
+    let isDistracted = false;
+    let gameOver = false;
+
+    // Tribe member visual elements
+    let tribeEls = [];
+
+    function movePlayer(dx) {
+      if (gameOver) return;
+      playerX = Math.max(25, Math.min(295, playerX + dx));
+      playerEl.style.left = playerX + 'px';
+      updateTribePositions();
+    }
+
+    function throwSpear() {
+      if (gameOver) return;
+      if (rockCount <= 0) {
+        msgEl.innerText = "Out of spears! Craft more!";
+        return;
+      }
+
+      rockCount--;
+      rocksText.innerText = rockCount;
+
+      // Damage boss based on tribe size
+      const damage = 5 * tribeCount;
+      bossHP = Math.max(0, bossHP - damage);
+      bossHpText.innerText = bossHP;
+
+      msgEl.innerText = `Hit T-Rex for ${damage} damage!`;
+
+      if (bossHP <= 0) {
+        gameOver = true;
+        msgEl.innerText = "🏆 T-REX DEFEATED! CAVE TRIBE WINS!";
+      }
+    }
+
+    function throwBanana() {
+      if (gameOver || isDistracted) return;
+      
+      const b = document.createElement('div');
+      b.className = 'banana';
+      b.innerText = '🍌';
+      b.style.left = (Math.random() * 200 + 60) + 'px';
+      b.style.top = '140px';
+      arena.appendChild(b);
+
+      isDistracted = true;
+      msgEl.innerText = "🍌 T-Rex is distracted by the banana!";
+
+      setTimeout(() => {
+        b.remove();
+        isDistracted = false;
+        msgEl.innerText = "T-Rex finished the snack! Watch out!";
+      }, 3500);
+    }
+
+    function craftSpear() {
+      if (gameOver) return;
+      rockCount += 3;
+      rocksText.innerText = rockCount;
+      msgEl.innerText = "Crafted +3 Stone Spears!";
+    }
+
+    function recruitBuddy() {
+      if (gameOver) return;
+      if (tribeCount >= 5) {
+        msgEl.innerText = "Tribe is already full!";
+        return;
+      }
+      tribeCount++;
+      tribeText.innerText = tribeCount;
+
+      const buddy = document.createElement('div');
+      buddy.className = 'entity';
+      buddy.innerText = '🧔';
+      arena.appendChild(buddy);
+      tribeEls.push(buddy);
+
+      updateTribePositions();
+      msgEl.innerText = "Recruited a Cave Buddy! Extra damage!";
+    }
+
+    function updateTribePositions() {
+      tribeEls.forEach((el, idx) => {
+        const offset = (idx + 1) * (idx % 2 === 0 ? 25 : -25);
+        el.style.left = Math.max(20, Math.min(300, playerX + offset)) + 'px';
+        el.style.top = '260px';
+      });
+    }
+
+    // Boss Loop
+    setInterval(() => {
+      if (gameOver) return;
+
+      if (!isDistracted) {
+        // Chase player horizontally
+        if (bossX < playerX) bossX += 3;
+        else if (bossX > playerX) bossX -= 3;
+
+        // Stampede downward
+        bossY += 1.5;
+        if (bossY > 240) {
+          // Stomped player check
+          if (Math.abs(bossX - playerX) < 40) {
+            msgEl.innerText = "💥 STOMPED BY T-REX! Dodge faster!";
+          }
+          bossY = 60; // Reset boss height
+        }
+      } else {
+        // Distracted wiggle
+        bossX += (Math.random() - 0.5) * 8;
+      }
+
+      bossEl.style.left = bossX + 'px';
+      bossEl.style.top = bossY + 'px';
+    }, 50);
+  </script>
+</body>
+</html>
