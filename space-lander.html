@@ -95,26 +95,30 @@
 
     let currentLevel = 1;
     let gameOver = false;
+    let animId = null;
 
     let ship = { x: 150, y: 30, vx: 0, vy: 0 };
-    const gravity = 0.08;
+    const gravity = 0.05;
 
     const levels = [
-      { padX: 100, padWidth: 100 }, // Level 1: Wide pad
-      { padX: 180, padWidth: 70 },  // Level 2: Offset pad
-      { padX: 30, padWidth: 50 }    // Level 3: Narrow pad
+      { padX: 100, padWidth: 100 }, // Level 1
+      { padX: 180, padWidth: 70 },  // Level 2
+      { padX: 30, padWidth: 50 }    // Level 3
     ];
 
     function loadLevel(num) {
+      if (animId) cancelAnimationFrame(animId);
       gameOver = false;
+      shipEl.innerText = '🚀';
+      
       const data = levels[num - 1];
-
       ship = { x: 150, y: 30, vx: 0, vy: 0 };
+      
       padEl.style.left = data.padX + 'px';
       padEl.style.width = data.padWidth + 'px';
 
       lvlText.innerText = `${num} / 3`;
-      requestAnimationFrame(update);
+      update();
     }
 
     function applyThrust(dx, dy) {
@@ -126,13 +130,15 @@
     function update() {
       if (gameOver) return;
 
-      ship.vy += gravity;
+      ship.vy = Math.min(ship.vy + gravity, 4); // Limit max falling speed
+      ship.vx *= 0.98; // Drag friction
+      
       ship.x += ship.vx;
       ship.y += ship.vy;
 
-      // Keep within left/right walls
-      if (ship.x < 13) { ship.x = 13; ship.vx = 0; }
-      if (ship.x > 287) { ship.x = 287; ship.vx = 0; }
+      // Wall boundaries
+      if (ship.x < 15) { ship.x = 15; ship.vx = 0; }
+      if (ship.x > 285) { ship.x = 285; ship.vx = 0; }
 
       shipEl.style.left = ship.x + 'px';
       shipEl.style.top = ship.y + 'px';
@@ -142,8 +148,8 @@
 
       const padData = levels[currentLevel - 1];
 
-      // Landing Check
-      if (ship.y >= 272) {
+      // Touch Ground/Pad Check
+      if (ship.y >= 270) {
         gameOver = true;
         const landedOnPad = ship.x >= padData.padX && ship.x <= (padData.padX + padData.padWidth);
         const safeSpeed = Math.abs(ship.vy) <= 2.5;
@@ -157,26 +163,23 @@
           }
         } else {
           shipEl.innerText = '💥';
-          document.getElementById('hud').innerText = "💥 CRASHED! Tap Thrust to retry.";
-          setTimeout(() => {
-            shipEl.innerText = '🚀';
-            loadLevel(currentLevel);
-          }, 1200);
+          document.getElementById('hud').innerText = "💥 CRASHED! Resetting level...";
+          setTimeout(() => loadLevel(currentLevel), 1200);
         }
         return;
       }
 
-      requestAnimationFrame(update);
+      animId = requestAnimationFrame(update);
     }
 
-    document.getElementById('btn-thrust').onclick = () => applyThrust(0, -1.8);
-    document.getElementById('btn-left').onclick = () => applyThrust(-0.8, 0);
-    document.getElementById('btn-right').onclick = () => applyThrust(0.8, 0);
+    document.getElementById('btn-thrust').onclick = () => applyThrust(0, -1.2);
+    document.getElementById('btn-left').onclick = () => applyThrust(-0.5, 0);
+    document.getElementById('btn-right').onclick = () => applyThrust(0.5, 0);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === ' ') applyThrust(0, -1.8);
-      if (e.key === 'ArrowLeft') applyThrust(-0.8, 0);
-      if (e.key === 'ArrowRight') applyThrust(0.8, 0);
+      if (e.key === 'ArrowUp' || e.key === ' ') applyThrust(0, -1.2);
+      if (e.key === 'ArrowLeft') applyThrust(-0.5, 0);
+      if (e.key === 'ArrowRight') applyThrust(0.5, 0);
     });
 
     loadLevel(1);
