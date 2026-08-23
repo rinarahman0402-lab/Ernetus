@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Jumper</title>
+  <style>
+    body {
+      background-color: #030712;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+    }
+    h1 { color: #a855f7; margin-bottom: 5px; }
+    #hud { font-size: 1.1rem; color: #38bdf8; margin-bottom: 15px; font-weight: bold; }
+    #world {
+      width: 300px;
+      height: 300px;
+      background: #0f172a;
+      border: 4px solid #a855f7;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    #player {
+      width: 20px;
+      height: 20px;
+      background: #facc15;
+      border-radius: 4px;
+      position: absolute;
+      box-shadow: 0 0 10px #facc15;
+    }
+    .platform {
+      height: 12px;
+      background: #38bdf8;
+      position: absolute;
+      border-radius: 6px;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+    #goal {
+      width: 30px;
+      height: 12px;
+      background: #22c55e;
+      position: absolute;
+      top: 20px;
+      left: 135px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px #22c55e;
+    }
+  </style>
+</head>
+<body>
+  <h1>🦘 Neon Jumper</h1>
+  <div id="hud">Level: <span id="lvl">1 / 3</span> | Tap/Space to Jump!</div>
+
+  <div id="world">
+    <div id="goal"></div>
+    <div id="player"></div>
+  </div>
+
+  <script>
+    const world = document.getElementById('world');
+    const playerEl = document.getElementById('player');
+    const lvlText = document.getElementById('lvl');
+
+    let currentLevel = 1;
+    let gameOver = false;
+    let py = 250, px = 140, vy = 0, vx = 0;
+    let onPlatform = false;
+    let platforms = [];
+
+    const levels = [
+      [{ x: 100, y: 220, w: 100, dx: 1 }, { x: 50, y: 150, w: 80, dx: -1.5 }, { x: 120, y: 80, w: 70, dx: 2 }],
+      [{ x: 30, y: 230, w: 70, dx: 2 }, { x: 180, y: 170, w: 60, dx: -2 }, { x: 40, y: 110, w: 60, dx: 2.5 }],
+      [{ x: 120, y: 240, w: 50, dx: 3 }, { x: 20, y: 180, w: 50, dx: -3 }, { x: 200, y: 120, w: 50, dx: 3.5 }]
+    ];
+
+    function loadLevel(num) {
+      gameOver = false;
+      py = 270; px = 140; vy = 0; vx = 0;
+      lvlText.innerText = `${num} / 3`;
+
+      document.querySelectorAll('.platform').forEach(e => e.remove());
+      platforms = levels[num - 1].map(p => {
+        const el = document.createElement('div');
+        el.className = 'platform';
+        el.style.width = p.w + 'px';
+        world.appendChild(el);
+        return { ...p, el };
+      });
+    }
+
+    function jump() {
+      if (onPlatform && !gameOver) {
+        vy = -7.5;
+        onPlatform = false;
+      }
+    }
+
+    function update() {
+      if (!gameOver) {
+        vy += 0.35;
+        py += vy;
+
+        onPlatform = false;
+
+        if (py >= 270 && currentLevel === 1) {
+          py = 270; vy = 0; onPlatform = true;
+        }
+
+        platforms.forEach(p => {
+          p.x += p.dx;
+          if (p.x <= 0 || p.x + p.w >= 300) p.dx *= -1;
+          p.el.style.left = p.x + 'px';
+          p.el.style.top = p.y + 'px';
+
+          if (vy >= 0 && py + 20 >= p.y && py + 20 <= p.y + 10 && px + 20 > p.x && px < p.x + p.w) {
+            py = p.y - 20;
+            vy = 0;
+            px += p.dx;
+            onPlatform = true;
+          }
+        });
+
+        if (py > 300) {
+          gameOver = true;
+          setTimeout(() => loadLevel(currentLevel), 800);
+        }
+
+        if (py <= 32 && px + 20 > 135 && px < 165) {
+          if (currentLevel < 3) {
+            currentLevel++;
+            loadLevel(currentLevel);
+          } else {
+            gameOver = true;
+            document.getElementById('hud').innerText = "🏆 YOU BEAT NEON JUMPER!";
+          }
+        }
+
+        playerEl.style.left = px + 'px';
+        playerEl.style.top = py + 'px';
+      }
+      requestAnimationFrame(update);
+    }
+
+    world.onclick = jump;
+    document.addEventListener('keydown', e => { if (e.key === ' ') jump(); });
+    loadLevel(1);
+    update();
+  </script>
+</body>
+</html>
