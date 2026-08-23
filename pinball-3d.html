@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>3D Pinball Arcade</title>
   <style>
     body {
@@ -11,6 +11,7 @@
       font-family: Arial, sans-serif;
       background: #020617;
       user-select: none;
+      touch-action: manipulation;
     }
     #ui {
       position: absolute;
@@ -21,28 +22,82 @@
       font-size: 1.2rem;
       text-shadow: 0 0 10px #0284c7;
       pointer-events: none;
+      z-index: 10;
     }
     #instructions {
       position: absolute;
-      bottom: 25px;
+      top: 50px;
       left: 50%;
       transform: translateX(-50%);
       color: #facc15;
       font-weight: bold;
       background: rgba(15, 23, 42, 0.85);
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 8px;
       pointer-events: none;
       text-align: center;
       border: 2px solid #38bdf8;
       box-shadow: 0 0 15px #0284c7;
+      z-index: 10;
+      font-size: 0.9rem;
+    }
+    /* On-Screen Mobile Controls */
+    .touch-btn {
+      position: absolute;
+      bottom: 20px;
+      width: 35%;
+      height: 100px;
+      background: rgba(56, 189, 248, 0.25);
+      border: 2px solid #38bdf8;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      backdrop-filter: blur(4px);
+    }
+    .touch-btn:active {
+      background: rgba(56, 189, 248, 0.6);
+    }
+    #left-flipper-btn { left: 15px; }
+    #right-flipper-btn { right: 15px; }
+    #launch-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20%;
+      height: 100px;
+      background: rgba(250, 204, 21, 0.3);
+      border: 2px solid #facc15;
+      border-radius: 12px;
+      color: #facc15;
+      font-weight: bold;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      backdrop-filter: blur(4px);
+      text-align: center;
+    }
+    #launch-btn:active {
+      background: rgba(250, 204, 21, 0.7);
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <div id="ui">🏆 SCORE: <span id="score">0</span> | ⚽ BALLS LEFT: <span id="balls">3</span></div>
-  <div id="instructions">SPACE: Launch Ball | LEFT ARROW / A: Left Flipper | RIGHT ARROW / D: Right Flipper</div>
+  <div id="ui">🏆 SCORE: <span id="score">0</span> | ⚽ BALLS: <span id="balls">3</span></div>
+  <div id="instructions">TAP BUTTONS ON SCREEN OR USE KEYBOARD (A/D/SPACE)</div>
+
+  <!-- Mobile Touch Controls -->
+  <div id="left-flipper-btn" class="touch-btn">LEFT</div>
+  <div id="launch-btn">LAUNCH</div>
+  <div id="right-flipper-btn" class="touch-btn">RIGHT</div>
 
   <script>
     const scene = new THREE.Scene();
@@ -64,7 +119,7 @@
 
     // Table Container (Tilted)
     const tableGroup = new THREE.Group();
-    tableGroup.rotation.x = 0.15; // Slanted table plane
+    tableGroup.rotation.x = 0.15;
     scene.add(tableGroup);
 
     // Pinball Surface
@@ -84,12 +139,12 @@
       return wall;
     }
 
-    addWall(-5, 0, 0.4, 18);  // Left wall
-    addWall(5, 0, 0.4, 18);   // Right outer wall
-    addWall(3.8, 0, 0.4, 18); // Plunger lane wall
-    addWall(0, -9, 10, 0.4);  // Top wall
+    addWall(-5, 0, 0.4, 18);
+    addWall(5, 0, 0.4, 18);
+    addWall(3.8, 0, 0.4, 18);
+    addWall(0, -9, 10, 0.4);
 
-    // Bumpers (Score Boosters)
+    // Bumpers
     const bumpers = [];
     const bumperMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xb91c1c });
 
@@ -143,20 +198,37 @@
     }
     resetBall();
 
-    // Input States
+    // Input Control States
     const keys = { left: false, right: false };
+
+    function launchBall() {
+      if (!ballActive && ballsLeft > 0) {
+        ballActive = true;
+        velZ = -0.42;
+      }
+    }
+
+    // Keyboard Events
     window.addEventListener('keydown', e => {
       if (e.key === 'a' || e.key === 'ArrowLeft') keys.left = true;
       if (e.key === 'd' || e.key === 'ArrowRight') keys.right = true;
-      if (e.key === ' ' && !ballActive && ballsLeft > 0) {
-        ballActive = true;
-        velZ = -0.42; // Launch Plunger Force
-      }
+      if (e.key === ' ') launchBall();
     });
     window.addEventListener('keyup', e => {
       if (e.key === 'a' || e.key === 'ArrowLeft') keys.left = false;
       if (e.key === 'd' || e.key === 'ArrowRight') keys.right = false;
     });
+
+    // Touch Button Events
+    const leftBtn = document.getElementById('left-flipper-btn');
+    const rightBtn = document.getElementById('right-flipper-btn');
+    const launchBtn = document.getElementById('launch-btn');
+
+    leftBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); keys.left = true; });
+    leftBtn.addEventListener('pointerup', () => keys.left = false);
+    rightBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); keys.right = true; });
+    rightBtn.addEventListener('pointerup', () => keys.right = false);
+    launchBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); launchBall(); });
 
     function animate() {
       requestAnimationFrame(animate);
@@ -203,14 +275,12 @@
 
         // Flipper Collisions
         if (ball.position.z >= 6.1 && ball.position.z <= 6.8) {
-          // Left Flipper Hit
           if (keys.left && ball.position.x >= -2.2 && ball.position.x <= 0) {
             velZ = -0.35;
             velX = 0.15;
             score += 50;
             document.getElementById('score').innerText = score;
           }
-          // Right Flipper Hit
           if (keys.right && ball.position.x >= 0 && ball.position.x <= 2.2) {
             velZ = -0.35;
             velX = -0.15;
@@ -225,7 +295,7 @@
           document.getElementById('balls').innerText = ballsLeft;
 
           if (ballsLeft <= 0) {
-            document.getElementById('instructions').innerText = `🏆 GAME OVER! Milestone Score: ${score}. Reload to play again!`;
+            document.getElementById('instructions').innerText = `🏆 GAME OVER! Final Score: ${score}. Reload to play again!`;
             ballActive = false;
           } else {
             resetBall();
