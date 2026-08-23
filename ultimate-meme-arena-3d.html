@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ultimate Meme Arena 3D</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      background: #000;
+      user-select: none;
+      touch-action: none;
+    }
+    #ui {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      color: #facc15;
+      font-size: 1.5rem;
+      text-shadow: 3px 3px 0 #000;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #instructions {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 12px 24px;
+      border-radius: 12px;
+      text-align: center;
+      border: 3px solid #facc15;
+      box-shadow: 0 0 20px #facc15;
+      z-index: 10;
+      font-size: 1rem;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">🐕 SUCH SCORE: <span id="score">0</span></div>
+  <div id="instructions">DRAG TO MOVE DOGE & DODGE MEMES!</div>
+
+  <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050515);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 14, 12);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lights
+    const light = new THREE.DirectionalLight(0xffffff, 1.5);
+    light.position.set(5, 20, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xa855f7, 0.6));
+
+    // Arena Floor Grid
+    const floorGeo = new THREE.PlaneGeometry(30, 30);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(30, 20, 0xfacc15, 0x3b82f6);
+    grid.position.y = 0.01;
+    scene.add(grid);
+
+    // Canvas Texture Generators for Memes
+    function createMemeTexture(text, bgColor, emoji) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bgColor; ctx.fillRect(0, 0, 256, 256);
+      ctx.font = '100px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(emoji, 128, 140);
+      ctx.font = 'bold 28px Impact'; ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 4;
+      ctx.strokeText(text, 128, 220); ctx.fillText(text, 128, 220);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Player Mesh (Doge)
+    const dogeTex = createMemeTexture("WOW MUCH DODGE", "#f59e0b", "🐕");
+    const dogeMat = new THREE.MeshStandardMaterial({ map: dogeTex });
+    const player = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), dogeMat);
+    player.position.set(0, 0.8, 6);
+    scene.add(player);
+
+    // Meme Bosses & Entities
+    const memeList = [
+      { name: "NYAN CAT", bg: "#ec4899", emoji: "🐱", speed: 0.18 },
+      { name: "GIGACHAD", bg: "#475569", emoji: "🗿", speed: 0.14 },
+      { name: "PEPE", bg: "#22c55e", emoji: "🐸", speed: 0.16 },
+      { name: "DISTRACTED", bg: "#ef4444", emoji: "🧔", speed: 0.15 },
+      { name: "SPODERMAN", bg: "#3b82f6", emoji: "🕷️", speed: 0.20 }
+    ];
+
+    const activeMemes = [];
+
+    function spawnMeme() {
+      if (activeMemes.length >= 10 || gameOver) return;
+      const type = memeList[Math.floor(Math.random() * memeList.length)];
+      const tex = createMemeTexture(type.name, type.bg, type.emoji);
+      const mat = new THREE.MeshStandardMaterial({ map: tex });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), mat);
+
+      mesh.position.set((Math.random() - 0.5) * 24, 0.75, -16 - Math.random() * 10);
+      scene.add(mesh);
+
+      activeMemes.push({ mesh, speed: type.speed + Math.random() * 0.05, name: type.name });
+    }
+
+    setInterval(spawnMeme, 1200);
+
+    // Touch / Drag Controls
+    let score = 0;
+    let gameOver = false;
+    let lastX = 0, lastY = 0;
+
+    function resetGame() {
+      score = 0;
+      gameOver = false;
+      player.position.set(0, 0.8, 6);
+      document.getElementById('score').innerText = "0";
+      document.getElementById('instructions').innerText = "DRAG TO MOVE DOGE & DODGE MEMES!";
+      activeMemes.forEach(m => scene.remove(m.mesh));
+      activeMemes.length = 0;
+    }
+
+    const onPointerDown = (e) => {
+      if (gameOver) return resetGame();
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      lastX = x; lastY = y;
+    };
+
+    const onPointerMove = (e) => {
+      if (gameOver) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (lastX !== 0 || lastY !== 0) {
+        const dx = x - lastX;
+        const dy = y - lastY;
+
+        player.position.x += dx * 0.03;
+        player.position.z += dy * 0.03;
+
+        player.position.x = Math.max(-12, Math.min(12, player.position.x));
+        player.position.z = Math.max(-12, Math.min(12, player.position.z));
+      }
+
+      lastX = x; lastY = y;
+    };
+
+    const onPointerEnd = () => { lastX = 0; lastY = 0; };
+
+    window.addEventListener('touchstart', onPointerDown);
+    window.addEventListener('touchmove', (e) => { e.preventDefault(); onPointerMove(e); }, { passive: false });
+    window.addEventListener('touchend', onPointerEnd);
+    window.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerEnd);
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (!gameOver) {
+        score++;
+        document.getElementById('score').innerText = Math.floor(score / 5);
+
+        // Spin Player
+        player.rotation.y += 0.03;
+
+        // Move Enemies Forward
+        for (let i = activeMemes.length - 1; i >= 0; i--) {
+          const m = activeMemes[i];
+          m.mesh.position.z += m.speed;
+          m.mesh.rotation.y += 0.02;
+
+          // Check Collision
+          if (player.position.distanceTo(m.mesh.position) < 1.4) {
+            gameOver = true;
+            document.getElementById('instructions').innerText = `💥 HIT BY ${m.name}! WOW SCORE: ${Math.floor(score / 5)}. Tap to restart!`;
+          }
+
+          // Reset Out of Bounds
+          if (m.mesh.position.z > 12) {
+            scene.remove(m.mesh);
+            activeMemes.splice(i, 1);
+          }
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+</html>
