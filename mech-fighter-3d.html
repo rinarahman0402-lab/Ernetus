@@ -40,7 +40,6 @@
       font-size: 0.85rem;
       pointer-events: none;
     }
-    /* Mobile Controls Overlay */
     .touch-zone {
       position: absolute;
       bottom: 20px;
@@ -99,7 +98,6 @@
   <div id="ui">🤖 SHIELD: <span id="shield">100</span>% | 💥 KILLS: <span id="score">0</span></div>
   <div id="instructions">Use Joystick to Move | Drag Right Side to Aim | Tap FIRE to Attack</div>
 
-  <!-- Mobile Touch Controls -->
   <div id="joystick-area" class="touch-zone">
     <div id="joystick-knob"></div>
   </div>
@@ -143,13 +141,13 @@
       new THREE.BoxGeometry(1.6, 2, 1.2),
       new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 })
     );
-    playerTorso.position.y = 2;
+    playerTorso.position.y = 1;
     playerGroup.add(playerTorso);
 
     const gunMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7 });
     const leftGun = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.5), gunMat);
     leftGun.rotation.x = Math.PI / 2;
-    leftGun.position.set(-1, 2, -0.8);
+    leftGun.position.set(-1, 1, -0.8);
     playerGroup.add(leftGun);
 
     const rightGun = leftGun.clone();
@@ -159,7 +157,6 @@
     // Game Entities
     const enemies = [];
     const projectiles = [];
-    const enemyMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.3 });
     const playerBoltMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
     const enemyBoltMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
 
@@ -172,28 +169,35 @@
     function spawnEnemy() {
       if (gameOver || enemies.length >= 4) return;
       const group = new THREE.Group();
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2, 1.2), enemyMat);
-      torso.position.y = 2;
+      const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 2, 1.2),
+        new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.3 })
+      );
+      torso.position.y = 1;
       group.add(torso);
 
       const angle = Math.random() * Math.PI * 2;
-      group.position.set(Math.cos(angle) * 30, 0, Math.sin(angle) * 30);
+      group.position.set(Math.cos(angle) * 25, 0, Math.sin(angle) * 25);
       scene.add(group);
 
-      enemies.push({ group, cooldown: 0, hp: 3 });
+      enemies.push({ group, torso, cooldown: 0, hp: 2 });
     }
 
-    setInterval(spawnEnemy, 2500);
+    setInterval(spawnEnemy, 2000);
 
-    // Shooting Function
+    // Shooting
     function shoot() {
       if (gameOver) return;
-      [-1, 1].forEach(offset => {
-        const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), playerBoltMat);
-        bolt.position.set(playerGroup.position.x + offset * 0.8, 2, playerGroup.position.z);
+      [-0.8, 0.8].forEach(offset => {
+        const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), playerBoltMat);
+        
+        // Fire bolt forward based on player's current angle
+        const fireOrigin = new THREE.Vector3(offset, 1, -1).applyQuaternion(playerGroup.quaternion).add(playerGroup.position);
+        bolt.position.copy(fireOrigin);
+        
         const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(playerGroup.quaternion).normalize();
         scene.add(bolt);
-        projectiles.push({ mesh: bolt, dir, isPlayer: true, speed: 0.8 });
+        projectiles.push({ mesh: bolt, dir, isPlayer: true, speed: 1.0, distance: 0 });
       });
     }
 
@@ -269,7 +273,7 @@
       requestAnimationFrame(animate);
 
       if (!gameOver) {
-        // Apply Joystick / Keyboard movement
+        // Player Movement
         const speed = 0.2;
         let vx = moveVector.x * speed;
         let vz = moveVector.z * speed;
@@ -285,7 +289,7 @@
         playerGroup.position.x = Math.max(-38, Math.min(38, playerGroup.position.x));
         playerGroup.position.z = Math.max(-38, Math.min(38, playerGroup.position.z));
 
-        // Mech Rotation
+        // Rotation
         if (aimAngle !== 0) {
           playerGroup.rotation.y = aimAngle;
         }
@@ -294,15 +298,23 @@
         camera.position.set(playerGroup.position.x, playerGroup.position.y + 12, playerGroup.position.z + 16);
         camera.lookAt(playerGroup.position);
 
-        // Update Projectiles
+        // Update Projectiles & Check Collisions
         for (let i = projectiles.length - 1; i >= 0; i--) {
           const p = projectiles[i];
           p.mesh.position.addScaledVector(p.dir, p.speed);
+          p.distance += p.speed;
 
           if (p.isPlayer) {
-            enemies.forEach((e, eIdx) => {
-              if (p.mesh.position.distanceTo(e.group.position) < 1.8) {
+            // Check collision against all active enemies
+            for (let eIdx = enemies.length - 1; eIdx >= 0; eIdx--) {
+              const e = enemies[eIdx];
+              const dist = p.mesh.position.distanceTo(e.group.position);
+              
+              if (dist < 2.5) { // Generous hit area
                 e.hp--;
+                e.torso.material.color.setHex(0xffffff); // Flash white on hit
+                setTimeout(() => { if (e.torso) e.torso.material.color.setHex(0xe11d48); }, 100);
+
                 scene.remove(p.mesh);
                 projectiles.splice(i, 1);
 
@@ -312,10 +324,12 @@
                   score++;
                   document.getElementById('score').innerText = score;
                 }
+                break;
               }
-            });
+            }
           } else {
-            if (p.mesh.position.distanceTo(playerGroup.position) < 1.5) {
+            // Enemy shot hitting player
+            if (p.mesh.position.distanceTo(playerGroup.position) < 2.0) {
               scene.remove(p.mesh);
               projectiles.splice(i, 1);
               playerShield = Math.max(0, playerShield - 10);
@@ -323,25 +337,31 @@
 
               if (playerShield <= 0) {
                 gameOver = true;
-                document.getElementById('instructions').innerText = `💥 CRITICAL FAILURE! Score: ${score}. Reload to retry!`;
+                document.getElementById('instructions').innerText = `💥 CRITICAL FAILURE! Kills: ${score}. Reload to retry!`;
               }
             }
+          }
+
+          // Remove out of bounds shots
+          if (p.distance > 60) {
+            scene.remove(p.mesh);
+            projectiles.splice(i, 1);
           }
         }
 
         // Enemy AI
         enemies.forEach(e => {
-          e.group.lookAt(playerGroup.position);
+          e.group.lookAt(playerGroup.position.x, e.group.position.y, playerGroup.position.z);
           const dirToPlayer = new THREE.Vector3().subVectors(playerGroup.position, e.group.position).normalize();
-          e.group.position.addScaledVector(dirToPlayer, 0.05);
+          e.group.position.addScaledVector(dirToPlayer, 0.04);
 
           e.cooldown++;
-          if (e.cooldown > 90) {
+          if (e.cooldown > 100) {
             e.cooldown = 0;
-            const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), enemyBoltMat);
-            bolt.position.set(e.group.position.x, 2, e.group.position.z);
+            const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), enemyBoltMat);
+            bolt.position.set(e.group.position.x, 1, e.group.position.z);
             scene.add(bolt);
-            projectiles.push({ mesh: bolt, dir: dirToPlayer.clone(), isPlayer: false, speed: 0.35 });
+            projectiles.push({ mesh: bolt, dir: dirToPlayer.clone(), isPlayer: false, speed: 0.35, distance: 0 });
           }
         });
       }
