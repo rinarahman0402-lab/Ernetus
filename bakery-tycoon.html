@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Bakery Tycoon</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Quicksand, sans-serif;
+      background: #fdf2f8; color: #475569; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    /* TOP HUD */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 450px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10;
+    }
+    .hud-badge {
+      background: rgba(255, 255, 255, 0.85); border: 2px solid #f472b6;
+      border-radius: 20px; padding: 6px 14px; font-weight: 800; font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(244, 114, 182, 0.15); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-coins { border-color: #fbbf24; color: #d97706; }
+    .badge-happy { border-color: #f472b6; color: #db2777; }
+
+    /* BAKERY WORKSHOP & SHOP LAYOUT */
+    #game-container {
+      position: relative; width: 100%; height: 100%; display: flex;
+      flex-direction: column; justify-content: space-between; padding-top: 60px;
+    }
+
+    /* CUSTOMER AREA */
+    #counter-area {
+      height: 35%; display: flex; justify-content: space-around;
+      align-items: flex-end; padding-bottom: 10px; border-bottom: 4px solid #fbcfe8;
+      background: linear-gradient(180deg, #fce7f3 0%, #fde047 180%);
+    }
+    .customer {
+      display: flex; flex-direction: column; align-items: center;
+      transition: all 0.3s ease; animation: popIn 0.4s ease-out;
+    }
+    .bubble {
+      background: #fff; border: 2px solid #f472b6; border-radius: 14px;
+      padding: 6px 10px; font-weight: bold; font-size: 0.85rem; color: #db2777;
+      margin-bottom: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      position: relative;
+    }
+    .customer-avatar { font-size: 3rem; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+
+    /* WORK BENCH AREA */
+    #workbench {
+      height: 65%; background: #fff5f8; display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between; padding: 15px; position: relative;
+    }
+    .baking-station {
+      width: 100%; max-width: 380px; height: 160px; background: #fff;
+      border: 3px dashed #f472b6; border-radius: 24px; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      position: relative; cursor: pointer; box-shadow: 0 6px 16px rgba(244, 114, 182, 0.1);
+    }
+    .pastry-display { font-size: 4.5rem; transition: transform 0.2s; }
+    .pastry-display:active { transform: scale(0.95); }
+
+    /* UPGRADES BAR */
+    #upgrades {
+      width: 100%; max-width: 420px; display: flex; gap: 10px; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .btn-upg {
+      flex: 1; background: #fff; border: 2px solid #f472b6; color: #db2777;
+      padding: 10px; border-radius: 16px; font-weight: bold; font-size: 0.8rem;
+      cursor: pointer; text-align: center; box-shadow: 0 4px 0 #f472b6;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .btn-upg:active { transform: translateY(4px); box-shadow: none; }
+    .btn-upg:disabled { opacity: 0.5; border-color: #cbd5e1; color: #94a3b8; box-shadow: none; }
+
+    /* DECORATION CANVAS (Frosting & Sprinkles) */
+    #decor-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-mix" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-coin" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-bake" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge badge-coins">🪙 <span id="coins-txt">0</span></div>
+    <div class="hud-badge badge-happy">💖 <span id="happy-txt">100%</span></div>
+  </div>
+
+  <div id="game-container">
+    <!-- CUSTOMER COUNTER -->
+    <div id="counter-area">
+      <div id="customer-box" class="customer" style="display: none;">
+        <div class="bubble" id="order-bubble">I want a Cookie!</div>
+        <div class="customer-avatar" id="customer-avatar">🐱</div>
+      </div>
+    </div>
+
+    <!-- WORKBENCH -->
+    <div id="workbench">
+      <div style="font-weight: 800; color: #db2777; font-size: 1.1rem;" id="step-txt">Tap to Mix Dough!</div>
+      
+      <div class="baking-station" id="station" onclick="handleStationTap()">
+        <div class="pastry-display" id="pastry-img">🥣</div>
+        <canvas id="decor-canvas"></canvas>
+      </div>
+
+      <!-- UPGRADES MENU -->
+      <div id="upgrades">
+        <button class="btn-upg" id="btn-oven" onclick="buyOvenUpgrade()">
+          <span>🔥 Upgrade Oven</span>
+          <span style="font-size: 0.75rem; color: #d97706;" id="oven-cost">50 🪙</span>
+        </button>
+        <button class="btn-upg" id="btn-recipe" onclick="buyRecipeUpgrade()">
+          <span>📜 New Recipe</span>
+          <span style="font-size: 0.75rem; color: #d97706;" id="recipe-cost">100 🪙</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // GAME STATE
+    let coins = 20;
+    let happiness = 100;
+    let ovenLevel = 1;
+    let unlockedRecipes = ['cookie']; // 'cookie', 'cake', 'bread'
+
+    const RECIPES = {
+      cookie: { name: 'Cookie', icon: '🍪', price: 15, mixTaps: 3, bakeTime: 2000 },
+      cake:   { name: 'Cake', icon: '🎂', price: 35, mixTaps: 5, bakeTime: 1500 },
+      bread:  { name: 'Bread', icon: '🍞', price: 60, mixTaps: 7, bakeTime: 1200 }
+    };
+
+    const CUSTOMERS = ['🐱', '🐰', '🦊', '🐻', '🐼'];
+
+    let currentOrder = null;
+    let state = 'IDLE'; // IDLE, MIXING, BAKING, READY, DECORATING
+    let mixProgress = 0;
+    let currentPastry = 'cookie';
+
+    const pastryImg = document.getElementById('pastry-img');
+    const stepTxt = document.getElementById('step-txt');
+    const customerBox = document.getElementById('customer-box');
+
+    function updateHUD() {
+      document.getElementById('coins-txt').innerText = coins;
+      document.getElementById('happy-txt').innerText = Math.round(happiness) + '%';
+      
+      document.getElementById('btn-oven').disabled = coins < (ovenLevel * 50);
+      document.getElementById('btn-recipe').disabled = unlockedRecipes.length >= 3 || coins < (unlockedRecipes.length * 100);
+    }
+
+    function spawnCustomer() {
+      if (currentOrder) return;
+
+      const randomRecipeKey = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
+      currentOrder = RECIPES[randomRecipeKey];
+      
+      const avatar = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+      document.getElementById('customer-avatar').innerText = avatar;
+      document.getElementById('order-bubble').innerText = `Want: ${currentOrder.name} ${currentOrder.icon}`;
+      
+      customerBox.style.display = 'flex';
+      resetBakingStation();
+    }
+
+    function resetBakingStation() {
+      state = 'MIXING';
+      mixProgress = 0;
+      currentPastry = currentOrder ? currentOrder.name.toLowerCase() : 'cookie';
+      pastryImg.innerText = '🥣';
+      stepTxt.innerText = `Tap ${currentOrder.mixTaps}x to Mix ${currentOrder.name}!`;
+    }
+
+    function handleStationTap() {
+      if (!currentOrder) return;
+
+      if (state === 'MIXING') {
+        mixProgress++;
+        playSound('snd-mix');
+        pastryImg.style.transform = 'scale(1.1)';
+        setTimeout(() => pastryImg.style.transform = 'scale(1)', 100);
+
+        if (mixProgress >= currentOrder.mixTaps) {
+          startBaking();
+        }
+      } else if (state === 'READY') {
+        serveCustomer();
+      }
+    }
+
+    function startBaking() {
+      state = 'BAKING';
+      pastryImg.innerText = '⏱️';
+      stepTxt.innerText = 'Baking in progress...';
+
+      const bakeSpeedMult = 1 - (ovenLevel - 1) * 0.2;
+      setTimeout(() => {
+        state = 'READY';
+        pastryImg.innerText = currentOrder.icon;
+        stepTxt.innerText = 'Baked! Tap to serve!';
+        playSound('snd-bake');
+      }, currentOrder.bakeTime * bakeSpeedMult);
+    }
+
+    function serveCustomer() {
+      coins += currentOrder.price;
+      happiness = Math.min(100, happiness + 5);
+      playSound('snd-coin');
+      updateHUD();
+
+      // Customer leaves happy
+      customerBox.style.display = 'none';
+      currentOrder = null;
+      pastryImg.innerText = '✨';
+      stepTxt.innerText = 'Served! Next customer incoming...';
+
+      setTimeout(spawnCustomer, 1500);
+    }
+
+    function buyOvenUpgrade() {
+      const cost = ovenLevel * 50;
+      if (coins >= cost) {
+        coins -= cost;
+        ovenLevel++;
+        document.getElementById('oven-cost').innerText = (ovenLevel * 50) + ' 🪙';
+        updateHUD();
+      }
+    }
+
+    function buyRecipeUpgrade() {
+      const cost = unlockedRecipes.length * 100;
+      if (coins >= cost && unlockedRecipes.length < 3) {
+        coins -= cost;
+        if (unlockedRecipes.length === 1) unlockedRecipes.push('cake');
+        else if (unlockedRecipes.length === 2) unlockedRecipes.push('bread');
+
+        if (unlockedRecipes.length >= 3) {
+          document.getElementById('recipe-cost').innerText = 'MAXED';
+        } else {
+          document.getElementById('recipe-cost').innerText = (unlockedRecipes.length * 100) + ' 🪙';
+        }
+        updateHUD();
+      }
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    // Auto decrease happiness slightly over time to keep game loop active
+    setInterval(() => {
+      if (currentOrder && happiness > 20) {
+        happiness -= 0.5;
+        updateHUD();
+      }
+    }, 1000);
+
+    // Initial setup
+    updateHUD();
+    spawnCustomer();
+  </script>
+</body>
+  </html>
+  
