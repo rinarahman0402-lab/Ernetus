@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Will-O-Wisp Tag</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #090514; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: none;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD OVERLAY */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 450px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10; pointer-events: none;
+    }
+    .hud-badge {
+      background: rgba(15, 5, 29, 0.85); border: 2px solid #a855f7;
+      backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 16px;
+      font-weight: 800; font-size: 0.95rem; color: #c084fc;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    }
+
+    /* SHOOT BUTTON */
+    #shoot-btn {
+      position: absolute; bottom: 25px; right: 25px; width: 85px; height: 85px;
+      border-radius: 50%; background: radial-gradient(circle, #ff5500 0%, #991b1b 100%);
+      border: 3px solid #ffaa00; color: #fff; font-size: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(255, 85, 0, 0.6), 0 6px 0 #7f1d1d;
+      cursor: pointer; z-index: 20; touch-action: manipulation;
+    }
+    #shoot-btn:active { transform: scale(0.92) translateY(4px); box-shadow: 0 0 10px rgba(255, 85, 0, 0.4), 0 2px 0 #7f1d1d; }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(9, 5, 20, 0.92); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #a855f7; color: #fff; border: 3px solid #fff;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #6b21a8; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #6b21a8; }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO SYNTH/SFX -->
+  <audio id="snd-tag" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-fire" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge">👻 Tagged: <span id="ghost-count">0</span> / 10</div>
+    <div class="hud-badge">⏱️ Time: <span id="timer-txt">0.0s</span></div>
+  </div>
+
+  <!-- SHOOT WILL-O-WISP BUTTON -->
+  <div id="shoot-btn" onclick="shootFire(event)" ontouchstart="shootFire(event)">🔥</div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.5rem; color: #c084fc; margin: 0; text-shadow: 0 0 15px rgba(168,85,247,0.6);">WILL-O-WISP TAG</h1>
+    <p style="font-size: 0.95rem; color: #e9d5ff; max-width: 320px; margin-top: 12px; line-height: 1.4;">
+      Drag screen/mouse to control <b>Gengar</b>.<br>
+      Tap <b>🔥 Fire Button</b> or <b>Spacebar</b> to blast Will-O-Wisps.<br><br>
+      Tag all 10 fleeing ghosts in the haunted city!
+    </p>
+    <button class="btn-main" onclick="startGame()">START TAG 👻</button>
+  </div>
+
+  <div id="overlay-win" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.8rem; color: #4ade80; margin: 0; text-shadow: 0 0 15px rgba(74,222,128,0.5);">CITY PURIFIED! 🎉</h1>
+    <p style="font-size: 1.1rem; color: #e9d5ff; margin-top: 10px;">You tagged all 10 ghosts!</p>
+    <p style="font-size: 1.3rem; margin-top: 5px;">Final Time: <span id="final-time" style="color: #4ade80; font-weight:bold;">0.0s</span></p>
+    <button class="btn-main" onclick="restartGame()">PLAY AGAIN</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let isPlaying = false;
+    let startTime = 0;
+    let elapsedTime = 0;
+
+    // GENGAR (PLAYER)
+    const gengar = { x: 0, y: 0, r: 28, speed: 0.15, targetX: 0, targetY: 0 };
+
+    // GAME OBJECTS
+    let ghosts = [];
+    let fireballs = [];
+    let buildings = [];
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (!isPlaying) {
+        gengar.x = canvas.width / 2;
+        gengar.y = canvas.height / 2;
+        gengar.targetX = gengar.x;
+        gengar.targetY = gengar.y;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // GENERATE HAUNTED CITY BUILDINGS
+    function generateCity() {
+      buildings = [];
+      const cols = 4;
+      const rows = 3;
+      const cellW = canvas.width / cols;
+      const cellH = canvas.height / rows;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (Math.random() > 0.35) {
+            buildings.push({
+              x: c * cellW + cellW * 0.2,
+              y: r * cellH + cellH * 0.2,
+              w: cellW * 0.6,
+              h: cellH * 0.6
+            });
+          }
+        }
+      }
+    }
+
+    // SPAWN 10 FLEEING GHOSTS
+    function spawnGhosts() {
+      ghosts = [];
+      for (let i = 0; i < 10; i++) {
+        ghosts.push({
+          x: Math.random() * (canvas.width - 80) + 40,
+          y: Math.random() * (canvas.height - 80) + 40,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          r: 20,
+          tagged: false
+        });
+      }
+    }
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      generateCity();
+      spawnGhosts();
+      fireballs = [];
+      particles = [];
+      gengar.x = canvas.width / 2;
+      gengar.y = canvas.height / 2;
+      gengar.targetX = gengar.x;
+      gengar.targetY = gengar.y;
+
+      startTime = Date.now();
+      isPlaying = true;
+      updateHUD();
+    }
+
+    function updateHUD() {
+      const remaining = ghosts.filter(g => g.tagged).length;
+      document.getElementById('ghost-count').innerText = remaining;
+      if (isPlaying) {
+        elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        document.getElementById('timer-txt').innerText = elapsedTime + 's';
+      }
+    }
+
+    // CONTROLS: DRAG TOUCH & MOUSE
+    function setTargetPos(e) {
+      if (!isPlaying) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      // Don't drag if clicking fire button
+      if (clientX > window.innerWidth - 120 && clientY > window.innerHeight - 120) return;
+
+      gengar.targetX = clientX;
+      gengar.targetY = clientY;
+    }
+
+    window.addEventListener('pointerdown', setTargetPos);
+    window.addEventListener('pointermove', (e) => {
+      if (e.buttons > 0 || e.touches) setTargetPos(e);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && isPlaying) shootFire();
+    });
+
+    // SHOOT WILL-O-WISP
+    function shootFire(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (!isPlaying) return;
+
+      // Nearest ghost angle or forward trajectory
+      let targetAngle = 0;
+      let closestDist = Infinity;
+      ghosts.filter(g => !g.tagged).forEach(g => {
+        const d = Math.hypot(g.x - gengar.x, g.y - gengar.y);
+        if (d < closestDist) {
+          closestDist = d;
+          targetAngle = Math.atan2(g.y - gengar.y, g.x - gengar.x);
+        }
+      });
+
+      if (closestDist === Infinity) targetAngle = Math.random() * Math.PI * 2;
+
+      fireballs.push({
+        x: gengar.x,
+        y: gengar.y,
+        vx: Math.cos(targetAngle) * 9,
+        vy: Math.sin(targetAngle) * 9,
+        r: 12,
+        life: 70
+      });
+
+      playSound('snd-fire');
+    }
+
+    function spawnParticles(x, y, color) {
+      for (let i = 0; i < 12; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          radius: Math.random() * 4 + 2,
+          alpha: 1,
+          color
+        });
+      }
+    }
+
+    // GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. HAUNTED CITY BACKGROUND & BUILDINGS
+      ctx.fillStyle = '#0f0a1c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#1e1333';
+      ctx.strokeStyle = '#4c1d95';
+      ctx.lineWidth = 2;
+      buildings.forEach(b => {
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        // Spooky windows
+        ctx.fillStyle = 'rgba(234, 179, 8, 0.3)';
+        ctx.fillRect(b.x + 10, b.y + 10, 12, 16);
+        ctx.fillRect(b.x + b.w - 22, b.y + 10, 12, 16);
+        ctx.fillStyle = '#1e1333';
+      });
+
+      if (!isPlaying) return;
+
+      updateHUD();
+
+      // 2. MOVE GENGAR
+      gengar.x += (gengar.targetX - gengar.x) * gengar.speed;
+      gengar.y += (gengar.targetY - gengar.y) * gengar.speed;
+
+      // Draw Gengar
+      ctx.fillStyle = '#7e22ce';
+      ctx.beginPath();
+      ctx.arc(gengar.x, gengar.y, gengar.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Gengar Eyes & Smile
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(gengar.x - 10, gengar.y - 6, 5, 0, Math.PI * 2);
+      ctx.arc(gengar.x + 10, gengar.y - 6, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. UPDATE & DRAW FLEEING GHOSTS
+      ghosts.forEach(g => {
+        if (g.tagged) return;
+
+        // Flee mechanics from Gengar
+        const dx = g.x - gengar.x;
+        const dy = g.y - gengar.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 180) {
+          g.vx += (dx / dist) * 0.4;
+          g.vy += (dy / dist) * 0.4;
+        }
+
+        // Speed cap & bounce off screen bounds
+        g.x += g.vx;
+        g.y += g.vy;
+        g.vx *= 0.96;
+        g.vy *= 0.96;
+
+        if (g.x < 30 || g.x > canvas.width - 30) g.vx *= -1;
+        if (g.y < 30 || g.y > canvas.height - 30) g.vy *= -1;
+
+        // Tag check via Direct Touch
+        if (dist < gengar.r + g.r) {
+          tagGhost(g);
+        }
+
+        // Draw Ghost Sprite
+        ctx.font = '2rem sans-serif';
+        ctx.fillText('👻', g.x - 16, g.y + 10);
+      });
+
+      // 4. FIREBALLS (WILL-O-WISP)
+      for (let i = fireballs.length - 1; i >= 0; i--) {
+        const f = fireballs[i];
+        f.x += f.vx;
+        f.y += f.vy;
+        f.life--;
+
+        // Fire particle effect
+        ctx.fillStyle = '#ff5500';
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fireball collision with Ghosts
+        ghosts.filter(g => !g.tagged).forEach(g => {
+          if (Math.hypot(f.x - g.x, f.y - g.y) < f.r + g.r) {
+            tagGhost(g);
+            f.life = 0;
+          }
+        });
+
+        if (f.life <= 0) fireballs.splice(i, 1);
+      }
+
+      // 5. PARTICLES
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+
+      // WIN CHECK
+      if (ghosts.every(g => g.tagged)) {
+        winGame();
+      }
+    }
+
+    function tagGhost(ghost) {
+      ghost.tagged = true;
+      playSound('snd-tag');
+      spawnParticles(ghost.x, ghost.y, '#c084fc');
+    }
+
+    function winGame() {
+      isPlaying = false;
+      playSound('snd-win');
+      document.getElementById('final-time').innerText = elapsedTime + 's';
+      document.getElementById('overlay-win').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-win').style.display = 'none';
+      initGame();
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
