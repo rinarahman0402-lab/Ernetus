@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pokemon Catcher Game</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(180deg, #38bdf8 0%, #4ade80 100%);
+      user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    /* TOP HUD */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; align-items: center; z-index: 10;
+      background: rgba(255, 255, 255, 0.9); padding: 8px 18px;
+      border-radius: 20px; border: 3px solid #facc15;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 90%; max-width: 420px;
+      justify-content: space-between;
+    }
+    #counter { font-size: 1.1rem; font-weight: bold; color: #1e293b; }
+    #bgm-btn {
+      background: #facc15; border: 2px solid #ca8a04; border-radius: 12px;
+      padding: 6px 12px; font-weight: bold; cursor: pointer; font-size: 0.85rem;
+    }
+
+    /* GAME FIELD */
+    #field {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* POKEMON TARGET */
+    .pokemon-target {
+      position: absolute; width: 100px; height: 100px;
+      cursor: pointer; transition: transform 0.2s;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .pokemon-target img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* POKEBALL ANIMATION MESH */
+    #pokeball-anim {
+      position: absolute; width: 60px; height: 60px; display: none;
+      z-index: 20; transform-origin: center center;
+    }
+    #pokeball-anim img { width: 100%; height: 100%; }
+
+    /* ANIMATIONS */
+    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    
+    .throw-anim {
+      animation: flyBall 0.5s ease-out forwards;
+    }
+    @keyframes flyBall {
+      0% { transform: scale(0.3) translateY(200px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .shake-anim {
+      animation: shakeBall 0.6s ease-in-out 3;
+    }
+    @keyframes shakeBall {
+      0%, 100% { transform: rotate(0deg); }
+      20% { transform: rotate(-25deg); }
+      60% { transform: rotate(25deg); }
+    }
+
+    /* POKEDEX MODAL */
+    #pokedex-modal {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; color: #fff;
+    }
+    .pokedex-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+      background: #fff; padding: 20px; border-radius: 16px; border: 4px solid #ef4444;
+      max-width: 320px;
+    }
+    .dex-slot {
+      width: 70px; height: 70px; border-radius: 10px; background: #e2e8f0;
+      display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .dex-slot img { width: 80%; height: 80%; opacity: 0.2; filter: grayscale(100%); }
+    .dex-slot.caught img { opacity: 1; filter: grayscale(0%); }
+
+    /* TOAST MESSAGE */
+    #toast {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px;
+      font-weight: bold; display: none; z-index: 50; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS (REPLACE SRC WITH YOUR DIRECT URLS) -->
+  <audio id="snd-throw" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-shake" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="snd-success" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-cry" src="https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="counter">Caught: <span id="caught-count" style="color: #ef4444;">0</span> / 6</div>
+    <button id="bgm-btn" onclick="toggleBGM()">🎵 BGM: OFF</button>
+  </div>
+
+  <!-- GAME PLAYFIELD -->
+  <div id="field">
+    <div id="pokeball-anim">
+      <!-- Pokeball Sprite -->
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokeball">
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- POKEDEX MODAL -->
+  <div id="pokedex-modal">
+    <h1 style="color: #facc15; text-shadow: 2px 2px #000; margin-top: 0;">🎉 POKEDEX COMPLETE!</h1>
+    <p>You caught all 6 wild Pokemon!</p>
+    <div class="pokedex-grid" id="pokedex-grid"></div>
+    <button style="margin-top:20px; padding:10px 20px; background:#ef4444; color:#fff; border:none; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="restartGame()">PLAY AGAIN</button>
+  </div>
+
+  <script>
+    // EDITABLE POKEMON LIST (Replace sprite URLs or cries here easily)
+    const pokemonList = [
+      { id: 'pikachu', name: 'Pikachu', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png' },
+      { id: 'charizard', name: 'Charizard', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png' },
+      { id: 'bulbasaur', name: 'Bulbasaur', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png' },
+      { id: 'squirtle', name: 'Squirtle', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png' },
+      { id: 'eevee', name: 'Eevee', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png' },
+      { id: 'gengar', name: 'Gengar', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png' }
+    ];
+
+    let caughtSet = new Set();
+    let currentPokemon = null;
+    let isBusy = false;
+    let bgmPlaying = false;
+
+    const field = document.getElementById('field');
+    const ballAnim = document.getElementById('pokeball-anim');
+
+    function init() {
+      renderPokedex();
+      spawnRandomPokemon();
+    }
+
+    function renderPokedex() {
+      const grid = document.getElementById('pokedex-grid');
+      grid.innerHTML = '';
+      pokemonList.forEach(p => {
+        const slot = document.createElement('div');
+        slot.className = `dex-slot ${caughtSet.has(p.id) ? 'caught' : ''}`;
+        slot.innerHTML = `<img src="${p.sprite}" title="${p.name}">`;
+        grid.appendChild(slot);
+      });
+    }
+
+    function spawnRandomPokemon() {
+      if (caughtSet.size >= 6) {
+        document.getElementById('pokedex-modal').style.display = 'flex';
+        return;
+      }
+
+      // Filter uncaught or pick randomly
+      currentPokemon = pokemonList[Math.floor(Math.random() * pokemonList.length)];
+
+      const el = document.createElement('div');
+      el.className = 'pokemon-target';
+      el.id = 'active-pokemon';
+      el.innerHTML = `<img src="${currentPokemon.sprite}">`;
+
+      // Random Screen Position
+      const x = 10 + Math.random() * 70;
+      const y = 20 + Math.random() * 55;
+      el.style.left = x + '%';
+      el.style.top = y + '%';
+
+      el.onclick = () => catchAttempt(el);
+      field.appendChild(el);
+    }
+
+    function catchAttempt(pokemonEl) {
+      if (isBusy) return;
+      isBusy = true;
+
+      // 1. Play Cry Audio
+      playSound('snd-cry');
+
+      // 2. Position Ball on Target
+      const rect = pokemonEl.getBoundingClientRect();
+      ballAnim.style.left = (rect.left + 20) + 'px';
+      ballAnim.style.top = (rect.top + 20) + 'px';
+      ballAnim.style.display = 'block';
+
+      // Throw Sound + Anim
+      playSound('snd-throw');
+      ballAnim.className = 'throw-anim';
+
+      setTimeout(() => {
+        pokemonEl.remove(); // Hide wild Pokemon inside ball
+
+        // 3. Shake 3 Times
+        ballAnim.className = 'shake-anim';
+        playSound('snd-shake');
+
+        setTimeout(() => {
+          ballAnim.className = '';
+          ballAnim.style.display = 'none';
+
+          // 4. 70% Catch Logic
+          const isSuccess = Math.random() < 0.7;
+          if (isSuccess) {
+            playSound('snd-success');
+            caughtSet.add(currentPokemon.id);
+            document.getElementById('caught-count').innerText = caughtSet.size;
+            showToast(`Gotcha! ${currentPokemon.name} was caught! 🔴`);
+            renderPokedex();
+          } else {
+            showToast(`Oh no! ${currentPokemon.name} broke free! 💨`);
+          }
+
+          isBusy = false;
+          setTimeout(spawnRandomPokemon, 1200);
+
+        }, 1800); // 3 shakes duration
+
+      }, 500); // Throw duration
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.innerText = text;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    function toggleBGM() {
+      const bgm = document.getElementById('bgm');
+      const btn = document.getElementById('bgm-btn');
+      if (!bgmPlaying) {
+        bgm.play().catch(() => {});
+        btn.innerText = '🎵 BGM: ON';
+        bgmPlaying = true;
+      } else {
+        bgm.pause();
+        btn.innerText = '🎵 BGM: OFF';
+        bgmPlaying = false;
+      }
+    }
+
+    function restartGame() {
+      caughtSet.clear();
+      document.getElementById('caught-count').innerText = '0';
+      document.getElementById('pokedex-modal').style.display = 'none';
+      isBusy = false;
+      renderPokedex();
+      spawnRandomPokemon();
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
