@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Study Simulator</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0f172a; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #fff; z-index: 10; pointer-events: none; width: 90%; max-width: 500px;
+    }
+    .status-card {
+      background: rgba(15, 23, 42, 0.85); border: 2px solid #3b82f6;
+      border-radius: 12px; padding: 12px 20px; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+    .bar-container {
+      width: 100%; background: #334155; border-radius: 8px; height: 16px;
+      margin: 8px 0; overflow: hidden; border: 1px solid #64748b;
+    }
+    .bar-fill { height: 100%; transition: width 0.1s linear; }
+    #neck-txt { color: #f43f5e; font-size: 0.9rem; margin-top: 4px; }
+    #controls {
+      position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10; width: 90%; max-width: 400px; justify-content: center;
+    }
+    .btn {
+      background: #3b82f6; color: #fff; border: 2px solid #93c5fd;
+      padding: 12px 20px; border-radius: 10px; font-weight: bold;
+      font-size: 0.95rem; cursor: pointer; flex: 1; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+    .btn:active { transform: scale(0.95); background: #2563eb; }
+    #game-over {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); display: none; flex-direction: column;
+      align-items: center; justify-content: center; color: #fff; z-index: 100; text-align: center;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin:0 0 8px 0; font-size: 1.5rem; color: #93c5fd;">📚 STUDY SIMULATOR</h1>
+    <div class="status-card">
+      <div>TIME STUDIED: <span id="time-txt" style="color:#facc15; font-weight:bold;">0s</span></div>
+      
+      <div style="margin-top: 8px; font-size: 0.85rem;">FOCUS METER</div>
+      <div class="bar-container">
+        <div id="focus-bar" class="bar-fill" style="width: 100%; background: #22c55e;"></div>
+      </div>
+
+      <div style="margin-top: 4px; font-size: 0.85rem;">NECK PAIN</div>
+      <div class="bar-container">
+        <div id="neck-bar" class="bar-fill" style="width: 0%; background: #f43f5e;"></div>
+      </div>
+      <div id="neck-txt">Posture Status: Fine</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="study-btn" class="btn" onclick="studyClick()">✏️ READ & STUDY</button>
+  </div>
+
+  <div id="game-over">
+    <h1 style="font-size: 3rem; color: #f43f5e; margin: 0;">💥 FOCUS LOST!</h1>
+    <p style="font-size: 1.2rem; margin: 10px 0 20px 0;">Your neck snapped forward and you passed out on the textbook.</p>
+    <button class="btn" style="max-width: 200px;" onclick="resetStudy()">STUDY AGAIN</button>
+  </div>
+
+  <script>
+    let scene, camera, renderer, headMesh;
+    let focus = 100, neckPain = 0, secondsStudied = 0;
+    let studyTimer = null, active = true;
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 2, 5);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.2);
+      light.position.set(2, 5, 5);
+      scene.add(light, new THREE.AmbientLight(0xffffff, 0.4));
+
+      // Desk
+      const deskGeo = new THREE.BoxGeometry(4, 0.2, 2);
+      const deskMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 });
+      const desk = new THREE.Mesh(deskGeo, deskMat);
+      desk.position.set(0, -0.6, 0);
+      scene.add(desk);
+
+      // Textbook on desk
+      const bookGeo = new THREE.BoxGeometry(1.2, 0.1, 1.6);
+      const bookMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+      const book = new THREE.Mesh(bookGeo, bookMat);
+      book.position.set(0, -0.45, 0.2);
+      scene.add(book);
+
+      // Student Head
+      const headGeo = new THREE.SphereGeometry(0.6, 16, 16);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.5 });
+      headMesh = new THREE.Mesh(headGeo, headMat);
+      headMesh.position.set(0, 0.8, 0);
+      scene.add(headMesh);
+
+      studyTimer = setInterval(tick, 1000);
+      animate();
+    }
+
+    function studyClick() {
+      if (!active) return;
+      focus = Math.min(100, focus + 8);
+      neckPain = Math.min(100, neckPain + 3);
+      updateBars();
+    }
+
+    function tick() {
+      if (!active) return;
+
+      secondsStudied++;
+      focus -= 5;
+      neckPain = Math.min(100, neckPain + 1.5);
+
+      document.getElementById('time-txt').innerText = secondsStudied + 's';
+      updateBars();
+
+      if (focus <= 0 || neckPain >= 100) {
+        active = false;
+        document.getElementById('game-over').style.display = 'flex';
+      }
+    }
+
+    function updateBars() {
+      const focusFill = document.getElementById('focus-bar');
+      const neckFill = document.getElementById('neck-bar');
+
+      focusFill.style.width = focus + '%';
+      neckFill.style.width = neckPain + '%';
+
+      if (neckPain > 75) {
+        document.getElementById('neck-txt').innerText = "Posture Status: CRITICAL NECK PAIN!";
+      } else if (neckPain > 40) {
+        document.getElementById('neck-txt').innerText = "Posture Status: Neck Achy...";
+      } else {
+        document.getElementById('neck-txt').innerText = "Posture Status: Fine";
+      }
+    }
+
+    function resetStudy() {
+      focus = 100;
+      neckPain = 0;
+      secondsStudied = 0;
+      active = true;
+      document.getElementById('game-over').style.display = 'none';
+      updateBars();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (headMesh && active) {
+        // Head drops lower as neck pain increases
+        const tilt = (neckPain / 100) * 0.8;
+        headMesh.position.y = 0.8 - tilt * 0.4;
+        headMesh.rotation.x = tilt;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
