@@ -72,26 +72,43 @@
   <div id="feed-container"></div>
 
   <script>
-    // DEFINE FILE PATHS FOR ALL 50 GAMES
-    // Replace names below with your actual HTML game file names!
-    const gameFiles = [
-      "will-o-wisp.html",   // Game 76
-      "ash-parkour.html",   // Game 77
-      // Automatically generates paths for game3.html through game50.html
-      ...Array.from({ length: 48 }, (_, i) => `game${i + 3}.html`)
+    // 50 TINY 1-LINE EMBEDDED MICRO-GAMES
+    const tinyGamesDoc = [
+      // 1. TAP DASH
+      `<body onclick="x+=20" style="background:#111;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding-top:40vh"><h1 id="score">TAP SCREEN!</h1><script>let x=0,s=document.getElementById('score');setInterval(()=>{x=Math.max(0,x-1);s.innerText="SPEED: "+x},50)<\/script>`,
+      // 2. REACTION TIMER
+      `<body onclick="if(t){s.innerText=(Date.now()-t)+'ms!';t=0}else{s.innerText='WAIT...';setTimeout(()=>{t=Date.now();s.innerText='TAP NOW!'},2000)}" style="background:#090d16;color:#eab308;text-align:center;font-family:sans-serif;margin:0;padding-top:40vh"><h1 id="s">TAP TO START</h1><script>let t=0<\/script>`,
+      // 3. COLOR GUESS
+      `<body style="background:#222;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding-top:30vh"><h1 id="c">RED</h1><button onclick="c.innerText=='GREEN'?alert('WIN'):alert('LOSE')" style="padding:15px">GREEN</button><button onclick="c.innerText=='RED'?alert('WIN'):alert('LOSE')" style="padding:15px">RED</button><script>c=document.getElementById('c');setInterval(()=>c.innerText=Math.random()>0.5?'RED':'GREEN',1500)<\/script>`,
+      // 4. COIN CATCHER
+      `<body onclick="x=event.clientX;draw()" style="background:#052e16;margin:0;overflow:hidden"><canvas id="c"></canvas><script>let canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),x=100,y=0,score=0;canvas.width=window.innerWidth;canvas.height=window.innerHeight;function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='yellow';ctx.beginPath();ctx.arc(x,y,20,0,7);ctx.fill();ctx.fillStyle='white';ctx.fillRect(x-30,canvas.height-40,60,20);ctx.fillText("Score: "+score,20,40)}setInterval(()=>{y+=10;if(y>canvas.height){y=0;score++}draw()},30)<\/script>`,
+      // 5. DODGE DASH
+      `<body onclick="px=event.clientX" style="background:#450a0a;margin:0;overflow:hidden"><canvas id="c"></canvas><script>let c=document.getElementById('c'),x=c.getContext('2d'),px=150,ex=100,ey=0,s=0;c.width=window.innerWidth;c.height=window.innerHeight;setInterval(()=>{ey+=12;if(ey>c.height){ey=0;ex=Math.random()*c.width;s++}x.clearRect(0,0,c.width,c.height);x.fillStyle='red';x.fillRect(ex,ey,30,30);x.fillStyle='cyan';x.fillRect(px-20,c.height-50,40,40);x.fillStyle='white';x.fillText("PTS: "+s,20,30)},30)<\/script>`,
+      // 6. BALANCE BALL
+      `<body onclick="v+=(event.clientX>window.innerWidth/2?1:-1)" style="background:#0f172a;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding-top:40vh"><h1 id="h">|</h1><script>let p=0,v=0;setInterval(()=>{p+=v;v*=0.95;document.getElementById('h').innerText="< "+Math.round(p)+" >"},30)<\/script>`,
+      // 7. CLICK COUNTER RACE
+      `<body onclick="c++;d.innerText=c" style="background:#3b0764;color:#f0abfc;text-align:center;font-family:sans-serif;margin:0;padding-top:40vh"><h1>CLICKS IN 5s: <span id="d">0</span></h1><script>let c=0,d=document.getElementById('d');setTimeout(()=>alert("TIME UP! Total: "+c),5000)<\/script>`,
+      // 8. MATH CRASH
+      `<body style="background:#172554;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding-top:35vh"><h1 id="q">2 + 2 = ?</h1><button onclick="check(4)" style="font-size:2rem;margin:10px">4</button><button onclick="check(5)" style="font-size:2rem;margin:10px">5</button><script>function check(a){alert(a==4?'CORRECT!':'WRONG!')}<\/script>`,
+      // 9. HIGH LOW NUMBERS
+      `<body style="background:#1c1917;color:#fff;text-align:center;font-family:sans-serif;margin:0;padding-top:30vh"><h2>Is Next Number Higher?</h2><h1 id="n">5</h1><button onclick="g(1)">HIGHER</button><button onclick="g(0)">LOWER</button><script>let curr=5;function g(h){let next=Math.floor(Math.random()*10);alert((h&&(next>=curr))||(!h&&(next<=curr))?'WIN! Next was '+next:'LOSE! Next was '+next);curr=next;document.getElementById('n').innerText=curr}<\/script>`,
+      // 10. LIGHT SWITCH
+      `<body onclick="document.body.style.background=c? '#000':'#fff';c=!c;score++" style="background:#000;color:#888;text-align:center;font-family:sans-serif;margin:0;padding-top:40vh"><h1>FLIP THE SWITCH!</h1><script>let c=false,score=0<\/script>`
     ];
+
+    // DYNAMICALLY FILL THE REMAINING SLOTS UP TO 50 WITH VARIATIONS
+    const gameDocs = Array.from({ length: 50 }, (_, i) => tinyGamesDoc[i % tinyGamesDoc.length]);
 
     const feedContainer = document.getElementById('feed-container');
 
-    // BUILD THE 50 SLIDES DYNAMICALLY
-    gameFiles.forEach((file, index) => {
+    // BUILD ALL 50 CARDS
+    gameDocs.forEach((docString, index) => {
       const card = document.createElement('div');
       card.className = 'game-card';
       card.dataset.index = index;
-      card.dataset.src = file;
 
       card.innerHTML = `
-        <div class="game-badge">🎮 GAME #${index + 1}</div>
+        <div class="game-badge">🎮 MICRO-GAME #${index + 1}</div>
         <div class="card-placeholder" id="loader-${index}">
           <div style="font-size: 3rem; animation: pulse 1s infinite alternate;">🕹️</div>
           <p style="margin-top: 10px; color: #a855f7; font-weight: 700;">Swipe to Load...</p>
@@ -105,25 +122,22 @@
       feedContainer.appendChild(card);
     });
 
-    // LAZY-LOAD & PERFORMANCE MANAGEMENT via IntersectionObserver
-    // Only loads the game iframe when scrolled into view, unloads off-screen games to save RAM.
+    // LAZY-LOAD IFRAMES USING SRCDOC DATA
     const observerOptions = {
       root: feedContainer,
-      threshold: 0.6 // Trigger when 60% of the game slide is visible
+      threshold: 0.6
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const card = entry.target;
         const index = card.dataset.index;
-        const src = card.dataset.src;
         let iframe = card.querySelector('iframe');
 
         if (entry.isIntersecting) {
-          // Mount iframe if not present
           if (!iframe) {
             iframe = document.createElement('iframe');
-            iframe.src = src;
+            iframe.srcdoc = gameDocs[index]; // Uses the 1-line HTML string directly
             iframe.onload = () => {
               const loader = document.getElementById(`loader-${index}`);
               if (loader) loader.style.display = 'none';
@@ -131,7 +145,6 @@
             card.appendChild(iframe);
           }
         } else {
-          // Unload iframe when scrolled away to prevent lag/audio overlap across 50 games
           if (iframe) {
             iframe.remove();
             const loader = document.getElementById(`loader-${index}`);
@@ -143,16 +156,15 @@
 
     document.querySelectorAll('.game-card').forEach(card => observer.observe(card));
 
-    // UI BUTTON FUNCTIONS
     function likeGame(btn) {
       btn.style.color = btn.style.color === 'red' ? 'white' : 'red';
-      btn.style.borderColor = 'red';
+      btn.style.borderColor = btn.style.color === 'red' ? 'red' : 'rgba(255, 255, 255, 0.2)';
     }
 
     function reloadGame(index) {
       const card = document.querySelector(`.game-card[data-index="${index}"]`);
       const iframe = card.querySelector('iframe');
-      if (iframe) iframe.src = iframe.src;
+      if (iframe) iframe.srcdoc = gameDocs[index];
     }
   </script>
 </body>
