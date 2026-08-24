@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Demon Slayer Sword Hero - Breathing Style Game</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #09090b; color: #fff; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD */
+    #hud {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 600px; z-index: 10; pointer-events: none;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .hud-row { display: flex; justify-content: space-between; align-items: center; }
+    .score-box { font-size: 1.2rem; font-weight: bold; color: #facc15; text-shadow: 0 0 8px #ca8a04; }
+
+    /* HP BAR */
+    .hp-container {
+      width: 100%; background: rgba(30, 41, 59, 0.8); border: 2px solid #64748b;
+      height: 16px; border-radius: 8px; overflow: hidden; position: relative;
+    }
+    #hp-fill { width: 100%; height: 100%; background: #ef4444; transition: width 0.1s linear; }
+
+    /* BOSS HP BAR */
+    #boss-hp-container {
+      width: 100%; background: rgba(30, 41, 59, 0.8); border: 2px solid #a855f7;
+      height: 14px; border-radius: 8px; overflow: hidden; display: none; margin-top: 4px;
+    }
+    #boss-hp-fill { width: 100%; height: 100%; background: #a855f7; transition: width 0.1s linear; }
+
+    /* BREATHING STYLE CONTROLS */
+    #style-controls {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10; width: 95%; max-width: 500px; justify-content: center;
+    }
+    .style-btn {
+      flex: 1; padding: 12px 8px; border-radius: 12px; font-weight: bold;
+      font-size: 0.85rem; cursor: pointer; border: 2px solid #fff; text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: transform 0.1s;
+    }
+    .style-btn:active { transform: scale(0.95); }
+    .btn-water { background: #0284c7; color: #fff; border-color: #38bdf8; }
+    .btn-flame { background: #dc2626; color: #fff; border-color: #f87171; }
+    .btn-thunder { background: #eab308; color: #000; border-color: #fef08a; }
+
+    /* TOP RIGHT BUTTONS */
+    #top-btns { position: absolute; top: 10px; right: 10px; z-index: 20; display: flex; gap: 8px; }
+    .icon-btn {
+      background: rgba(15, 23, 42, 0.8); border: 1px solid #64748b; color: #fff;
+      padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer;
+    }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(9, 9, 11, 0.9); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #ef4444; color: #fff; border: 2px solid #fff;
+      padding: 12px 28px; border-radius: 10px; font-weight: bold;
+      font-size: 1.1rem; cursor: pointer; margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PLACEHOLDER AUDIO ELEMENTS -->
+  <audio id="snd-slash" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-hit" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="snd-breath" src="https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3"></audio>
+  <audio id="snd-roar" src="https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3"></audio>
+  <audio id="snd-over" src="https://assets.mixkit.co/active_storage/sfx/253.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-row">
+      <div class="score-box">SCORE: <span id="score-txt">0</span></div>
+      <div style="font-size:0.85rem; color:#94a3b8;">STYLE: <span id="style-txt" style="color:#38bdf8; font-weight:bold;">WATER</span></div>
+    </div>
+    <div class="hp-container">
+      <div id="hp-fill"></div>
+    </div>
+    <div id="boss-hp-container">
+      <div id="boss-hp-fill"></div>
+    </div>
+  </div>
+
+  <div id="top-btns">
+    <button class="icon-btn" onclick="togglePause()">⏸️</button>
+  </div>
+
+  <!-- BREATHING STYLE SWITCHER -->
+  <div id="style-controls">
+    <button class="style-btn btn-water" onclick="selectStyle('water')">🌊 WATER</button>
+    <button class="style-btn btn-flame" onclick="selectStyle('flame')">🔥 FLAME</button>
+    <button class="style-btn btn-thunder" onclick="selectStyle('thunder')">⚡ THUNDER</button>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- START / GAME OVER / PAUSE OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.2rem; color: #ef4444; margin: 0; text-shadow: 0 0 10px #7f1d1d;">⚔️ DEMON SLAYER</h1>
+    <h3 style="margin: 5px 0 20px 0; color: #94a3b8;">Sword Hero - Breathing Style</h3>
+    <p style="font-size: 0.95rem; max-width: 320px; color: #cbd5e1;">Tap incoming demons to slash them! Switch Breathing Styles for different slash colors and stats.</p>
+    <button class="btn-main" onclick="startGame()">START SLAYING</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.5rem; color: #ef4444; margin: 0;">💥 GAME OVER</h1>
+    <p style="font-size: 1.2rem; margin: 10px 0;">Final Score: <span id="final-score" style="color: #facc15;">0</span></p>
+    <button class="btn-main" onclick="restartGame()">TRY AGAIN</button>
+  </div>
+
+  <div id="overlay-pause" class="overlay" style="display: none;">
+    <h1 style="font-size: 2rem; color: #facc15;">⏸️ PAUSED</h1>
+    <button class="btn-main" onclick="togglePause()">RESUME</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // GAME STATE
+    let isPlaying = false, isPaused = false;
+    let score = 0, playerHP = 100;
+    let currentStyle = 'water';
+    let enemies = [], particles = [], slashes = [], texts = [];
+    let spawnTimer = null, bossTimer = null;
+    let bossActive = false, bossRef = null;
+
+    // BREATHING STYLES CONFIG
+    const styles = {
+      water: { color: '#38bdf8', speedMult: 1.0, dmg: 25, radius: 45, name: 'WATER' },
+      flame: { color: '#f87171', speedMult: 0.8, dmg: 55, radius: 55, name: 'FLAME' },
+      thunder: { color: '#fef08a', speedMult: 1.8, dmg: 20, radius: 35, name: 'THUNDER' }
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // CUSTOMIZABLE SPRITES (Replace shapes with Image elements here if desired)
+    // Example: const demonImg = new Image(); demonImg.src = 'your-demon-url.png';
+
+    function selectStyle(styleName) {
+      if (currentStyle === styleName) return;
+      currentStyle = styleName;
+      document.getElementById('style-txt').innerText = styles[styleName].name;
+      document.getElementById('style-txt').style.color = styles[styleName].color;
+      playSound('snd-breath');
+    }
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      score = 0; playerHP = 100; enemies = []; particles = []; slashes = []; texts = [];
+      bossActive = false; bossRef = null;
+      document.getElementById('boss-hp-container').style.display = 'none';
+      updateHPUI();
+      document.getElementById('score-txt').innerText = score;
+      isPlaying = true; isPaused = false;
+
+      playSound('bgm');
+
+      if (spawnTimer) clearInterval(spawnTimer);
+      if (bossTimer) clearInterval(bossTimer);
+
+      spawnTimer = setInterval(spawnEnemy, 1800);
+      bossTimer = setInterval(spawnBoss, 30000);
+    }
+
+    function spawnEnemy() {
+      if (!isPlaying || isPaused || bossActive) return;
+      
+      const side = Math.random() < 0.5 ? 'left' : 'right';
+      const enemy = {
+        x: side === 'left' ? -40 : canvas.width + 40,
+        y: canvas.height * 0.4 + Math.random() * (canvas.height * 0.3),
+        radius: 25,
+        speed: (1.2 + Math.random() * 1.5),
+        hp: 40, maxHp: 40,
+        isBoss: false,
+        side: side
+      };
+
+      enemies.push(enemy);
+      playSound('snd-roar');
+    }
+
+    function spawnBoss() {
+      if (!isPlaying || isPaused || bossActive) return;
+
+      bossActive = true;
+      const side = Math.random() < 0.5 ? 'left' : 'right';
+      bossRef = {
+        x: side === 'left' ? -60 : canvas.width + 60,
+        y: canvas.height * 0.45,
+        radius: 50,
+        speed: 0.8,
+        hp: 350, maxHp: 350,
+        isBoss: true,
+        side: side
+      };
+
+      enemies.push(bossRef);
+      document.getElementById('boss-hp-container').style.display = 'block';
+      updateBossHP();
+      playSound('snd-roar');
+    }
+
+    // INTERACTION / SLASH LOGIC
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!isPlaying || isPaused) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const style = styles[currentStyle];
+      playSound('snd-slash');
+
+      // Create Sword Slash Effect
+      slashes.push({
+        x: clickX, y: clickY,
+        color: style.color,
+        radius: style.radius,
+        life: 1.0
+      });
+
+      let hitAny = false;
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const en = enemies[i];
+        const dist = Math.hypot(en.x - clickX, en.y - clickY);
+
+        if (dist < en.radius + style.radius) {
+          hitAny = true;
+          playSound('snd-hit');
+
+          // Perfect Slash Timing (Clicked close to center)
+          const isPerfect = dist < en.radius * 0.5;
+          const damage = style.dmg * (isPerfect ? 1.5 : 1.0);
+          en.hp -= damage;
+
+          // Spawn Floating Text
+          texts.push({
+            x: en.x, y: en.y - 20,
+            text: isPerfect ? 'PERFECT! ' + Math.round(damage) : Math.round(damage),
+            color: isPerfect ? '#facc15' : '#ffffff',
+            life: 1.0
+          });
+
+          // Spawn Hit Particles
+          for (let p = 0; p < 12; p++) {
+            particles.push({
+              x: en.x, y: en.y,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              color: style.color,
+              life: 1.0
+            });
+          }
+
+          if (en.isBoss) updateBossHP();
+
+          if (en.hp <= 0) {
+            score += en.isBoss ? 500 : 100;
+            document.getElementById('score-txt').innerText = score;
+
+            if (en.isBoss) {
+              bossActive = false;
+              bossRef = null;
+              document.getElementById('boss-hp-container').style.display = 'none';
+            }
+
+            enemies.splice(i, 1);
+          }
+        }
+      }
+    });
+
+    function updateHPUI() {
+      document.getElementById('hp-fill').style.width = Math.max(0, playerHP) + '%';
+    }
+
+    function updateBossHP() {
+      if (!bossRef) return;
+      const pct = (bossRef.hp / bossRef.maxHp) * 100;
+      document.getElementById('boss-hp-fill').style.width = Math.max(0, pct) + '%';
+    }
+
+    // GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      // Clear Canvas
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (!isPlaying || isPaused) return;
+
+      const playerX = canvas.width / 2;
+      const playerY = canvas.height * 0.55;
+
+      // Draw Player Hero Node
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#0284c7';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(playerX, playerY, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Update & Draw Enemies
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const en = enemies[i];
+
+        // Move toward player
+        const angle = Math.atan2(playerY - en.y, playerX - en.x);
+        en.x += Math.cos(angle) * en.speed * (en.isBoss ? 0.8 : 1.0);
+        en.y += Math.sin(angle) * en.speed * (en.isBoss ? 0.8 : 1.0);
+
+        // Draw Demon
+        ctx.fillStyle = en.isBoss ? '#a855f7' : '#ef4444';
+        ctx.shadowColor = en.isBoss ? '#9333ea' : '#dc2626';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(en.x, en.y, en.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Demon Eyes
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(en.x - en.radius * 0.3, en.y - 5, 4, 0, Math.PI * 2);
+        ctx.arc(en.x + en.radius * 0.3, en.y - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Check distance to player (Damage player)
+        const distToPlayer = Math.hypot(en.x - playerX, en.y - playerY);
+        if (distToPlayer < en.radius + 15) {
+          playerHP -= en.isBoss ? 30 : 15;
+          updateHPUI();
+
+          enemies.splice(i, 1);
+
+          if (en.isBoss) {
+            bossActive = false;
+            bossRef = null;
+            document.getElementById('boss-hp-container').style.display = 'none';
+          }
+
+          if (playerHP <= 0) gameOver();
+        }
+      }
+
+      // Draw Particle FX
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.life -= 0.04;
+
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+
+      // Draw Sword Slashes
+      for (let i = slashes.length - 1; i >= 0; i--) {
+        const s = slashes[i];
+        s.life -= 0.1;
+
+        if (s.life <= 0) { slashes.splice(i, 1); continue; }
+
+        ctx.strokeStyle = s.color;
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 20;
+        ctx.lineWidth = 6 * s.life;
+        ctx.globalAlpha = s.life;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius * (2 - s.life), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+      }
+
+      // Draw Damage / Floating Texts
+      for (let i = texts.length - 1; i >= 0; i--) {
+        const t = texts[i];
+        t.y -= 1; t.life -= 0.03;
+
+        if (t.life <= 0) { texts.splice(i, 1); continue; }
+
+        ctx.fillStyle = t.color;
+        ctx.font = 'bold 16px sans-serif';
+        ctx.globalAlpha = t.life;
+        ctx.fillText(t.text, t.x - 20, t.y);
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      clearInterval(spawnTimer);
+      clearInterval(bossTimer);
+      playSound('snd-over');
+      document.getElementById('final-score').innerText = score;
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-over').style.display = 'none';
+      initGame();
+    }
+
+    function togglePause() {
+      if (!isPlaying) return;
+      isPaused = !isPaused;
+      document.getElementById('overlay-pause').style.display = isPaused ? 'flex' : 'none';
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+  </html>
+  
