@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Viral Baker TikTok</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #000; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    /* TIKTOK PHONE OVERLAY LAYOUT */
+    #phone-screen {
+      position: relative; width: 100%; height: 100%; max-width: 480px;
+      margin: 0 auto; background: #111; display: flex; flex-direction: column;
+      justify-content: space-between; overflow: hidden;
+    }
+
+    /* TOP LIVE BAR */
+    #top-bar {
+      position: absolute; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 20;
+    }
+    .live-badge {
+      background: #ff0050; color: #fff; padding: 4px 10px; border-radius: 12px;
+      font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;
+      animation: pulse 1.5s infinite;
+    }
+    .stats-badge {
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+      padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.9rem;
+      border: 1px solid rgba(255,255,255,0.2); color: #25f4ee;
+    }
+
+    /* MAIN STREAM AREA */
+    #stream-area {
+      position: relative; width: 100%; height: 65%; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle, #222 0%, #050505 100%);
+    }
+
+    /* CAKE DISPLAY */
+    .cake-container {
+      width: 220px; height: 220px; background: rgba(255,255,255,0.05);
+      border: 3px dashed #00f2fe; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 5rem;
+      cursor: pointer; position: relative; box-shadow: 0 0 25px rgba(0, 242, 254, 0.2);
+    }
+    .cake-container:active { transform: scale(0.96); }
+
+    /* FLOATING COMMENTS STREAM */
+    #comment-stream {
+      position: absolute; bottom: 10px; left: 12px; width: 70%;
+      height: 140px; display: flex; flex-direction: column-reverse;
+      gap: 6px; overflow: hidden; pointer-events: none; z-index: 15;
+    }
+    .comment-bubble {
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+      padding: 6px 12px; border-radius: 14px; font-size: 0.8rem;
+      animation: slideIn 0.3s ease-out; width: fit-content; max-width: 100%;
+    }
+    .comment-user { font-weight: bold; color: #25f4ee; margin-right: 4px; }
+    .comment-hate { color: #ff0050; border: 1px solid #ff0050; }
+
+    /* RIGHT TIKTOK ACTION BUTTONS */
+    #actions-side {
+      position: absolute; right: 12px; bottom: 20px; display: flex;
+      flex-direction: column; align-items: center; gap: 16px; z-index: 20;
+    }
+    .action-btn {
+      display: flex; flex-direction: column; align-items: center; font-size: 1.8rem;
+      cursor: pointer; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    .action-label { font-size: 0.75rem; font-weight: 800; margin-top: 2px; }
+
+    /* CONTROLS & RECIPES BAR */
+    #bottom-panel {
+      height: 35%; background: #181818; border-top: 2px solid #333;
+      padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .timer-bar {
+      width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden;
+    }
+    .timer-fill { width: 100%; height: 100%; background: #00f2fe; transition: width 0.1s linear; }
+
+    .recipe-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .recipe-card {
+      min-width: 110px; background: #262626; border: 2px solid #444; border-radius: 12px;
+      padding: 8px; text-align: center; cursor: pointer; display: flex;
+      flex-direction: column; align-items: center; gap: 4px;
+    }
+    .recipe-card.active { border-color: #ff0050; background: #331019; }
+    .recipe-card.locked { opacity: 0.5; cursor: not-allowed; }
+
+    /* ANIMATIONS & FLOATING LIKES */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .floating-heart {
+      position: absolute; font-size: 1.5rem; pointer-events: none;
+      animation: floatUp 1s ease-out forwards; z-index: 30;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) scale(1.4); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-pop" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-cash" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <div id="phone-screen">
+    <!-- TOP LIVE HEADER -->
+    <div id="top-bar">
+      <div class="live-badge">LIVE</div>
+      <div class="stats-badge">💖 Likes: <span id="likes-txt">0</span></div>
+      <div class="stats-badge" style="color: #fe2c55;">💵 $<span id="money-txt">0</span></div>
+    </div>
+
+    <!-- STREAM DISPLAY -->
+    <div id="stream-area">
+      <div class="cake-container" id="cake-box" onclick="tapDecorate()">
+        <span id="cake-icon">🧁</span>
+      </div>
+
+      <!-- SIDE TIKTOK BUTTONS -->
+      <div id="actions-side">
+        <div class="action-btn">❤️<span class="action-label" id="side-likes">0</span></div>
+        <div class="action-btn">💬<span class="action-label">99+</span></div>
+        <div class="action-btn">🔁<span class="action-label">Share</span></div>
+      </div>
+
+      <!-- LIVE COMMENTS -->
+      <div id="comment-stream"></div>
+    </div>
+
+    <!-- BOTTOM PANEL & RECIPES -->
+    <div id="bottom-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 800; font-size: 0.9rem; color: #aaa;" id="target-txt">Tap fast to decorate!</span>
+        <span style="font-weight: 900; color: #ff0050;" id="timer-txt">5.0s</span>
+      </div>
+
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+
+      <div class="recipe-grid">
+        <div class="recipe-card active" id="rec-cupcake" onclick="selectRecipe('cupcake')">
+          <span style="font-size: 1.5rem;">🧁</span>
+          <span style="font-size: 0.75rem; font-weight: bold;">Cupcake</span>
+          <span style="font-size: 0.65rem; color: #25f4ee;">FREE</span>
+        </div>
+        <div class="recipe-card locked" id="rec-3milk" onclick="unlockRecipe('3milk')">
+          <span style="font-size: 1.5rem;">🥛</span>
+          <span style="font-size: 0.75rem; font-weight: bold;">3 Milk Cake</span>
+          <span style="font-size: 0.65rem; color: #ff0050;" id="cost-3milk">$100</span>
+        </div>
+        <div class="recipe-card locked" id="rec-dubai" onclick="unlockRecipe('dubai')">
+          <span style="font-size: 1.5rem;">🍫</span>
+          <span style="font-size: 0.75rem; font-weight: bold;">Dubai Choco</span>
+          <span style="font-size: 0.65rem; color: #ff0050;" id="cost-dubai">$300</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let likes = 0;
+    let money = 0;
+    let tapsNeeded = 8;
+    let currentTaps = 0;
+    let timeRemaining = 5.0;
+    let timerInterval = null;
+    let isLive = false;
+
+    let selectedRecipe = 'cupcake';
+    let unlocked = { cupcake: true, '3milk': false, dubai: false };
+
+    const RECIPES = {
+      cupcake: { icon: '🧁', name: 'Cupcake', taps: 8, reward: 25, reqLikes: 50 },
+      '3milk': { icon: '🍰', name: '3 Milk Cake', taps: 14, reward: 80, reqLikes: 200 },
+      dubai:   { icon: '🍫', name: 'Dubai Choco', taps: 22, reward: 220, reqLikes: 600 }
+    };
+
+    const GOOD_COMMENTS = ["OMGG LOOKS DELICIOUS! 🤤", "RECIPE PLEASE! 🙏", "Viral material right here 🔥", "I need 10 of these!! 😍"];
+    const BAD_COMMENTS = ["Bro ruined it 💀", "Hate comment incoming 😡", "Looks raw... 🤢", "UNFOLLOWING 👎"];
+
+    function updateHUD() {
+      document.getElementById('likes-txt').innerText = likes;
+      document.getElementById('side-likes').innerText = likes;
+      document.getElementById('money-txt').innerText = money;
+    }
+
+    function selectRecipe(key) {
+      if (!unlocked[key]) return;
+      selectedRecipe = key;
+      document.querySelectorAll('.recipe-card').forEach(el => el.classList.remove('active'));
+      document.getElementById(`rec-${key}`).classList.add('active');
+      resetOrder();
+    }
+
+    function unlockRecipe(key) {
+      const cost = key === '3milk' ? 100 : 300;
+      if (money >= cost && !unlocked[key]) {
+        money -= cost;
+        unlocked[key] = true;
+        document.getElementById(`rec-${key}`).classList.remove('locked');
+        document.getElementById(`cost-${key}`).innerText = 'UNLOCKED';
+        document.getElementById(`cost-${key}`).style.color = '#25f4ee';
+        selectRecipe(key);
+        updateHUD();
+      }
+    }
+
+    function resetOrder() {
+      clearInterval(timerInterval);
+      const recipe = RECIPES[selectedRecipe];
+      tapsNeeded = recipe.taps;
+      currentTaps = 0;
+      timeRemaining = 5.0;
+
+      document.getElementById('cake-icon').innerText = '🥣';
+      document.getElementById('target-txt').innerText = `Tap fast! (${currentTaps}/${tapsNeeded})`;
+      document.getElementById('timer-fill').style.width = '100%';
+
+      isLive = true;
+      timerInterval = setInterval(() => {
+        timeRemaining -= 0.1;
+        document.getElementById('timer-txt').innerText = Math.max(0, timeRemaining).toFixed(1) + 's';
+        document.getElementById('timer-fill').style.width = (timeRemaining / 5.0 * 100) + '%';
+
+        if (timeRemaining <= 0) {
+          failOrder();
+        }
+      }, 100);
+    }
+
+    function tapDecorate() {
+      if (!isLive) return;
+
+      currentTaps++;
+      playSound('snd-pop');
+      spawnHeart();
+
+      document.getElementById('target-txt').innerText = `Tap fast! (${currentTaps}/${tapsNeeded})`;
+
+      if (currentTaps >= tapsNeeded) {
+        completeOrder();
+      }
+    }
+
+    function completeOrder() {
+      isLive = false;
+      clearInterval(timerInterval);
+      const recipe = RECIPES[selectedRecipe];
+
+      document.getElementById('cake-icon').innerText = recipe.icon;
+      likes += recipe.reqLikes;
+      money += recipe.reward;
+      playSound('snd-cash');
+      updateHUD();
+
+      addComment(GOOD_COMMENTS[Math.floor(Math.random() * GOOD_COMMENTS.length)], false);
+      document.getElementById('target-txt').innerText = 'VIRAL HIT! Next cake starting...';
+
+      setTimeout(resetOrder, 1500);
+    }
+
+    function failOrder() {
+      isLive = false;
+      clearInterval(timerInterval);
+
+      document.getElementById('cake-icon').innerText = '💩';
+      addComment(BAD_COMMENTS[Math.floor(Math.random() * BAD_COMMENTS.length)], true);
+      document.getElementById('target-txt').innerText = 'FAILED! Trend lost...';
+
+      setTimeout(resetOrder, 1500);
+    }
+
+    function addComment(text, isHate) {
+      const stream = document.getElementById('comment-stream');
+      const bubble = document.createElement('div');
+      bubble.className = `comment-bubble ${isHate ? 'comment-hate' : ''}`;
+      bubble.innerHTML = `<span class="comment-user">@user${Math.floor(Math.random()*900+100)}</span> ${text}`;
+      stream.prepend(bubble);
+
+      if (stream.children.length > 4) {
+        stream.lastElementChild.remove();
+      }
+    }
+
+    function spawnHeart() {
+      const cakeBox = document.getElementById('cake-box');
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.innerText = Math.random() > 0.5 ? '❤️' : '💖';
+      heart.style.left = (cakeBox.offsetLeft + Math.random() * 120 + 40) + 'px';
+      heart.style.top = (cakeBox.offsetTop + Math.random() * 120 + 40) + 'px';
+      document.getElementById('stream-area').appendChild(heart);
+      setTimeout(() => heart.remove(), 1000);
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    // Start stream loop
+    playSound('bgm');
+    updateHUD();
+    resetOrder();
+  </script>
+</body>
+  </html>
+  
