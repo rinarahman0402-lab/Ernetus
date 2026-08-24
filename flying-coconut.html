@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flying Coconut Simulator</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #38bdf8; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #fff; z-index: 10; pointer-events: none; width: 90%;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .hud-box {
+      background: rgba(15, 23, 42, 0.6); padding: 8px 18px;
+      border-radius: 12px; display: inline-block; font-size: 1.2rem; font-weight: bold;
+    }
+    #controls-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 20px;
+      font-size: 0.9rem; pointer-events: none; z-index: 10;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin:0 0 5px 0; font-size: 1.6rem;">🥥 FLYING COCONUT SIMULATOR</h1>
+    <div class="hud-box">CLOUDS COLLECTED: ☁️ <span id="score-txt" style="color:#facc15;">0</span></div>
+  </div>
+
+  <div id="controls-hint">DRAG / TOUCH TO FLY THE COCONUT</div>
+
+  <script>
+    let scene, camera, renderer, coconut;
+    let clouds = [], score = 0;
+    let isDragging = false, lastX = 0, lastY = 0;
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x38bdf8);
+      scene.fog = new THREE.FogExp2(0x38bdf8, 0.02);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 2, 7);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.5);
+      light.position.set(5, 10, 5);
+      scene.add(light, new THREE.AmbientLight(0xffffff, 0.6));
+
+      // Create Coconut Player
+      const coconutGeo = new THREE.SphereGeometry(0.8, 16, 16);
+      coconutGeo.scale(0.85, 1, 0.85); // Make it slightly oblong
+      const coconutMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+      coconut = new THREE.Mesh(coconutGeo, coconutMat);
+      coconut.position.set(0, 0, 0);
+      scene.add(coconut);
+
+      // Add cute coconut hair/fibers
+      const topGeo = new THREE.ConeGeometry(0.2, 0.4, 8);
+      const topMat = new THREE.MeshBasicMaterial({ color: 0x451a03 });
+      const top = new THREE.Mesh(topGeo, topMat);
+      top.position.y = 0.8;
+      coconut.add(top);
+
+      spawnInitialClouds();
+      setupControls();
+      animate();
+    }
+
+    function createCloudMesh() {
+      const group = new THREE.Group();
+      const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, transparent: true, opacity: 0.9 });
+      
+      const puffs = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < puffs; i++) {
+        const size = 0.6 + Math.random() * 0.6;
+        const pGeo = new THREE.SphereGeometry(size, 8, 8);
+        const puff = new THREE.Mesh(pGeo, cloudMat);
+        puff.position.set((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 1.2);
+        group.add(puff);
+      }
+      return group;
+    }
+
+    function spawnInitialClouds() {
+      for (let i = 0; i < 15; i++) {
+        const cloud = createCloudMesh();
+        cloud.position.set(
+          (Math.random() - 0.5) * 16,
+          (Math.random() - 0.5) * 10,
+          -10 - Math.random() * 40
+        );
+        scene.add(cloud);
+        clouds.push(cloud);
+      }
+    }
+
+    function setupControls() {
+      const onStart = (x, y) => { isDragging = true; lastX = x; lastY = y; };
+      const onMove = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - lastX;
+        const dy = y - lastY;
+        lastX = x; lastY = y;
+
+        coconut.position.x += dx * 0.015;
+        coconut.position.y -= dy * 0.015;
+
+        coconut.position.x = Math.max(-6, Math.min(6, coconut.position.x));
+        coconut.position.y = Math.max(-4, Math.min(4, coconut.position.y));
+      };
+      const onEnd = () => isDragging = false;
+
+      window.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY));
+      window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+      window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onEnd);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Coconut Rotation
+      coconut.rotation.x += 0.02;
+      coconut.rotation.y += 0.03;
+
+      // Move Clouds Forward
+      clouds.forEach(cloud => {
+        cloud.position.z += 0.25;
+
+        // Collision Check
+        const dist = coconut.position.distanceTo(cloud.position);
+        if (dist < 1.4) {
+          score++;
+          document.getElementById('score-txt').innerText = score;
+          // Recycle Cloud back to distance
+          cloud.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 10, -50);
+        }
+
+        // Reset offscreen clouds
+        if (cloud.position.z > 10) {
+          cloud.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 10, -50);
+        }
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
