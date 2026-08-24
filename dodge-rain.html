@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Dodge the Rain</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif;
+      background: #1e293b; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD */
+    #hud {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.75); border: 2px solid #38bdf8;
+      border-radius: 20px; padding: 8px 20px; font-weight: 800; font-size: 1.2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); color: #38bdf8; z-index: 10;
+      pointer-events: none; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #0284c7; color: #fff; border: 3px solid #fff;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #0369a1; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #0369a1; }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-over" src="https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">⏱️ <span id="time-txt">0.0s</span></div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.8rem; color: #38bdf8; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">DODGE THE RAIN</h1>
+    <p style="font-size: 1rem; color: #cbd5e1; max-width: 320px; margin-top: 10px;">
+      Drag your finger left and right to move. Avoid the falling raindrops as they speed up!
+    </p>
+    <button class="btn-main" onclick="startGame()">START GAME</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.8rem; color: #ef4444; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">SOAKED!</h1>
+    <p style="font-size: 1.2rem; margin-top: 10px;">You survived: <span id="final-time" style="color: #38bdf8; font-weight:bold;">0.0s</span></p>
+    <button class="btn-main" onclick="restartGame()">TRY AGAIN</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let isPlaying = false;
+    let startTime = 0;
+    let elapsedTime = 0;
+    let raindrops = [];
+    let particles = [];
+
+    let player = {
+      x: 0, y: 0,
+      radius: 18,
+      targetX: 0
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      player.y = canvas.height - 70;
+      if (!isPlaying) {
+        player.x = canvas.width / 2;
+        player.targetX = canvas.width / 2;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // CONTROLS (TOUCH & MOUSE)
+    function handleMove(clientX) {
+      if (!isPlaying) return;
+      player.targetX = clientX;
+    }
+
+    window.addEventListener('pointermove', (e) => handleMove(e.clientX));
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.tagName !== 'BUTTON') handleMove(e.clientX);
+    });
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      startTime = Date.now();
+      elapsedTime = 0;
+      raindrops = [];
+      particles = [];
+      player.x = canvas.width / 2;
+      player.targetX = canvas.width / 2;
+      
+      playSound('bgm');
+      isPlaying = true;
+    }
+
+    function spawnRaindrop() {
+      // Speed multiplier increases over time
+      const difficultyMult = 1 + (elapsedTime / 15);
+      const radius = 6 + Math.random() * 8;
+
+      raindrops.push({
+        x: Math.random() * canvas.width,
+        y: -20,
+        radius: radius,
+        speed: (4 + Math.random() * 4) * difficultyMult,
+        length: radius * 2.5
+      });
+    }
+
+    function createSplash(x, y) {
+      for (let i = 0; i < 6; i++) {
+        particles.push({
+          x: x, y: y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.8) * 3,
+          radius: Math.random() * 3 + 1,
+          life: 1.0
+        });
+      }
+    }
+
+    // DRAW CARTOON CLOUDS BACKGROUND
+    function drawClouds() {
+      ctx.fillStyle = '#334155';
+      const cloudY = 40;
+      
+      for (let i = -1; i < 6; i++) {
+        const x = i * (canvas.width / 4);
+        ctx.beginPath();
+        ctx.arc(x, cloudY, 50, 0, Math.PI * 2);
+        ctx.arc(x + 35, cloudY - 15, 45, 0, Math.PI * 2);
+        ctx.arc(x + 70, cloudY, 50, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // MAIN GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      // Clear & Background
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawClouds();
+
+      if (!isPlaying) return;
+
+      // Update Time
+      elapsedTime = (Date.now() - startTime) / 1000;
+      document.getElementById('time-txt').innerText = elapsedTime.toFixed(1) + 's';
+
+      // Move Player smoothly toward finger/cursor
+      player.x += (player.targetX - player.x) * 0.25;
+      // Keep player inside canvas
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+
+      // Draw Player (Cute Yellow Duck / Mascot)
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Player Face Details
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(player.x - 6, player.y - 4, 3, 0, Math.PI * 2);
+      ctx.arc(player.x + 6, player.y - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y + 4, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dynamic Spawn Rate
+      const spawnFrequency = Math.max(2, Math.floor(12 - elapsedTime / 4));
+      if (Math.floor(Math.random() * spawnFrequency) === 0) {
+        spawnRaindrop();
+      }
+
+      // Update & Draw Raindrops
+      for (let i = raindrops.length - 1; i >= 0; i--) {
+        const drop = raindrops[i];
+        drop.y += drop.speed;
+
+        // Draw Tear Drop Shape
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(drop.x, drop.y, drop.radius, 0, Math.PI);
+        ctx.lineTo(drop.x, drop.y - drop.length);
+        ctx.closePath();
+        ctx.fill();
+
+        // Check Collision with Player
+        const dist = Math.hypot(drop.x - player.x, drop.y - player.y);
+        if (dist < drop.radius + player.radius - 2) {
+          gameOver();
+        }
+
+        // Remove offscreen drops and make splash
+        if (drop.y > canvas.height + 10) {
+          createSplash(drop.x, canvas.height - 5);
+          raindrops.splice(i, 1);
+        }
+      }
+
+      // Update & Draw Splash Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      playSound('snd-over');
+      document.getElementById('final-time').innerText = elapsedTime.toFixed(1) + 's';
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-over').style.display = 'none';
+      initGame();
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
