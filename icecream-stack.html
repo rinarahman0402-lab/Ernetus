@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ice Cream Stack</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Quicksand, sans-serif;
+      background: linear-gradient(180deg, #bae6fd 0%, #fbcfe8 100%);
+      color: #334155; user-select: none; -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 450px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10; pointer-events: none;
+    }
+    .hud-badge {
+      background: rgba(255, 255, 255, 0.85); border: 2px solid #38bdf8;
+      border-radius: 20px; padding: 6px 14px; font-weight: 800; font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-score { border-color: #f472b6; color: #db2777; }
+    .badge-high { border-color: #fbbf24; color: #d97706; }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.85); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #f472b6; color: #fff; border: 3px solid #fff;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #db2777; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #db2777; }
+
+    /* FLOATING POPUP TEXT */
+    .pop-text {
+      position: absolute; font-weight: 900; font-size: 1.3rem; pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards; z-index: 20;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-30px) scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-drip" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-over" src="https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge badge-score">🍦 Score: <span id="score-txt">0</span></div>
+    <div class="hud-badge badge-high">👑 High: <span id="high-txt">0</span></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.6rem; color: #f472b6; margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.1);">ICE CREAM STACK</h1>
+    <p style="font-size: 0.95rem; color: #64748b; max-width: 300px; margin-top: 10px;">
+      Tap to drop swinging scoops on top of your cone! Vanilla = +2, Chocolate = +3, Strawberry = +5. Don't let the tower fall!
+    </p>
+    <button class="btn-main" onclick="startGame()">START STACKING</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.6rem; color: #ef4444; margin: 0;">SPLAT!</h1>
+    <p style="font-size: 1.2rem; margin-top: 10px;">Score: <span id="final-score" style="color: #f472b6; font-weight:bold;">0</span></p>
+    <p style="font-size: 1.1rem; color: #d97706;">High Score: <span id="final-high" style="font-weight:bold;">0</span></p>
+    <button class="btn-main" onclick="restartGame()">TRY AGAIN</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let score = 0;
+    let highScore = localStorage.getItem('icecream_high') || 0;
+    let isPlaying = false;
+
+    // FLAVOR TYPES
+    const FLAVORS = [
+      { name: 'Vanilla', pts: 2, color: '#fef08a', darkColor: '#fde047' },
+      { name: 'Chocolate', pts: 3, color: '#78350f', darkColor: '#451a03' },
+      { name: 'Strawberry', pts: 5, color: '#f472b6', darkColor: '#db2777' }
+    ];
+
+    let currentFlavor = null;
+    let swingingScoop = { x: 0, y: 0, r: 32, dir: 1, speed: 4 };
+    let stackedScoops = [];
+    let cone = { x: 0, y: 0, w: 60, h: 80 };
+    let cameraOffsetY = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cone.x = canvas.width / 2;
+      cone.y = canvas.height - 120;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function updateHUD() {
+      document.getElementById('score-txt').innerText = score;
+      document.getElementById('high-txt').innerText = highScore;
+    }
+
+    function spawnNextScoop() {
+      currentFlavor = FLAVORS[Math.floor(Math.random() * FLAVORS.length)];
+      swingingScoop.y = 120;
+      swingingScoop.speed = 3.5 + Math.min(score * 0.1, 6);
+    }
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      score = 0;
+      highScore = localStorage.getItem('icecream_high') || 0;
+      updateHUD();
+
+      stackedScoops = [];
+      cameraOffsetY = 0;
+      
+      swingingScoop.x = canvas.width / 2;
+      spawnNextScoop();
+
+      playSound('bgm');
+      isPlaying = true;
+    }
+
+    function dropScoop() {
+      if (!isPlaying) return;
+
+      const topItem = stackedScoops.length > 0 
+        ? stackedScoops[stackedScoops.length - 1] 
+        : { x: cone.x, y: cone.y - 10, r: cone.w / 2 };
+
+      const targetY = topItem.y - 32;
+      const distX = Math.abs(swingingScoop.x - topItem.x);
+
+      // Check stacking threshold
+      if (distX < 45) {
+        score += currentFlavor.pts;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('icecream_high', highScore);
+        }
+        updateHUD();
+
+        stackedScoops.push({
+          x: swingingScoop.x,
+          y: targetY,
+          r: swingingScoop.r,
+          flavor: currentFlavor
+        });
+
+        playSound('snd-drip');
+        showPopText(swingingScoop.x, targetY - cameraOffsetY, '+' + currentFlavor.pts, currentFlavor.darkColor);
+
+        // Adjust camera upwards when tower grows
+        if (targetY - cameraOffsetY < canvas.height * 0.45) {
+          cameraOffsetY += 40;
+        }
+
+        spawnNextScoop();
+      } else {
+        gameOver();
+      }
+    }
+
+    function showPopText(x, y, text, color) {
+      const el = document.createElement('div');
+      el.className = 'pop-text';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.color = color;
+      el.innerText = text;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.tagName !== 'BUTTON' && isPlaying) {
+        dropScoop();
+      }
+    });
+
+    // DRAW HELPER: Cute Scoop with Drips & Highlights
+    function drawScoop(x, y, r, flavor) {
+      ctx.fillStyle = flavor.color;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Drippy bottom edge
+      ctx.fillStyle = flavor.darkColor;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.arc(x + i * 12, y + r - 4, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Shine / Highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(x - 10, y - 10, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawCone(x, y, w, h) {
+      // Waffle Cone Triangle
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(x - w / 2, y);
+      ctx.lineTo(x + w / 2, y);
+      ctx.lineTo(x, y + h);
+      ctx.closePath();
+      ctx.fill();
+
+      // Waffle Grid Texture
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 15, y + 20); ctx.lineTo(x + 10, y + 50);
+      ctx.moveTo(x + 15, y + 20); ctx.lineTo(x - 10, y + 50);
+      ctx.stroke();
+    }
+
+    // MAIN GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      // Clear Screen
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(0, cameraOffsetY);
+
+      // 1. Draw Waffle Cone
+      drawCone(cone.x, cone.y, cone.w, cone.h);
+
+      // 2. Draw Stacked Scoops
+      stackedScoops.forEach(s => {
+        drawScoop(s.x, s.y, s.r, s.flavor);
+      });
+
+      ctx.restore();
+
+      if (!isPlaying) return;
+
+      // 3. Update & Draw Swinging Scoop
+      swingingScoop.x += swingingScoop.speed * swingingScoop.dir;
+      if (swingingScoop.x > canvas.width - 40 || swingingScoop.x < 40) {
+        swingingScoop.dir *= -1;
+      }
+
+      drawScoop(swingingScoop.x, swingingScoop.y, swingingScoop.r, currentFlavor);
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      playSound('snd-over');
+      document.getElementById('final-score').innerText = score;
+      document.getElementById('final-high').innerText = highScore;
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-over').style.display = 'none';
+      initGame();
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
