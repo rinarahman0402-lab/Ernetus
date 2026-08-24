@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Impossible Reaction Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Impact', 'Arial Black', sans-serif;
+      background: #000; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #fff; z-index: 10; pointer-events: none; width: 90%;
+    }
+    #instruction {
+      font-size: 1.5rem; text-shadow: 0 0 10px #000; color: #facc15; margin-top: 10px;
+    }
+    #overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(239, 68, 68, 0.95); display: none; flex-direction: column;
+      align-items: center; justify-content: center; color: #fff; z-index: 100;
+      text-align: center; padding: 20px;
+    }
+    .btn {
+      background: #fff; color: #ef4444; border: 3px solid #000;
+      padding: 14px 28px; border-radius: 12px; font-weight: bold;
+      font-size: 1.1rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .btn:active { transform: scale(0.95); }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin: 0; font-size: 2rem; color: #fff;">⚡ REACTION SPEED TEST</h1>
+    <div id="instruction">WAIT FOR GREEN... THEN CLICK!</div>
+  </div>
+
+  <div id="overlay">
+    <h1 style="font-size: 3.5rem; margin: 0; text-shadow: 0 0 20px #000;">❌ TOO SLOW! ❌</h1>
+    <p style="font-size: 1.4rem; margin-top: 10px;">The screen went RED the exact millisecond you clicked!</p>
+    <p style="font-size: 1.1rem; color: #facc15;">Reaction Time: 0.00001 ms (FAILED)</p>
+    <button class="btn" onclick="startTest()">TRY AGAIN</button>
+  </div>
+
+  <script>
+    let scene, camera, renderer, backdropMesh;
+    let isGreen = false;
+    let timer = null;
+
+    function init() {
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 5);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.5);
+      light.position.set(0, 0, 5);
+      scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+
+      // 3D Background Plane
+      const bgGeo = new THREE.PlaneGeometry(20, 20);
+      const bgMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2 }); // Starts Red
+      backdropMesh = new THREE.Mesh(bgGeo, bgMat);
+      scene.add(backdropMesh);
+
+      setupInteraction();
+      startTest();
+      animate();
+    }
+
+    function startTest() {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('instruction').innerText = "WAIT FOR GREEN...";
+      document.getElementById('instruction').style.color = "#facc15";
+      
+      isGreen = false;
+      backdropMesh.material.color.setHex(0xef4444); // Red state
+
+      if (timer) clearTimeout(timer);
+
+      // Random wait time before turning green
+      const waitTime = 2000 + Math.random() * 3000;
+      timer = setTimeout(() => {
+        isGreen = true;
+        backdropMesh.material.color.setHex(0x22c55e); // Green state
+        document.getElementById('instruction').innerText = "CLICK NOW!";
+        document.getElementById('instruction').style.color = "#22c55e";
+      }, waitTime);
+    }
+
+    function setupInteraction() {
+      const handlePress = () => {
+        if (document.getElementById('overlay').style.display === 'flex') return;
+
+        if (!isGreen) {
+          // Clicked too early
+          clearTimeout(timer);
+          alert("⚠️ TOO EARLY! You clicked before it turned green!");
+          startTest();
+        } else {
+          // Instant trap: turning red the exact instant they attempt to click
+          backdropMesh.material.color.setHex(0xef4444);
+          document.getElementById('overlay').style.display = 'flex';
+        }
+      };
+
+      window.addEventListener('mousedown', handlePress);
+      window.addEventListener('touchstart', handlePress);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
