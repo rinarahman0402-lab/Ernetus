@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sweet Rice Treats</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Quicksand, sans-serif;
+      background: #fff7ed; color: #431407; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 450px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10;
+    }
+    .hud-badge {
+      background: rgba(255, 255, 255, 0.9); border: 2px solid #f97316;
+      border-radius: 20px; padding: 6px 14px; font-weight: 800; font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15); display: flex; align-items: center; gap: 6px;
+    }
+
+    #game-container {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      justify-content: space-between; padding-top: 60px; padding-bottom: 10px;
+    }
+
+    /* CUSTOMER AREA */
+    #customer-area {
+      height: 30%; background: linear-gradient(180deg, #ffedd5 0%, #fff7ed 100%);
+      border-bottom: 4px solid #fed7aa; display: flex; justify-content: center;
+      align-items: center; position: relative;
+    }
+    .customer-box {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .bubble {
+      background: #fff; border: 2px solid #ea580c; border-radius: 14px;
+      padding: 6px 12px; font-weight: bold; font-size: 0.85rem; color: #c2410c;
+    }
+    .customer-avatar { font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+
+    /* KITCHEN AREA */
+    #kitchen {
+      height: 70%; display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between; padding: 15px; position: relative;
+    }
+    .instruction-text {
+      font-weight: 800; color: #c2410c; font-size: 1.1rem; text-align: center;
+    }
+
+    .interactive-pan {
+      width: 240px; height: 240px; border-radius: 50%; background: #78716c;
+      border: 12px solid #44403c; position: relative; display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15); transition: transform 0.05s;
+    }
+    .pan-contents {
+      width: 190px; height: 190px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; transition: background 0.3s; position: relative;
+      overflow: hidden;
+    }
+
+    /* UPGRADES BAR */
+    #upgrades {
+      width: 100%; max-width: 420px; display: flex; gap: 10px; justify-content: center;
+    }
+    .btn-upg {
+      flex: 1; background: #fff; border: 2px solid #f97316; color: #c2410c;
+      padding: 8px; border-radius: 16px; font-weight: bold; font-size: 0.75rem;
+      cursor: pointer; text-align: center; box-shadow: 0 4px 0 #f97316;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .btn-upg:active { transform: translateY(3px); box-shadow: none; }
+    .btn-upg:disabled { opacity: 0.4; border-color: #cbd5e1; color: #94a3b8; box-shadow: none; }
+
+    .shake-anim { animation: shake 0.2s infinite; }
+    @keyframes shake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-4px, 4px) rotate(-3deg); }
+      75% { transform: translate(4px, -4px) rotate(3deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-sizzle" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-coin" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge">🪙 <span id="coins-txt">0</span></div>
+    <div class="hud-badge">✨ Level: <span id="lvl-txt">1</span></div>
+  </div>
+
+  <div id="game-container">
+    <!-- CUSTOMER AREA -->
+    <div id="customer-area">
+      <div class="customer-box" id="customer-box" style="display: none;">
+        <div class="bubble" id="order-bubble">I'd love a sweet treat!</div>
+        <div class="customer-avatar" id="customer-avatar">🐱</div>
+      </div>
+    </div>
+
+    <!-- KITCHEN WORKBENCH -->
+    <div id="kitchen">
+      <div class="instruction-text" id="step-txt">Tap the pan to stir melting sugar!</div>
+
+      <div class="interactive-pan" id="pan" onclick="handlePanAction()">
+        <div class="pan-contents" id="pan-contents" style="background: #fef3c7;">
+          <span id="pan-icon">🍬</span>
+        </div>
+      </div>
+
+      <!-- UPGRADES MENU -->
+      <div id="upgrades">
+        <button class="btn-upg" id="btn-choco" onclick="buyChocoUpgrade()">
+          <span>🍫 Chocolate Coat</span>
+          <span style="color: #d97706;" id="choco-cost">40 🪙</span>
+        </button>
+        <button class="btn-upg" id="btn-caramel" onclick="buyCaramelUpgrade()">
+          <span>🍯 Caramel Drizzle</span>
+          <span style="color: #d97706;" id="caramel-cost">80 🪙</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let coins = 0;
+    let step = 0; // 0: Melt Sugar, 1: Shake Puffed Rice, 2: Roll Ball, 3: Coat/Drizzle, 4: Serve
+    let stirCount = 0;
+    let shakeCount = 0;
+    let rollCount = 0;
+
+    let hasChoco = false;
+    let hasCaramel = false;
+    let currentTreatValue = 10;
+
+    const CUSTOMERS = ['🐱', '🐰', '🦊', '🐻', '🐼', '🐶'];
+    const stepTxt = document.getElementById('step-txt');
+    const pan = document.getElementById('pan');
+    const panContents = document.getElementById('pan-contents');
+    const panIcon = document.getElementById('pan-icon');
+    const customerBox = document.getElementById('customer-box');
+
+    function updateHUD() {
+      document.getElementById('coins-txt').innerText = coins;
+      document.getElementById('btn-choco').disabled = hasChoco || coins < 40;
+      document.getElementById('btn-caramel').disabled = hasCaramel || coins < 80;
+    }
+
+    function spawnCustomer() {
+      const avatar = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+      document.getElementById('customer-avatar').innerText = avatar;
+      document.getElementById('order-bubble').innerText = "Waiting for fresh sweet treats!";
+      customerBox.style.display = 'flex';
+      resetRecipe();
+    }
+
+    function resetRecipe() {
+      step = 0;
+      stirCount = 0;
+      shakeCount = 0;
+      rollCount = 0;
+      currentTreatValue = 10 + (hasChoco ? 15 : 0) + (hasCaramel ? 25 : 0);
+      
+      panContents.style.background = '#fef3c7'; // Sugar color
+      panIcon.innerText = '🍬';
+      stepTxt.innerText = 'Tap to stir the melting sugar (5x)!';
+    }
+
+    function handlePanAction() {
+      playSound('snd-sizzle');
+
+      if (step === 0) { // STIR SUGAR
+        stirCount++;
+        panContents.style.background = stirCount > 3 ? '#fde047' : '#fef3c7';
+        if (stirCount >= 5) {
+          step = 1;
+          panContents.style.background = '#f59e0b'; // Caramelized sugar
+          panIcon.innerText = '🍚';
+          stepTxt.innerText = 'Shake the pan to mix puffed rice (4x)!';
+        }
+      } else if (step === 1) { // SHAKE PUFFED RICE
+        shakeCount++;
+        pan.classList.add('shake-anim');
+        setTimeout(() => pan.classList.remove('shake-anim'), 200);
+
+        if (shakeCount >= 4) {
+          step = 2;
+          panIcon.innerText = '🥣';
+          stepTxt.innerText = 'Tap to roll into sweet rice balls (3x)!';
+        }
+      } else if (step === 2) { // ROLL BALLS
+        rollCount++;
+        if (rollCount >= 3) {
+          if (hasChoco || hasCaramel) {
+            step = 3;
+            panIcon.innerText = '🧆';
+            stepTxt.innerText = 'Tap to add your delicious toppings!';
+          } else {
+            step = 4;
+            panIcon.innerText = '🍡';
+            stepTxt.innerText = 'Tap to serve your fresh treat!';
+          }
+        }
+      } else if (step === 3) { // TOPPINGS
+        panIcon.innerText = hasChoco && hasCaramel ? '🍩' : (hasChoco ? '🍫' : '🍯');
+        step = 4;
+        stepTxt.innerText = 'Treat complete! Tap to serve!';
+      } else if (step === 4) { // SERVE
+        serveCustomer();
+      }
+    }
+
+    function serveCustomer() {
+      coins += currentTreatValue;
+      playSound('snd-coin');
+      updateHUD();
+
+      customerBox.style.display = 'none';
+      stepTxt.innerText = 'Served! Next customer arriving...';
+
+      setTimeout(spawnCustomer, 1200);
+    }
+
+    function buyChocoUpgrade() {
+      if (coins >= 40 && !hasChoco) {
+        coins -= 40;
+        hasChoco = true;
+        document.getElementById('choco-cost').innerText = 'UNLOCKED';
+        updateHUD();
+      }
+    }
+
+    function buyCaramelUpgrade() {
+      if (coins >= 80 && !hasCaramel) {
+        coins -= 80;
+        hasCaramel = true;
+        document.getElementById('caramel-cost').innerText = 'UNLOCKED';
+        updateHUD();
+      }
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    updateHUD();
+    spawnCustomer();
+  </script>
+</body>
+</html>
