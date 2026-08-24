@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Simon Scares</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Impact', Arial, sans-serif;
+      background: #000; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #ef4444; z-index: 10; pointer-events: none;
+      text-shadow: 0 0 10px #ff0000;
+    }
+    #status { font-size: 1.2rem; color: #fff; margin-top: 5px; }
+    #jumpscare {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999;
+    }
+    #jumpscare-face {
+      font-size: 10rem; animation: shake 0.1s infinite;
+    }
+    #jumpscare-text {
+      color: #ef4444; font-size: 3rem; text-shadow: 0 0 20px #ff0000;
+    }
+    @keyframes shake {
+      0% { transform: translate(10px, 10px) scale(1.2); }
+      50% { transform: translate(-10px, -10px) scale(1.4); }
+      100% { transform: translate(10px, -10px) scale(1.2); }
+    }
+    #restart-btn {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: #ef4444; color: #fff; border: 2px solid #fff;
+      padding: 12px 24px; border-radius: 12px; font-weight: bold;
+      font-size: 1rem; cursor: pointer; display: none; z-index: 1000;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin:0; font-size: 2rem;">💀 SIMON SCARES 💀</h1>
+    <div id="status">WATCH SIMON'S PATTERN...</div>
+  </div>
+
+  <div id="jumpscare">
+    <div id="jumpscare-face">👹</div>
+    <div id="jumpscare-text">WRONG CHOICE!</div>
+  </div>
+
+  <button id="restart-btn" onclick="resetGame()">TRY AGAIN</button>
+
+  <script>
+    let scene, camera, renderer;
+    let buttons = [];
+    let sequence = [], playerInput = [];
+    let isPlayerTurn = false, round = 1;
+
+    const colors = [
+      { base: 0xef4444, active: 0xff8888, note: 261.63 }, // Red
+      { base: 0x3b82f6, active: 0x88bbff, note: 329.63 }, // Blue
+      { base: 0x22c55e, active: 0x88ff88, note: 392.00 }, // Green
+      { base: 0xfacc15, active: 0xffff88, note: 523.25 }  // Yellow
+    ];
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x05020a);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 6, 6);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.PointLight(0xffffff, 1.5, 50);
+      light.position.set(0, 8, 0);
+      scene.add(light, new THREE.AmbientLight(0x222222));
+
+      // Creepy Board Frame
+      const boardGeo = new THREE.CylinderGeometry(3.5, 3.8, 0.4, 32);
+      const boardMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+      scene.add(new THREE.Mesh(boardGeo, boardMat));
+
+      // 4 Cursed Buttons
+      const positions = [
+        { x: -1.4, z: -1.4 }, { x: 1.4, z: -1.4 },
+        { x: -1.4, z: 1.4 },  { x: 1.4, z: 1.4 }
+      ];
+
+      positions.forEach((pos, i) => {
+        const btnGeo = new THREE.BoxGeometry(2.2, 0.5, 2.2);
+        const btnMat = new THREE.MeshStandardMaterial({ color: colors[i].base, roughness: 0.2 });
+        const btn = new THREE.Mesh(btnGeo, btnMat);
+        btn.position.set(pos.x, 0.3, pos.z);
+        btn.userData = { id: i };
+        buttons.push(btn);
+        scene.add(btn);
+      });
+
+      setupRaycaster();
+      startNewRound();
+      animate();
+    }
+
+    function flashButton(id, duration = 400) {
+      return new Promise(resolve => {
+        const btn = buttons[id];
+        btn.material.color.setHex(colors[id].active);
+        btn.position.y = 0.1;
+
+        setTimeout(() => {
+          btn.material.color.setHex(colors[id].base);
+          btn.position.y = 0.3;
+          setTimeout(resolve, 150);
+        }, duration);
+      });
+    }
+
+    async function playSequence() {
+      isPlayerTurn = false;
+      document.getElementById('status').innerText = `ROUND ${round}: SIMON IS WATCHING...`;
+      
+      for (let id of sequence) {
+        await flashButton(id, 400);
+      }
+
+      isPlayerTurn = true;
+      playerInput = [];
+      document.getElementById('status').innerText = "YOUR TURN... DON'T FAIL!";
+    }
+
+    function startNewRound() {
+      sequence.push(Math.floor(Math.random() * 4));
+      playSequence();
+    }
+
+    function setupRaycaster() {
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      const handlePress = (clientX, clientY) => {
+        if (!isPlayerTurn) return;
+
+        mouse.x = (clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(buttons);
+
+        if (intersects.length > 0) {
+          const clickedId = intersects[0].object.userData.id;
+          flashButton(clickedId, 200);
+          playerInput.push(clickedId);
+
+          const stepIndex = playerInput.length - 1;
+          if (playerInput[stepIndex] !== sequence[stepIndex]) {
+            triggerJumpscare();
+            return;
+          }
+
+          if (playerInput.length === sequence.length) {
+            round++;
+            setTimeout(startNewRound, 800);
+          }
+        }
+      };
+
+      window.addEventListener('mousedown', e => handlePress(e.clientX, e.clientY));
+      window.addEventListener('touchstart', e => handlePress(e.touches[0].clientX, e.touches[0].clientY));
+    }
+
+    function triggerJumpscare() {
+      isPlayerTurn = false;
+      document.getElementById('jumpscare').style.display = 'flex';
+      document.getElementById('restart-btn').style.display = 'block';
+    }
+
+    function resetGame() {
+      sequence = [];
+      playerInput = [];
+      round = 1;
+      document.getElementById('jumpscare').style.display = 'none';
+      document.getElementById('restart-btn').style.display = 'none';
+      startNewRound();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      scene.rotation.y = Math.sin(Date.now() * 0.0008) * 0.08;
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
