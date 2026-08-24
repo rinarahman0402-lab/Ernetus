@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Viral Ice Cream Stack</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* STREAM HUD */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 450px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10; pointer-events: none;
+    }
+    .hud-badge {
+      background: rgba(15, 23, 42, 0.75); border: 2px solid #38bdf8;
+      backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px;
+      font-weight: 800; font-size: 0.9rem; color: #38bdf8; display: flex;
+      align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .badge-views { border-color: #ff0050; color: #ff0050; }
+
+    /* COLLAB NOTIFICATION TOAST */
+    #collab-toast {
+      position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+      background: rgba(255, 0, 80, 0.9); color: #fff; padding: 8px 16px;
+      border-radius: 20px; font-weight: 900; font-size: 0.9rem; z-index: 15;
+      display: none; animation: popToast 0.3s ease-out; pointer-events: none;
+    }
+    @keyframes popToast { 0% { transform: translate(-50%, -10px) scale(0.8); } 100% { transform: translate(-50%, 0) scale(1); } }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #ff0050; color: #fff; border: 3px solid #fff;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #990030; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #990030; }
+
+    /* FLOATING POPUP TEXT */
+    .pop-text {
+      position: absolute; font-weight: 900; font-size: 1.2rem; pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards; z-index: 20; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-30px) scale(1.3); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-drop" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-collab" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-cancel" src="https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge badge-views">👁️ Views: <span id="views-txt">0</span></div>
+    <div class="hud-badge">📏 Stack: <span id="height-txt">0m</span></div>
+  </div>
+
+  <div id="collab-toast">🌟 COLLAB BONUS! 5x VIEWS MULTIPLIER!</div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.5rem; color: #ff0050; margin: 0; text-shadow: 0 0 15px rgba(255,0,80,0.5);">VIRAL ICE CREAM STACK</h1>
+    <p style="font-size: 0.95rem; color: #cbd5e1; max-width: 320px; margin-top: 10px;">
+      Tap to drop swinging scoops! Stack higher to gain live views. Catch golden Creator Scoops for major Collab Multipliers! Don't let it fall or you're CANCELLED.
+    </p>
+    <button class="btn-main" onclick="startGame()">GO LIVE NOW 🎥</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.8rem; color: #ef4444; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">CANCELLED! ❌</h1>
+    <p style="font-size: 1.1rem; color: #cbd5e1; margin-top: 10px;">You dropped the stack live on stream!</p>
+    <p style="font-size: 1.3rem; margin-top: 5px;">Total Views: <span id="final-views" style="color: #ff0050; font-weight:bold;">0</span></p>
+    <button class="btn-main" onclick="restartGame()">TRY NEW STREAM</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let isPlaying = false;
+    let views = 0;
+    let height = 0;
+    let collabMultiplier = 1;
+
+    // FLAVORS
+    const SCOOP_TYPES = [
+      { name: 'Vanilla', color: '#fef08a', darkColor: '#fde047', views: 50 },
+      { name: 'Matcha', color: '#86efac', darkColor: '#4ade80', views: 80 },
+      { name: 'Strawberry', color: '#f472b6', darkColor: '#db2777', views: 120 },
+      { name: 'Creator Collab', color: '#fbbf24', darkColor: '#d97706', views: 500, isCollab: true }
+    ];
+
+    let currentScoopType = null;
+    let swingingScoop = { x: 0, y: 0, r: 32, dir: 1, speed: 4 };
+    let stackedScoops = [];
+    let cone = { x: 0, y: 0, w: 60, h: 80 };
+    let cameraOffsetY = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cone.x = canvas.width / 2;
+      cone.y = canvas.height - 120;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function updateHUD() {
+      document.getElementById('views-txt').innerText = views.toLocaleString();
+      document.getElementById('height-txt').innerText = height + 'm';
+    }
+
+    function spawnNextScoop() {
+      // 20% chance for a Creator Collab Scoop
+      const isCollab = Math.random() < 0.2;
+      if (isCollab) {
+        currentScoopType = SCOOP_TYPES[3];
+      } else {
+        currentScoopType = SCOOP_TYPES[Math.floor(Math.random() * 3)];
+      }
+
+      swingingScoop.y = 120;
+      swingingScoop.speed = 3.8 + Math.min(height * 0.1, 7);
+    }
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      views = 0;
+      height = 0;
+      collabMultiplier = 1;
+      stackedScoops = [];
+      cameraOffsetY = 0;
+      updateHUD();
+
+      swingingScoop.x = canvas.width / 2;
+      spawnNextScoop();
+
+      playSound('bgm');
+      isPlaying = true;
+    }
+
+    function dropScoop() {
+      if (!isPlaying) return;
+
+      const topItem = stackedScoops.length > 0
+        ? stackedScoops[stackedScoops.length - 1]
+        : { x: cone.x, y: cone.y - 10, r: cone.w / 2 };
+
+      const targetY = topItem.y - 32;
+      const distX = Math.abs(swingingScoop.x - topItem.x);
+
+      // Alignment check
+      if (distX < 44) {
+        height++;
+
+        if (currentScoopType.isCollab) {
+          collabMultiplier = 5;
+          playSound('snd-collab');
+          showCollabToast();
+        } else {
+          playSound('snd-drop');
+        }
+
+        const gainedViews = Math.round(currentScoopType.views * (1 + height * 0.2) * collabMultiplier);
+        views += gainedViews;
+
+        // Reset Collab Multiplier after next drop
+        if (!currentScoopType.isCollab) collabMultiplier = 1;
+
+        updateHUD();
+
+        stackedScoops.push({
+          x: swingingScoop.x,
+          y: targetY,
+          r: swingingScoop.r,
+          type: currentScoopType
+        });
+
+        showPopText(swingingScoop.x, targetY - cameraOffsetY, `+${gainedViews} 👁️`, currentScoopType.darkColor);
+
+        // Scroll Camera Upwards
+        if (targetY - cameraOffsetY < canvas.height * 0.45) {
+          cameraOffsetY += 40;
+        }
+
+        spawnNextScoop();
+      } else {
+        gameOver();
+      }
+    }
+
+    function showCollabToast() {
+      const toast = document.getElementById('collab-toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 1500);
+    }
+
+    function showPopText(x, y, text, color) {
+      const el = document.createElement('div');
+      el.className = 'pop-text';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.color = color;
+      el.innerText = text;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.tagName !== 'BUTTON' && isPlaying) {
+        dropScoop();
+      }
+    });
+
+    // DRAW SCOOP
+    function drawScoop(x, y, r, type) {
+      ctx.fillStyle = type.color;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Drippy detail
+      ctx.fillStyle = type.darkColor;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.arc(x + i * 12, y + r - 4, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Creator Star badge for Collab Scoops
+      if (type.isCollab) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('⭐', x - 8, y + 5);
+      }
+
+      // Shine Highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(x - 10, y - 10, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawCone(x, y, w, h) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(x - w / 2, y);
+      ctx.lineTo(x + w / 2, y);
+      ctx.lineTo(x, y + h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 15, y + 20); ctx.lineTo(x + 10, y + 50);
+      ctx.moveTo(x + 15, y + 20); ctx.lineTo(x - 10, y + 50);
+      ctx.stroke();
+    }
+
+    // MAIN GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(0, cameraOffsetY);
+
+      // Cone & Stacked Scoops
+      drawCone(cone.x, cone.y, cone.w, cone.h);
+      stackedScoops.forEach(s => drawScoop(s.x, s.y, s.r, s.type));
+
+      ctx.restore();
+
+      if (!isPlaying) return;
+
+      // Swinging Scoop
+      swingingScoop.x += swingingScoop.speed * swingingScoop.dir;
+      if (swingingScoop.x > canvas.width - 40 || swingingScoop.x < 40) {
+        swingingScoop.dir *= -1;
+      }
+
+      drawScoop(swingingScoop.x, swingingScoop.y, swingingScoop.r, currentScoopType);
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      playSound('snd-cancel');
+      document.getElementById('final-views').innerText = views.toLocaleString();
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-over').style.display = 'none';
+      initGame();
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
