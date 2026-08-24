@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Cute Farm Game - Grow & Harvest</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #86efac; color: #1e293b; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    }
+
+    /* TOP HUD */
+    #hud {
+      width: 100%; max-width: 500px; padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #ffffff; border-bottom: 4px solid #4ade80;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 10;
+    }
+    .hud-card { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 1.1rem; }
+    .coin-badge { color: #d97706; background: #fef3c7; padding: 4px 12px; border-radius: 20px; border: 2px solid #f59e0b; }
+    .lvl-badge { color: #166534; background: #dcfce7; padding: 4px 12px; border-radius: 20px; border: 2px solid #22c55e; }
+
+    /* CROP SELECTION BAR */
+    #crop-bar {
+      display: flex; gap: 8px; width: 95%; max-width: 500px; margin-top: 10px;
+      overflow-x: auto; padding: 4px 2px;
+    }
+    .crop-btn {
+      flex: 1; min-width: 80px; background: #fff; border: 3px solid #cbd5e1;
+      border-radius: 12px; padding: 8px 4px; text-align: center; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      transition: all 0.2s;
+    }
+    .crop-btn.active { border-color: #22c55e; background: #f0fdf4; transform: scale(1.05); }
+    .crop-btn.locked { opacity: 0.5; filter: grayscale(100%); cursor: not-allowed; }
+    .crop-icon { font-size: 1.4rem; }
+    .crop-name { font-size: 0.75rem; font-weight: bold; }
+    .crop-cost { font-size: 0.7rem; color: #d97706; font-weight: bold; }
+
+    /* FARM GRID (3x3 SOIL PLOTS) */
+    #farm-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      padding: 15px; background: #15803d; border-radius: 24px;
+      border: 6px solid #166534; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin: auto 0; width: 90vw; height: 90vw; max-width: 380px; max-height: 380px;
+    }
+    .soil-plot {
+      background: #78350f; border-radius: 16px; border: 4px solid #451a03;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; cursor: pointer; transition: transform 0.1s;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .soil-plot:active { transform: scale(0.95); }
+    .soil-plot.wet { background: #451a03; border-color: #270d02; }
+    
+    .plant-stage { font-size: 2.2rem; transition: transform 0.3s; }
+    .water-indicator {
+      position: absolute; top: 6px; right: 6px; font-size: 0.8rem;
+      background: rgba(56, 189, 248, 0.9); border-radius: 50%; width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center; color: #fff;
+    }
+
+    /* BOTTOM CONTROLS & STORAGE */
+    #bottom-panel {
+      width: 100%; max-width: 500px; background: #ffffff;
+      padding: 12px 16px; border-top: 4px solid #4ade80;
+      display: flex; flex-direction: column; gap: 8px; z-index: 10;
+    }
+    .storage-row {
+      display: flex; justify-content: space-around; font-size: 0.85rem; font-weight: bold;
+      background: #f8fafc; padding: 6px; border-radius: 10px; border: 1px solid #e2e8f0;
+    }
+    .btn-action {
+      background: #f59e0b; color: #fff; border: none; border-radius: 12px;
+      padding: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+      box-shadow: 0 4px 0 #b45309; text-align: center; width: 100%;
+    }
+    .btn-action:active { transform: translateY(4px); box-shadow: none; }
+
+    /* TOAST / POPUP */
+    #toast {
+      position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85); color: #fff; padding: 8px 16px;
+      border-radius: 20px; font-weight: bold; font-size: 0.9rem; pointer-events: none;
+      display: none; z-index: 50; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PLACEHOLDER AUDIO ELEMENTS -->
+  <audio id="snd-plant" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-water" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+  <audio id="snd-harvest" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-sell" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+  <audio id="snd-unlock" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- TOP HUD -->
+  <div id="hud">
+    <div class="hud-card coin-badge">🪙 <span id="coins-txt">50</span></div>
+    <div class="hud-card lvl-badge">⭐ LVL <span id="lvl-txt">1</span></div>
+    <button style="border:none; background:none; font-size:1.2rem; cursor:pointer;" onclick="toggleBGM()">🎵</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- CROP SELECTION BAR -->
+  <div id="crop-bar">
+    <div class="crop-btn active" id="btn-carrot" onclick="selectCrop('carrot')">
+      <span class="crop-icon">🥕</span>
+      <span class="crop-name">Carrot</span>
+      <span class="crop-cost">Buy: 10🪙</span>
+    </div>
+    <div class="crop-btn locked" id="btn-tomato" onclick="selectCrop('tomato')">
+      <span class="crop-icon">🍅</span>
+      <span class="crop-name">Tomato</span>
+      <span class="crop-cost">Req: 100🪙</span>
+    </div>
+    <div class="crop-btn locked" id="btn-corn" onclick="selectCrop('corn')">
+      <span class="crop-icon">🌽</span>
+      <span class="crop-name">Corn</span>
+      <span class="crop-cost">Req: 300🪙</span>
+    </div>
+    <div class="crop-btn locked" id="btn-strawberry" onclick="selectCrop('strawberry')">
+      <span class="crop-icon">🍓</span>
+      <span class="crop-name">Strawberry</span>
+      <span class="crop-cost">Req: 500🪙</span>
+    </div>
+  </div>
+
+  <!-- 3x3 FARM GRID -->
+  <div id="farm-grid"></div>
+
+  <!-- BOTTOM PANEL / STORAGE / SELL -->
+  <div id="bottom-panel">
+    <div class="storage-row">
+      <span>🥕 <span id="cnt-carrot">0</span></span>
+      <span>🍅 <span id="cnt-tomato">0</span></span>
+      <span>🌽 <span id="cnt-corn">0</span></span>
+      <span>🍓 <span id="cnt-strawberry">0</span></span>
+    </div>
+    <button class="btn-action" onclick="sellAllCrops()">💰 SELL ALL HARVESTED CROPS</button>
+  </div>
+
+  <script>
+    // CROP CONFIGURATION (Easily edit cost, sell price, unlock thresholds here)
+    const CROP_TYPES = {
+      carrot:     { name: 'Carrot', icon: '🥕', seedCost: 10, sellPrice: 20, unlockCoins: 0, levelReq: 1 },
+      tomato:     { name: 'Tomato', icon: '🍅', seedCost: 25, sellPrice: 55, unlockCoins: 100, levelReq: 2 },
+      corn:       { name: 'Corn', icon: '🌽', seedCost: 60, sellPrice: 140, unlockCoins: 300, levelReq: 3 },
+      strawberry: { name: 'Strawberry', icon: '🍓', seedCost: 120, sellPrice: 300, unlockCoins: 500, levelReq: 4 }
+    };
+
+    // GAME STATE
+    let coins = 50;
+    let farmLevel = 1;
+    let selectedCrop = 'carrot';
+    let bgmPlaying = false;
+
+    let storage = { carrot: 0, tomato: 0, corn: 0, strawberry: 0 };
+    let plots = Array(9).fill(null).map(() => ({
+      crop: null,
+      stage: 0,      // 0: empty, 1: seed, 2: sprout, 3: fully grown
+      isWatered: false,
+      timer: null
+    }));
+
+    function init() {
+      renderGrid();
+      updateUI();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('farm-grid');
+      grid.innerHTML = '';
+
+      plots.forEach((p, idx) => {
+        const plotEl = document.createElement('div');
+        plotEl.className = `soil-plot ${p.isWatered ? 'wet' : ''}`;
+        plotEl.onclick = () => interactPlot(idx);
+
+        if (p.crop) {
+          const plantSpan = document.createElement('span');
+          plantSpan.className = 'plant-stage';
+
+          if (p.stage === 1) plantSpan.innerText = '🌱';
+          else if (p.stage === 2) plantSpan.innerText = '🌿';
+          else if (p.stage === 3) plantSpan.innerText = CROP_TYPES[p.crop].icon;
+
+          plotEl.appendChild(plantSpan);
+
+          if (!p.isWatered && p.stage < 3) {
+            const drop = document.createElement('div');
+            drop.className = 'water-indicator';
+            drop.innerText = '💧';
+            plotEl.appendChild(drop);
+          }
+        }
+
+        grid.appendChild(plotEl);
+      });
+    }
+
+    function selectCrop(type) {
+      const config = CROP_TYPES[type];
+      if (coins < config.unlockCoins && farmLevel < config.levelReq) {
+        showToast(`Requires ${config.unlockCoins} coins to unlock!`);
+        return;
+      }
+      selectedCrop = type;
+      document.querySelectorAll('.crop-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`btn-${type}`).classList.add('active');
+    }
+
+    function interactPlot(idx) {
+      const p = plots[idx];
+
+      // 1. PLANT SEED
+      if (!p.crop) {
+        const cost = CROP_TYPES[selectedCrop].seedCost;
+        if (coins < cost) {
+          showToast(`Not enough coins! Need ${cost}🪙`);
+          return;
+        }
+
+        coins -= cost;
+        p.crop = selectedCrop;
+        p.stage = 1;
+        p.isWatered = false;
+
+        playSound('snd-plant');
+        checkGrowth(idx);
+        updateUI();
+        renderGrid();
+        return;
+      }
+
+      // 2. WATER PLANT
+      if (p.crop && p.stage < 3 && !p.isWatered) {
+        p.isWatered = true;
+        playSound('snd-water');
+        checkGrowth(idx);
+        renderGrid();
+        return;
+      }
+
+      // 3. HARVEST CROP
+      if (p.crop && p.stage === 3) {
+        storage[p.crop]++;
+        playSound('snd-harvest');
+
+        // Reset Plot
+        if (p.timer) clearTimeout(p.timer);
+        p.crop = null;
+        p.stage = 0;
+        p.isWatered = false;
+
+        updateUI();
+        renderGrid();
+      }
+    }
+
+    function checkGrowth(idx) {
+      const p = plots[idx];
+      if (!p.crop || p.stage >= 3) return;
+
+      if (p.timer) clearTimeout(p.timer);
+
+      // Growth speed: 10s base, 5s if watered
+      const growTime = p.isWatered ? 5000 : 10000;
+
+      p.timer = setTimeout(() => {
+        if (p.crop) {
+          p.stage++;
+          p.isWatered = false; // Reset water status for next stage
+          renderGrid();
+
+          if (p.stage < 3) {
+            checkGrowth(idx);
+          }
+        }
+      }, growTime / 2); // Split into 2 growth steps (seed -> sprout -> adult)
+    }
+
+    function sellAllCrops() {
+      let totalEarned = 0;
+      Object.keys(storage).forEach(key => {
+        const count = storage[key];
+        totalEarned += count * CROP_TYPES[key].sellPrice;
+        storage[key] = 0;
+      });
+
+      if (totalEarned > 0) {
+        coins += totalEarned;
+        playSound('snd-sell');
+        showToast(`Sold crops for +${totalEarned}🪙!`);
+        checkUnlocks();
+        updateUI();
+      } else {
+        showToast("No crops in storage to sell!");
+      }
+    }
+
+    function checkUnlocks() {
+      let unlockedAny = false;
+
+      Object.keys(CROP_TYPES).forEach(key => {
+        const c = CROP_TYPES[key];
+        const btn = document.getElementById(`btn-${key}`);
+
+        if (coins >= c.unlockCoins && btn.classList.contains('locked')) {
+          btn.classList.remove('locked');
+          btn.querySelector('.crop-cost').innerText = `Buy: ${c.seedCost}🪙`;
+          unlockedAny = true;
+        }
+      });
+
+      if (coins >= 500) farmLevel = 4;
+      else if (coins >= 300) farmLevel = 3;
+      else if (coins >= 100) farmLevel = 2;
+
+      if (unlockedAny) {
+        playSound('snd-unlock');
+        showToast("🎉 NEW CROP UNLOCKED!");
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('coins-txt').innerText = coins;
+      document.getElementById('lvl-txt').innerText = farmLevel;
+
+      document.getElementById('cnt-carrot').innerText = storage.carrot;
+      document.getElementById('cnt-tomato').innerText = storage.tomato;
+      document.getElementById('cnt-corn').innerText = storage.corn;
+      document.getElementById('cnt-strawberry').innerText = storage.strawberry;
+
+      checkUnlocks();
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 2000);
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    function toggleBGM() {
+      const bgm = document.getElementById('bgm');
+      if (!bgmPlaying) {
+        bgm.play().catch(() => {});
+        bgmPlaying = true;
+      } else {
+        bgm.pause();
+        bgmPlaying = false;
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
