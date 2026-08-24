@@ -16,7 +16,6 @@
 
     #game-container { width: 100%; height: 100%; }
 
-    /* TOUCH CONTROLS OVERLAY */
     .touch-btn {
       position: absolute; width: 70px; height: 70px; border-radius: 50%;
       background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5);
@@ -29,7 +28,6 @@
     #btn-right { bottom: 25px; left: 110px; }
     #btn-jump { bottom: 25px; right: 25px; width: 85px; height: 85px; background: rgba(234, 179, 8, 0.3); border-color: #eab308; }
 
-    /* HUD */
     #hud {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
       width: 92%; max-width: 450px; display: flex; justify-content: space-between;
@@ -41,7 +39,6 @@
       font-weight: 800; font-size: 0.95rem; color: #fef08a;
     }
 
-    /* OVERLAY SCREENS */
     .overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(9, 13, 22, 0.92); display: flex; flex-direction: column;
@@ -58,25 +55,21 @@
 </head>
 <body>
 
-  <!-- AUDIO ELEMENTS -->
   <audio id="snd-jump" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
   <audio id="snd-bolt" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
   <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
-  <!-- HUD -->
   <div id="hud">
     <div class="hud-badge">⚡ Bolts: <span id="bolt-count">0</span> / 5</div>
     <div class="hud-badge">🌎 Zone: <span id="zone-txt">Forest</span></div>
   </div>
 
-  <!-- TOUCH CONTROLS -->
   <div id="btn-left" class="touch-btn">◀</div>
   <div id="btn-right" class="touch-btn">▶</div>
   <div id="btn-jump" class="touch-btn">⬆</div>
 
   <div id="game-container"></div>
 
-  <!-- OVERLAYS -->
   <div id="overlay-start" class="overlay">
     <h1 style="font-size: 2.2rem; color: #fef08a; margin: 0; text-shadow: 0 0 15px rgba(234,179,8,0.5);">ASH’S VICTORY PARKOUR</h1>
     <p style="font-size: 0.95rem; color: #cbd5e1; max-width: 320px; margin-top: 12px; line-height: 1.4;">
@@ -98,7 +91,6 @@
     let inputs = { left: false, right: false, jump: false };
     let boltsCollected = 0;
 
-    // TOUCH EVENT LISTENERS
     function setupTouchEvents(id, key) {
       const btn = document.getElementById(id);
       btn.addEventListener('pointerdown', (e) => { e.preventDefault(); inputs[key] = true; });
@@ -127,12 +119,10 @@
       if (snd) { snd.currentTime = 0; snd.play().catch(() => {}); }
     }
 
-    // PHASER SCENE DEFINITION
     class MainScene extends Phaser.Scene {
       constructor() { super({ key: 'MainScene' }); }
 
       preload() {
-        // Procedural Textures
         const graphics = this.make.graphics();
         
         // Ash Player
@@ -145,8 +135,13 @@
         graphics.fillStyle(0xef4444, 1); graphics.fillRect(0, 0, 160, 24); graphics.generateTexture('earth-volcano', 160, 24); graphics.clear();
         graphics.fillStyle(0x38bdf8, 1); graphics.fillRect(0, 0, 160, 24); graphics.generateTexture('earth-sky', 160, 24); graphics.clear();
 
-        // Bolt & Flag
-        graphics.fillStyle(0xfacc15, 1); graphics.fillTriangle(12, 0, 0, 16, 12, 14); graphics.fillTriangle(6, 10, 18, 24, 6, 12); graphics.generateTexture('bolt', 18, 24); graphics.clear();
+        // High-Visibility Yellow Lightning Bolt
+        graphics.fillStyle(0xffff00, 1);
+        graphics.fillTriangle(16, 0, 4, 20, 16, 18);
+        graphics.fillTriangle(10, 14, 26, 36, 10, 16);
+        graphics.generateTexture('bolt', 28, 36); graphics.clear();
+
+        // Flag
         graphics.fillStyle(0x22c55e, 1); graphics.fillRect(0, 0, 6, 60); graphics.fillStyle(0xef4444, 1); graphics.fillTriangle(6, 0, 36, 15, 6, 30); graphics.generateTexture('flag', 36, 60);
       }
 
@@ -154,72 +149,81 @@
         this.cameras.main.setBounds(0, 0, 3600, 600);
         this.physics.world.setBounds(0, 0, 3600, 750);
 
-        // EARTH ZONES BACKGROUNDS
-        this.add.rectangle(600, 300, 1200, 600, 0x064e3b).setDepth(-1); // Forest
-        this.add.rectangle(1800, 300, 1200, 600, 0x450a0a).setDepth(-1); // Volcano
-        this.add.rectangle(3000, 300, 1200, 600, 0x0c4a6e).setDepth(-1); // Sky
+        this.add.rectangle(600, 300, 1200, 600, 0x064e3b).setDepth(-1);
+        this.add.rectangle(1800, 300, 1200, 600, 0x450a0a).setDepth(-1);
+        this.add.rectangle(3000, 300, 1200, 600, 0x0c4a6e).setDepth(-1);
 
-        // PLATFORMS GROUP
         this.platforms = this.physics.add.staticGroup();
 
-        // ZONE 1: FOREST EARTHS (0 - 1200)
+        // Forest
         this.platforms.create(200, 500, 'earth-forest');
         this.platforms.create(450, 420, 'earth-forest');
         this.platforms.create(700, 350, 'earth-forest');
         this.platforms.create(950, 450, 'earth-forest');
 
-        // ZONE 2: VOLCANO EARTHS (1200 - 2400)
+        // Volcano
         this.platforms.create(1250, 400, 'earth-volcano');
         this.platforms.create(1550, 320, 'earth-volcano');
         this.platforms.create(1850, 420, 'earth-volcano');
         this.platforms.create(2150, 360, 'earth-volcano');
 
-        // ZONE 3: SKY EARTHS (2400 - 3600)
+        // Sky
         this.platforms.create(2450, 450, 'earth-sky');
         this.platforms.create(2750, 350, 'earth-sky');
         this.platforms.create(3050, 260, 'earth-sky');
         this.platforms.create(3350, 380, 'earth-sky');
 
-        // PLAYER (ASH)
-        this.player = this.physics.add.sprite(100, 350, 'ash');
+        this.player = this.physics.add.sprite(200, 400, 'ash');
         this.player.setBounce(0.1);
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
 
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
-        // BOLTS
-        this.bolts = this.physics.add.group({
-          key: 'bolt',
-          repeat: 4,
-          setXY: { x: 450, y: 300, stepX: 650 }
+        // Explicit Bolt Coordinates floating above platforms
+        const boltPositions = [
+          { x: 450, y: 350 },
+          { x: 950, y: 380 },
+          { x: 1550, y: 250 },
+          { x: 2150, y: 290 },
+          { x: 2750, y: 280 }
+        ];
+
+        this.bolts = this.physics.add.group({ allowGravity: false, immovable: true });
+
+        boltPositions.forEach(pos => {
+          let b = this.bolts.create(pos.x, pos.y, 'bolt');
+          this.tweens.add({
+            targets: b,
+            y: pos.y - 12,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+          });
         });
+
         this.physics.add.overlap(this.player, this.bolts, this.collectBolt, null, this);
 
-        // FLAG
-        this.flag = this.physics.add.sprite(3400, 300, 'flag');
+        this.flag = this.physics.add.sprite(3350, 300, 'flag');
         this.physics.add.collider(this.flag, this.platforms);
         this.physics.add.overlap(this.player, this.flag, this.reachFlag, null, this);
 
-        // KEYBOARD CONTROLS
         this.cursors = this.input.keyboard.createCursorKeys();
       }
 
       update() {
         const p = this.player;
 
-        // Reset game if fallen into pit
         if (p.y > 650) {
-          p.setPosition(100, 350);
+          p.setPosition(200, 400);
           p.setVelocity(0, 0);
         }
 
-        // Zone Detection HUD
         if (p.x < 1200) document.getElementById('zone-txt').innerText = 'Forest 🌲';
         else if (p.x < 2400) document.getElementById('zone-txt').innerText = 'Volcano 🌋';
         else document.getElementById('zone-txt').innerText = 'Sky ☁️';
 
-        // Movement Physics
         if (this.cursors.left.isDown || inputs.left) {
           p.setVelocityX(-220);
         } else if (this.cursors.right.isDown || inputs.right) {
@@ -228,7 +232,6 @@
           p.setVelocityX(0);
         }
 
-        // Jumping
         if ((this.cursors.up.isDown || this.cursors.space.isDown || inputs.jump) && p.body.touching.down) {
           p.setVelocityY(-460);
           playSound('snd-jump');
@@ -267,5 +270,4 @@
     }
   </script>
 </body>
-    </html>
-    
+</html>
