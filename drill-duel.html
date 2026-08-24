@@ -2,320 +2,344 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drill Duel Online</title>
-  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Drill Duel - AI Edition</title>
   <style>
-    body {
-      background-color: #0c0a09;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      user-select: none;
-    }
-    h1 { color: #f97316; margin-bottom: 5px; text-align: center; }
-    
-    /* Lobby Styles */
-    #lobby {
-      background: #1c1917;
-      border: 4px solid #f97316;
-      border-radius: 12px;
-      padding: 20px;
-      width: 300px;
-      text-align: center;
-    }
-    .lobby-btn {
-      background: #ea580c;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-      margin: 10px 0;
-    }
-    .input-box {
-      width: 90%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      border: none;
-      text-align: center;
-    }
-    #room-id-display {
-      background: #000;
-      padding: 10px;
-      border-radius: 6px;
-      font-family: monospace;
-      color: #fde047;
-      word-wrap: break-word;
-      font-size: 0.9rem;
-      margin-bottom: 5px;
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0f172a; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
     }
 
-    /* Game Styles */
-    #game-ui { display: none; flex-direction: column; align-items: center; }
-    #hud { font-size: 1rem; color: #fde047; margin-bottom: 10px; font-weight: bold; }
-    
-    #shaft {
-      width: 300px;
-      height: 360px;
-      background: #292524;
-      border: 4px solid #f97316;
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
+    /* TOP HUD */
+    #hud {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      width: 95%; max-width: 500px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10; gap: 8px;
     }
+    .score-card {
+      flex: 1; background: rgba(30, 41, 59, 0.9); border: 2px solid #ea580c;
+      border-radius: 12px; padding: 8px; text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .score-card.ai-card { border-color: #ef4444; }
+    .player-title { font-size: 0.8rem; font-weight: bold; color: #94a3b8; }
+    .score-num { font-size: 1.4rem; font-weight: bold; color: #f97316; }
+    .ai-card .score-num { color: #f87171; }
 
-    .driller {
-      position: absolute;
-      font-size: 1.5rem;
-      transform: translateX(-50%);
-      transition: all 0.15s ease;
-      z-index: 10;
-    }
+    /* CANVAS */
+    canvas { display: block; width: 100%; height: 100%; }
 
-    .trap {
-      position: absolute;
-      font-size: 1.2rem;
-      transform: translate(-50%, -50%);
-      z-index: 5;
+    /* MOBILE CONTROLS */
+    #controls {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      width: 95%; max-width: 400px; display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; z-index: 10;
     }
+    .ctrl-btn {
+      background: #ea580c; color: #fff; border: 2px solid #fdba74;
+      padding: 14px 0; border-radius: 12px; font-weight: bold; font-size: 1.2rem;
+      cursor: pointer; text-align: center; box-shadow: 0 4px 0 #9a3412;
+    }
+    .ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
 
-    #core-gem {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 2.5rem;
-      filter: drop-shadow(0 0 10px #e11d48);
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
     }
-
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 5px;
-      margin-top: 15px;
-      width: 300px;
+    .btn-main {
+      background: #ea580c; color: #fff; border: 2px solid #fff;
+      padding: 14px 32px; border-radius: 14px; font-weight: bold;
+      font-size: 1.2rem; cursor: pointer; margin-top: 15px;
+      box-shadow: 0 4px 0 #9a3412;
     }
-
-    .btn {
-      background: #ea580c;
-      color: white;
-      border: none;
-      padding: 12px 5px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .btn-trap { background: #dc2626; grid-column: span 3; }
+    .btn-main:active { transform: translateY(4px); box-shadow: none; }
   </style>
 </head>
 <body>
 
-  <h1>⛏️ Drill Duel<br><span style="font-size:0.5em; color:#a8a29e;">Online Multiplayer</span></h1>
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-drill" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-gem" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
-  <!-- LOBBY SCREEN -->
-  <div id="lobby">
-    <h3>Host a Game</h3>
-    <button class="lobby-btn" id="btn-host" onclick="hostGame()">1. Create Room</button>
-    <div id="room-id-display" style="display:none;">Generating ID...</div>
-    <div id="host-status" style="font-size: 0.8rem; color:#a8a29e;"></div>
-    
-    <hr style="border-color: #44403c; margin: 20px 0;">
-    
-    <h3>Join a Game</h3>
-    <input type="text" id="join-id" class="input-box" placeholder="Paste Room ID here">
-    <button class="lobby-btn" onclick="joinGame()">2. Join Room</button>
-    <div id="join-status" style="font-size: 0.8rem; color:#a8a29e;"></div>
+  <!-- HUD -->
+  <div id="hud">
+    <div class="score-card">
+      <div class="player-title">YOU (BLUE)</div>
+      <div class="score-num" id="p1-score">0</div>
+    </div>
+    <div style="font-weight: bold; color: #facc15;">VS</div>
+    <div class="score-card ai-card">
+      <div class="player-title">BOT (RED)</div>
+      <div class="score-num" id="p2-score">0</div>
+    </div>
   </div>
 
-  <!-- GAME SCREEN -->
-  <div id="game-ui">
-    <div id="hud">You: <span id="my-depth">0</span>m | Traps: <span id="traps">3</span></div>
+  <canvas id="canvas"></canvas>
 
-    <div id="shaft">
-      <div id="player1" class="driller" style="left: 80px; top: 20px;">🤖</div>
-      <div id="player2" class="driller" style="left: 220px; top: 20px;">👾</div>
-      <div id="core-gem">💎</div>
-    </div>
+  <!-- MOBILE BUTTONS -->
+  <div id="controls">
+    <button class="ctrl-btn" onclick="movePlayer(-1, 0)">⬅️</button>
+    <button class="ctrl-btn" onclick="movePlayer(0, 1)">⬇️</button>
+    <button class="ctrl-btn" onclick="movePlayer(1, 0)">➡️</button>
+  </div>
 
-    <div class="controls">
-      <button class="btn" onclick="action('left')">⬅️</button>
-      <button class="btn" onclick="action('drill')">🔥 DRILL</button>
-      <button class="btn" onclick="action('right')">➡️</button>
-      <button class="btn btn-trap" onclick="action('trap')">💣 Drop Trap (Stuns Opponent)</button>
-    </div>
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.5rem; color: #f97316; margin: 0;">⛏️ DRILL DUEL</h1>
+    <p style="color: #cbd5e1; max-width: 320px; margin-top: 10px;">
+      Dig underground, collect valuable gems, and beat the AI Driller before time runs out!
+    </p>
+    <button class="btn-main" onclick="startGame()">START DUEL</button>
+  </div>
+
+  <div id="overlay-end" class="overlay" style="display: none;">
+    <h1 id="end-title" style="font-size: 2.5rem; color: #f97316; margin: 0;">GAME OVER</h1>
+    <p id="end-desc" style="font-size: 1.2rem; margin-top: 10px;"></p>
+    <button class="btn-main" onclick="restartGame()">PLAY AGAIN</button>
   </div>
 
   <script>
-    let peer = null;
-    let conn = null;
-    let isHost = false;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-    // Game State
-    let myX = 80, myDepth = 0;
-    let oppX = 220, oppDepth = 0;
-    let trapCount = 3;
-    let isStunned = false;
-    let gameOver = false;
+    const GRID_SIZE = 12;
+    let tileSize = 0;
+    let isPlaying = false;
 
-    const myEl = document.getElementById('player1'); // Host defaults to p1
-    const oppEl = document.getElementById('player2');
-    
-    // --- MULTIPLAYER NETWORKING LOGIC ---
+    let grid = [];
+    let p1 = { x: 0, y: 0, score: 0, color: '#38bdf8' };
+    let p2 = { x: GRID_SIZE - 1, y: 0, score: 0, color: '#ef4444' }; // AI BOT
+    let aiTimer = null;
 
-    function initPeer() {
-      peer = new Peer(); // Connects to free public PeerJS server
-      
-      peer.on('error', (err) => {
-        alert("Network Error: " + err.type);
-      });
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      tileSize = Math.floor(Math.min(canvas.width, canvas.height * 0.7) / GRID_SIZE);
     }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    function hostGame() {
-      if (!peer) initPeer();
-      document.getElementById('btn-host').disabled = true;
-      document.getElementById('room-id-display').style.display = 'block';
-      
-      peer.on('open', (id) => {
-        document.getElementById('room-id-display').innerText = id;
-        document.getElementById('host-status').innerText = "Waiting for a player to join...\n(Copy the ID and send it to a friend!)";
-      });
-
-      peer.on('connection', (connection) => {
-        conn = connection;
-        isHost = true;
-        setupConnection();
-      });
-    }
-
-    function joinGame() {
-      if (!peer) initPeer();
-      const roomId = document.getElementById('join-id').value.trim();
-      if (!roomId) return alert("Please enter a Room ID!");
-      
-      document.getElementById('join-status').innerText = "Connecting...";
-      
-      peer.on('open', () => {
-        conn = peer.connect(roomId);
-        isHost = false;
-        
-        // Swap starting positions visually for the guest so they are always the "left" character on their screen
-        myX = 220; oppX = 80;
-        
-        setupConnection();
-      });
-    }
-
-    function setupConnection() {
-      conn.on('open', () => {
-        document.getElementById('lobby').style.display = 'none';
-        document.getElementById('game-ui').style.display = 'flex';
-        
-        if (isHost) {
-          myEl.innerText = '🤖'; oppEl.innerText = '👾';
-        } else {
-          myEl.innerText = '👾'; oppEl.innerText = '🤖';
-          // Swap physical elements so 'myEl' always tracks local player
-          myEl.id = 'player2'; oppEl.id = 'player1';
+    function initGrid() {
+      grid = [];
+      for (let r = 0; r < GRID_SIZE; r++) {
+        let row = [];
+        for (let c = 0; c < GRID_SIZE; c++) {
+          let rand = Math.random();
+          let type = 'dirt'; // Default dirt block
+          if (rand < 0.2) type = 'gem';     // 20% Gems
+          else if (rand < 0.25) type = 'rock'; // 5% Rocks (Obstacles)
+          row.push({ type: type, dug: false });
         }
-
-        updateVisuals();
-      });
-
-      conn.on('data', (data) => {
-        if (data.type === 'state') {
-          oppX = data.x;
-          oppDepth = data.depth;
-          updateVisuals();
-          checkWinConditions();
-        } else if (data.type === 'trap') {
-          spawnTrap(data.x, data.depth, false);
-        }
-      });
+        grid.push(row);
+      }
+      // Clear starting positions
+      grid[0][0].dug = true;
+      grid[0][GRID_SIZE - 1].dug = true;
     }
 
-    // --- GAMEPLAY LOGIC ---
-
-    function sendState() {
-      if (conn && conn.open) {
-        conn.send({ type: 'state', x: myX, depth: myDepth });
-      }
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
     }
 
-    function action(act) {
-      if (gameOver || isStunned) return;
-
-      if (act === 'left') myX = Math.max(30, myX - 40);
-      if (act === 'right') myX = Math.min(270, myX + 40);
-      if (act === 'drill') {
-        myDepth += 6;
-        checkWinConditions();
-      }
-      if (act === 'trap' && trapCount > 0) {
-        trapCount--;
-        document.getElementById('traps').innerText = trapCount;
-        spawnTrap(myX, myDepth - 10, true);
-        if (conn && conn.open) conn.send({ type: 'trap', x: myX, depth: myDepth - 10 });
-      }
+    function initGame() {
+      initGrid();
+      p1 = { x: 0, y: 0, score: 0, color: '#38bdf8' };
+      p2 = { x: GRID_SIZE - 1, y: 0, score: 0, color: '#ef4444' };
       
-      sendState();
-      updateVisuals();
+      updateHUD();
+      isPlaying = true;
+
+      if (aiTimer) clearInterval(aiTimer);
+      aiTimer = setInterval(updateAI, 450); // AI makes a move every 450ms
     }
 
-    function spawnTrap(x, d, isMine) {
-      const t = document.createElement('div');
-      t.className = 'trap';
-      t.innerText = isMine ? '💣' : '🧨';
-      t.style.left = x + 'px';
-      t.style.top = d + 'px';
-      document.getElementById('shaft').appendChild(t);
+    function movePlayer(dx, dy) {
+      if (!isPlaying) return;
 
-      // Check collision ONLY if it's the opponent's trap and we hit it
-      if (!isMine) {
-        const checkInterval = setInterval(() => {
-          if (gameOver) return clearInterval(checkInterval);
-          if (!isStunned && Math.abs(x - myX) < 30 && Math.abs(d - myDepth) < 20) {
-            isStunned = true;
-            myEl.innerText = '💫';
-            t.remove();
-            clearInterval(checkInterval);
-            setTimeout(() => {
-              isStunned = false;
-              myEl.innerText = isHost ? '🤖' : '👾';
-            }, 2000);
+      let nx = p1.x + dx;
+      let ny = p1.y + dy;
+
+      if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+        if (grid[ny][nx].type !== 'rock') {
+          p1.x = nx;
+          p1.y = ny;
+          processTile(p1, nx, ny);
+        }
+      }
+    }
+
+    // AI BOT LOGIC
+    function updateAI() {
+      if (!isPlaying) return;
+
+      // Find closest undug gem or dirt
+      let bestMove = null;
+      let minDistance = Infinity;
+
+      const directions = [
+        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+      ];
+
+      directions.forEach(d => {
+        let nx = p2.x + d.dx;
+        let ny = p2.y + d.dy;
+
+        if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+          if (grid[ny][nx].type !== 'rock') {
+            let scoreWeight = 1;
+            if (grid[ny][nx].type === 'gem' && !grid[ny][nx].dug) scoreWeight = 10;
+            
+            let dist = Math.hypot(nx - p1.x, ny - p1.y) - scoreWeight;
+            if (dist < minDistance) {
+              minDistance = dist;
+              bestMove = { x: nx, y: ny };
+            }
           }
-        }, 100);
+        }
+      });
+
+      if (bestMove) {
+        p2.x = bestMove.x;
+        p2.y = bestMove.y;
+        processTile(p2, p2.x, p2.y);
       }
     }
 
-    function updateVisuals() {
-      // Keep depth capped at 300 visually
-      myEl.style.left = myX + 'px';
-      myEl.style.top = Math.min(300, 20 + myDepth) + 'px';
-      
-      oppEl.style.left = oppX + 'px';
-      oppEl.style.top = Math.min(300, 20 + oppDepth) + 'px';
-
-      document.getElementById('my-depth').innerText = myDepth;
-    }
-
-    function checkWinConditions() {
-      if (myDepth >= 300) {
-        gameOver = true;
-        document.getElementById('hud').innerText = "🏆 YOU GOT THE CORE GEM!";
-      } else if (oppDepth >= 300) {
-        gameOver = true;
-        document.getElementById('hud').innerText = "💥 OPPONENT WON! YOU LOSE!";
+    function processTile(player, x, y) {
+      let tile = grid[y][x];
+      if (!tile.dug) {
+        tile.dug = true;
+        if (tile.type === 'gem') {
+          player.score += 50;
+          if (player === p1) playSound('snd-gem');
+        } else {
+          player.score += 10;
+          if (player === p1) playSound('snd-drill');
+        }
+        updateHUD();
+        checkGameEnd();
       }
     }
+
+    function updateHUD() {
+      document.getElementById('p1-score').innerText = p1.score;
+      document.getElementById('p2-score').innerText = p2.score;
+    }
+
+    function checkGameEnd() {
+      // Check if all diggable tiles are cleared
+      let remaining = 0;
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          if (!grid[r][c].dug && grid[r][c].type !== 'rock') remaining++;
+        }
+      }
+
+      if (remaining === 0) {
+        isPlaying = false;
+        clearInterval(aiTimer);
+        
+        const title = document.getElementById('end-title');
+        const desc = document.getElementById('end-desc');
+        
+        if (p1.score > p2.score) {
+          title.innerText = "🎉 YOU WIN!";
+          desc.innerText = `You out-drilled the AI ${p1.score} to ${p2.score}!`;
+          playSound('snd-win');
+        } else if (p2.score > p1.score) {
+          title.innerText = "💥 AI WINS!";
+          desc.innerText = `The AI Driller beat you ${p2.score} to ${p1.score}!`;
+        } else {
+          title.innerText = "🤝 IT'S A TIE!";
+          desc.innerText = `Both drillers scored ${p1.score}!`;
+        }
+
+        document.getElementById('overlay-end').style.display = 'flex';
+      }
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-end').style.display = 'none';
+      initGame();
+    }
+
+    // KEYBOARD CONTROLS
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-1, 0);
+      if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1, 0);
+      if (e.key === 'ArrowUp' || e.key === 'w') movePlayer(0, -1);
+      if (e.key === 'ArrowDown' || e.key === 's') movePlayer(0, 1);
+    });
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    // RENDERING LOOP
+    function render() {
+      requestAnimationFrame(render);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (grid.length === 0) return;
+
+      const offsetX = (canvas.width - GRID_SIZE * tileSize) / 2;
+      const offsetY = (canvas.height - GRID_SIZE * tileSize) / 2 + 20;
+
+      // Draw Grid
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          let cell = grid[r][c];
+          let x = offsetX + c * tileSize;
+          let y = offsetY + r * tileSize;
+
+          if (cell.dug) {
+            ctx.fillStyle = '#1e293b'; // Dug tunnel
+          } else if (cell.type === 'rock') {
+            ctx.fillStyle = '#475569'; // Impassable rock
+          } else {
+            ctx.fillStyle = '#78350f'; // Dirt
+          }
+
+          ctx.fillRect(x, y, tileSize - 2, tileSize - 2);
+
+          // Draw Gem Icon
+          if (!cell.dug && cell.type === 'gem') {
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(x + tileSize / 2, y + tileSize / 2, tileSize / 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Draw Player 1 (Blue Driller)
+      ctx.fillStyle = p1.color;
+      ctx.beginPath();
+      ctx.arc(offsetX + p1.x * tileSize + tileSize / 2, offsetY + p1.y * tileSize + tileSize / 2, tileSize / 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw Player 2 (AI Red Driller)
+      ctx.fillStyle = p2.color;
+      ctx.beginPath();
+      ctx.arc(offsetX + p2.x * tileSize + tileSize / 2, offsetY + p2.y * tileSize + tileSize / 2, tileSize / 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    render();
   </script>
 </body>
 </html>
