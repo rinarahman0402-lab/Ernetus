@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>1 Million Coin Flip Simulator</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #020617; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #fff; z-index: 10; pointer-events: none; width: 90%;
+    }
+    .stats-box {
+      background: rgba(15, 23, 42, 0.85); border: 2px solid #facc15;
+      border-radius: 12px; padding: 12px 20px; display: inline-block;
+      box-shadow: 0 0 15px rgba(250, 204, 21, 0.3); margin-top: 8px;
+    }
+    .stat-val { font-size: 1.2rem; font-weight: bold; color: #facc15; }
+    #controls {
+      position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10; flex-wrap: wrap; justify-content: center; width: 95%;
+    }
+    .btn {
+      background: #facc15; color: #000; border: 2px solid #fff;
+      padding: 10px 18px; border-radius: 10px; font-weight: bold;
+      font-size: 0.85rem; cursor: pointer; box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+    }
+    .btn:active { transform: scale(0.95); background: #eab308; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin:0; font-size: 1.5rem; color: #facc15;">🪙 1 MILLION COIN FLIP SIMULATOR</h1>
+    <div class="stats-box">
+      <div>TOTAL FLIPS: <span id="total-flips" class="stat-val">0</span> / 1,000,000</div>
+      <div style="margin-top: 4px; font-size: 0.9rem;">
+        👑 HEADS: <span id="heads-cnt" style="color:#38bdf8;">0</span> | 
+        🦅 TAILS: <span id="tails-cnt" style="color:#f43f5e;">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" onclick="flipSingle()">🪙 FLIP 1</button>
+    <button class="btn" onclick="flipBatch(1000)">⚡ FLIP 1,000</button>
+    <button class="btn" onclick="flipBatch(100000)">🚀 FLIP 100,000</button>
+    <button class="btn" style="background:#ef4444; color:#fff;" onclick="flipMillion()">💥 FLIP ALL 1,000,000!</button>
+  </div>
+
+  <script>
+    let scene, camera, renderer, coinMesh;
+    let totalFlips = 0, headsCount = 0, tailsCount = 0;
+    let isFlippingAnim = false, targetRotX = 0;
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x020617);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 6);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 2);
+      light.position.set(5, 5, 5);
+      scene.add(light, new THREE.AmbientLight(0xffffff, 0.6));
+
+      // 3D Coin Model
+      const coinGeo = new THREE.CylinderGeometry(2, 2, 0.2, 64);
+      const coinMat = new THREE.MeshStandardMaterial({ 
+        color: 0xfacc15, metalness: 0.8, roughness: 0.2 
+      });
+      coinMesh = new THREE.Mesh(coinGeo, coinMat);
+      coinMesh.rotation.x = Math.PI / 2;
+      scene.add(coinMesh);
+
+      animate();
+    }
+
+    function updateDisplay() {
+      document.getElementById('total-flips').innerText = totalFlips.toLocaleString();
+      document.getElementById('heads-cnt').innerText = headsCount.toLocaleString();
+      document.getElementById('tails-cnt').innerText = tailsCount.toLocaleString();
+    }
+
+    function flipSingle() {
+      if (totalFlips >= 1000000) return alert("You've already reached 1 Million flips!");
+      
+      const isHeads = Math.random() < 0.5;
+      totalFlips++;
+      if (isHeads) headsCount++; else tailsCount++;
+
+      // Trigger 3D Spin Animation
+      isFlippingAnim = true;
+      targetRotX = coinMesh.rotation.x + Math.PI * (6 + (isHeads ? 0 : 1));
+      updateDisplay();
+    }
+
+    function flipBatch(amount) {
+      const remaining = 1000000 - totalFlips;
+      const flipsToDo = Math.min(amount, remaining);
+
+      if (flipsToDo <= 0) return alert("1 Million flips completed!");
+
+      let localHeads = 0;
+      for (let i = 0; i < flipsToDo; i++) {
+        if (Math.random() < 0.5) localHeads++;
+      }
+
+      headsCount += localHeads;
+      tailsCount += (flipsToDo - localHeads);
+      totalFlips += flipsToDo;
+
+      // Spin animation trigger
+      isFlippingAnim = true;
+      targetRotX = coinMesh.rotation.x + Math.PI * 10;
+      updateDisplay();
+    }
+
+    function flipMillion() {
+      const remaining = 1000000 - totalFlips;
+      if (remaining > 0) {
+        flipBatch(remaining);
+        alert("🎉 CONGRATULATIONS! You flipped 1,000,000 coins!");
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (isFlippingAnim) {
+        coinMesh.rotation.x += (targetRotX - coinMesh.rotation.x) * 0.15;
+        coinMesh.rotation.y += 0.2;
+        if (Math.abs(targetRotX - coinMesh.rotation.x) < 0.05) {
+          coinMesh.rotation.x = targetRotX;
+          isFlippingAnim = false;
+        }
+      } else {
+        coinMesh.rotation.y += 0.01; // Idle spin
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
