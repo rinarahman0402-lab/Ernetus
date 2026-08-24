@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Elevator Simulator: Void Lord Saga</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #000; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #fff; text-shadow: 2px 2px 4px #000; pointer-events: none; z-index: 10;
+    }
+    .hud-box { background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 8px; border: 1px solid #555; }
+    #shop-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: #f59e0b; color: #000; border: none; font-weight: bold;
+      padding: 10px 16px; border-radius: 8px; cursor: pointer; pointer-events: auto; z-index: 11;
+    }
+    #danger-warning {
+      position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+      color: #ef4444; font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 10px #ff0000;
+      display: none; pointer-events: none; z-index: 10;
+    }
+    #shop-modal {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); display: none; flex-direction: column;
+      align-items: center; justify-content: center; color: #fff; z-index: 100;
+    }
+    .shop-card {
+      background: #1e293b; border: 2px solid #f59e0b; padding: 20px;
+      border-radius: 12px; text-align: center; max-width: 300px;
+    }
+    .btn {
+      background: #22c55e; color: #000; border: none; font-weight: bold;
+      padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="ui">
+    <div class="hud-box">
+      <div>FLOOR: <span id="floor-txt" style="color:#38bdf8;">1</span></div>
+      <div>GOLD: 🪙<span id="gold-txt" style="color:#facc15;">0</span></div>
+    </div>
+    <div class="hud-box">
+      <div>TARGET: <span id="boss-name" style="color:#ef4444;">Village Guard</span></div>
+      <div>HP: <span id="hp-txt">10</span></div>
+    </div>
+  </div>
+
+  <button id="shop-btn" onclick="toggleShop()">🔫 UPGRADE GUN</button>
+  <div id="danger-warning">⚠️ STEPPING ON RED ZONE! ⚠️</div>
+
+  <div id="shop-modal">
+    <div class="shop-card">
+      <h2>Pistol Upgrade</h2>
+      <p>Current Power: Level <span id="gun-lvl">1</span></p>
+      <p>Cost: 🪙<span id="gun-cost">5</span> Gold</p>
+      <button class="btn" onclick="buyGunUpgrade()">Upgrade Damage (+5)</button>
+      <br><br>
+      <button class="btn" style="background:#64748b; color:#fff;" onclick="toggleShop()">Close Shop</button>
+    </div>
+  </div>
+
+  <script>
+    let scene, camera, renderer, player, enemy, elevatorDoors = [];
+    let currentFloor = 1, gold = 0, gunLevel = 1, gunDamage = 2;
+    let enemyHp = 10, enemyMaxHp = 10;
+    let inElevatorAction = false;
+    let redZones = [];
+    let redTime = 0;
+
+    // Controls
+    let isDragging = false, lastX = 0, lastY = 0;
+
+    const floorTypes = [
+      { name: "Village", color: 0x15803d, enemy: "Village Bandit", bg: 0x86efac },
+      { name: "Disco Party", color: 0x9333ea, enemy: "Disco Bot", bg: 0xf472b6 },
+      { name: "Sci-Fi Lab", color: 0x0284c7, enemy: "Cyber Drone", bg: 0x38bdf8 },
+      { name: "Volcano Core", color: 0xb91c1c, enemy: "Fire Elemental", bg: 0xfca5a5 },
+      { name: "The Void", color: 0x0f172a, enemy: "VOID LORD", bg: 0x020617 }
+    ];
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x86efac);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 7, 10);
+      camera.lookAt(0, 1, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.2);
+      light.position.set(5, 10, 5);
+      scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+
+      // Arena Floor
+      const arenaGeo = new THREE.PlaneGeometry(12, 12);
+      const arenaMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+      const arena = new THREE.Mesh(arenaGeo, arenaMat);
+      arena.rotation.x = -Math.PI / 2;
+      scene.add(arena);
+
+      // Elevator Structure
+      createElevator();
+
+      // Player Setup
+      const playerGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16);
+      const playerMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
+      player = new THREE.Mesh(playerGeo, playerMat);
+      player.position.set(0, 0.6, 3);
+      scene.add(player);
+
+      // Pistol Mesh on Player
+      const gunGeo = new THREE.BoxGeometry(0.15, 0.15, 0.5);
+      const gunMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      const gun = new THREE.Mesh(gunGeo, gunMat);
+      gun.position.set(0.3, 0.2, -0.3);
+      player.add(gun);
+
+      spawnEnemy();
+      setupControls();
+      animate();
+    }
+
+    function createElevator() {
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 });
+      
+      const doorL = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 0.2), wallMat);
+      doorL.position.set(-1, 2, -5.9);
+      const doorR = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 0.2), wallMat);
+      doorR.position.set(1, 2, -5.9);
+
+      elevatorDoors = [doorL, doorR];
+      scene.add(doorL, doorR);
+    }
+
+    function spawnEnemy() {
+      if (enemy) scene.remove(enemy);
+
+      const env = floorTypes[(currentFloor - 1) % floorTypes.length];
+      scene.background.setHex(env.bg);
+
+      enemyMaxHp = currentFloor * 10;
+      enemyHp = enemyMaxHp;
+
+      document.getElementById('boss-name').innerText = env.enemy;
+      document.getElementById('hp-txt').innerText = enemyHp;
+
+      const isBoss = (currentFloor % 5 === 0);
+      const scale = isBoss ? 1.8 : 1.0;
+
+      const eGeo = new THREE.BoxGeometry(0.8 * scale, 1.4 * scale, 0.8 * scale);
+      const eMat = new THREE.MeshStandardMaterial({ 
+        color: isBoss ? 0xa855f7 : 0xef4444,
+        roughness: 0.2 
+      });
+      
+      enemy = new THREE.Mesh(eGeo, eMat);
+      enemy.position.set(0, (1.4 * scale) / 2, -2);
+      scene.add(enemy);
+
+      clearRedZones();
+      spawnRedZone();
+    }
+
+    function spawnRedZone() {
+      if (redZones.length > 2) return;
+      const zoneGeo = new THREE.CircleGeometry(1.2, 32);
+      const zoneMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.6 });
+      const zone = new THREE.Mesh(zoneGeo, zoneMat);
+      zone.rotation.x = -Math.PI / 2;
+      zone.position.set((Math.random() - 0.5) * 8, 0.01, (Math.random() - 0.5) * 6);
+      scene.add(zone);
+      redZones.push(zone);
+    }
+
+    function clearRedZones() {
+      redZones.forEach(z => scene.remove(z));
+      redZones = [];
+    }
+
+    function setupControls() {
+      const onStart = (x, y) => { isDragging = true; lastX = x; lastY = y; shootGun(); };
+      const onMove = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - lastX;
+        const dy = y - lastY;
+        lastX = x; lastY = y;
+
+        player.position.x += dx * 0.02;
+        player.position.z += dy * 0.02;
+
+        player.position.x = Math.max(-5, Math.min(5, player.position.x));
+        player.position.z = Math.max(-4, Math.min(4, player.position.z));
+      };
+      const onEnd = () => isDragging = false;
+
+      window.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY));
+      window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+      window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onEnd);
+    }
+
+    function shootGun() {
+      if (!enemy || inElevatorAction) return;
+
+      // Laser Bullet Animation
+      const bullet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+      );
+      bullet.position.copy(player.position);
+      scene.add(bullet);
+
+      const targetPos = enemy.position.clone();
+      let step = 0;
+      const animateBullet = () => {
+        step += 0.1;
+        bullet.position.lerp(targetPos, step);
+        if (step < 1) {
+          requestAnimationFrame(animateBullet);
+        } else {
+          scene.remove(bullet);
+          enemyHp -= gunDamage;
+          document.getElementById('hp-txt').innerText = Math.max(0, enemyHp);
+
+          if (enemyHp <= 0) defeatEnemy();
+        }
+      };
+      animateBullet();
+    }
+
+    function defeatEnemy() {
+      gold += currentFloor;
+      document.getElementById('gold-txt').innerText = gold;
+
+      if (currentFloor % 5 === 0) {
+        // Open Elevator Doors every 5 levels
+        elevatorDoors[0].position.x = -2.2;
+        elevatorDoors[1].position.x = 2.2;
+      }
+
+      setTimeout(() => {
+        currentFloor++;
+        document.getElementById('floor-txt').innerText = currentFloor;
+        elevatorDoors[0].position.x = -1;
+        elevatorDoors[1].position.x = 1;
+        spawnEnemy();
+      }, 1000);
+    }
+
+    function checkDangerZones() {
+      let standingInRed = false;
+      redZones.forEach(zone => {
+        const dist = player.position.distanceTo(new THREE.Vector3(zone.position.x, player.position.y, zone.position.z));
+        if (dist < 1.2) standingInRed = true;
+      });
+
+      const warnElem = document.getElementById('danger-warning');
+      if (standingInRed) {
+        warnElem.style.display = 'block';
+        redTime += 0.016; // Approx frame time
+        if (redTime >= 3.0) {
+          alert("💥 You stayed on the red zone for more than 3 seconds! GAME OVER.");
+          currentFloor = 1;
+          gold = 0;
+          document.getElementById('gold-txt').innerText = gold;
+          document.getElementById('floor-txt').innerText = currentFloor;
+          redTime = 0;
+          spawnEnemy();
+        }
+      } else {
+        warnElem.style.display = 'none';
+        redTime = Math.max(0, redTime - 0.02);
+      }
+    }
+
+    function toggleShop() {
+      const modal = document.getElementById('shop-modal');
+      modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+      document.getElementById('gun-cost').innerText = gunLevel * 5;
+    }
+
+    function buyGunUpgrade() {
+      const cost = gunLevel * 5;
+      if (gold >= cost) {
+        gold -= cost;
+        gunLevel++;
+        gunDamage += 5;
+        document.getElementById('gold-txt').innerText = gold;
+        document.getElementById('gun-lvl').innerText = gunLevel;
+        document.getElementById('gun-cost').innerText = gunLevel * 5;
+        alert("✨ Gun Upgraded!");
+      } else {
+        alert("Not enough gold!");
+      }
+    }
+
+    setInterval(spawnRedZone, 3000);
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (enemy) {
+        enemy.rotation.y += 0.01;
+      }
+
+      checkDangerZones();
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
