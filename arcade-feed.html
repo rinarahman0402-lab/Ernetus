@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Arcade Shorts Feed</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000; color: #fff;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* VERTICAL TIKTOK-STYLE SNAP CONTAINER */
+    #feed-container {
+      width: 100%; height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    .game-card {
+      width: 100%; height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      background: #090d16;
+    }
+
+    iframe {
+      width: 100%; height: 100%;
+      border: none; display: block;
+    }
+
+    /* PLACEHOLDER CARD BEFORE LOAD */
+    .card-placeholder {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle, #1e1b4b 0%, #090d16 100%);
+      z-index: 1; pointer-events: none;
+    }
+
+    /* RIGHT SIDE BAR UI (LIKE BUTTONS & INDICATORS) */
+    .side-bar {
+      position: absolute; right: 14px; bottom: 60px;
+      display: flex; flex-direction: column; gap: 18px;
+      z-index: 50; align-items: center;
+    }
+
+    .action-btn {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: rgba(15, 23, 42, 0.75); border: 2px solid rgba(255, 255, 255, 0.2);
+      color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(8px); cursor: pointer; transition: transform 0.15s, background 0.15s;
+    }
+    .action-btn:active { transform: scale(0.88); background: rgba(234, 179, 8, 0.8); }
+
+    /* GAME BADGE OVERLAY */
+    .game-badge {
+      position: absolute; top: 16px; left: 16px;
+      background: rgba(15, 23, 42, 0.85); border: 1.5px solid #a855f7;
+      padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;
+      color: #c084fc; z-index: 50; pointer-events: none; backdrop-filter: blur(6px);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="feed-container"></div>
+
+  <script>
+    // DEFINE FILE PATHS FOR ALL 50 GAMES
+    // Replace names below with your actual HTML game file names!
+    const gameFiles = [
+      "will-o-wisp.html",   // Game 76
+      "ash-parkour.html",   // Game 77
+      // Automatically generates paths for game3.html through game50.html
+      ...Array.from({ length: 48 }, (_, i) => `game${i + 3}.html`)
+    ];
+
+    const feedContainer = document.getElementById('feed-container');
+
+    // BUILD THE 50 SLIDES DYNAMICALLY
+    gameFiles.forEach((file, index) => {
+      const card = document.createElement('div');
+      card.className = 'game-card';
+      card.dataset.index = index;
+      card.dataset.src = file;
+
+      card.innerHTML = `
+        <div class="game-badge">🎮 GAME #${index + 1}</div>
+        <div class="card-placeholder" id="loader-${index}">
+          <div style="font-size: 3rem; animation: pulse 1s infinite alternate;">🕹️</div>
+          <p style="margin-top: 10px; color: #a855f7; font-weight: 700;">Swipe to Load...</p>
+        </div>
+        <div class="side-bar">
+          <button class="action-btn" onclick="likeGame(this)">❤️</button>
+          <button class="action-btn" onclick="reloadGame(${index})">🔄</button>
+        </div>
+      `;
+
+      feedContainer.appendChild(card);
+    });
+
+    // LAZY-LOAD & PERFORMANCE MANAGEMENT via IntersectionObserver
+    // Only loads the game iframe when scrolled into view, unloads off-screen games to save RAM.
+    const observerOptions = {
+      root: feedContainer,
+      threshold: 0.6 // Trigger when 60% of the game slide is visible
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const card = entry.target;
+        const index = card.dataset.index;
+        const src = card.dataset.src;
+        let iframe = card.querySelector('iframe');
+
+        if (entry.isIntersecting) {
+          // Mount iframe if not present
+          if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.src = src;
+            iframe.onload = () => {
+              const loader = document.getElementById(`loader-${index}`);
+              if (loader) loader.style.display = 'none';
+            };
+            card.appendChild(iframe);
+          }
+        } else {
+          // Unload iframe when scrolled away to prevent lag/audio overlap across 50 games
+          if (iframe) {
+            iframe.remove();
+            const loader = document.getElementById(`loader-${index}`);
+            if (loader) loader.style.display = 'flex';
+          }
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.game-card').forEach(card => observer.observe(card));
+
+    // UI BUTTON FUNCTIONS
+    function likeGame(btn) {
+      btn.style.color = btn.style.color === 'red' ? 'white' : 'red';
+      btn.style.borderColor = 'red';
+    }
+
+    function reloadGame(index) {
+      const card = document.querySelector(`.game-card[data-index="${index}"]`);
+      const iframe = card.querySelector('iframe');
+      if (iframe) iframe.src = iframe.src;
+    }
+  </script>
+</body>
+</html>
