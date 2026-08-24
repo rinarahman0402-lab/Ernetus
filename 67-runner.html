@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>6 7 Runner</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a; color: #fff; user-select: none;
+      -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD */
+    #hud {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 92%; max-width: 500px; display: flex; justify-content: space-between;
+      align-items: center; z-index: 10; pointer-events: none;
+    }
+    .hud-badge {
+      background: rgba(15, 23, 42, 0.75); border: 2px solid #38bdf8;
+      border-radius: 20px; padding: 6px 14px; font-weight: 800; font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-dist { border-color: #f43f5e; color: #fb7185; }
+    .badge-coins { border-color: #facc15; color: #fde047; }
+    .badge-lvl { border-color: #a855f7; color: #c084fc; }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+    .btn-main {
+      background: #f43f5e; color: #fff; border: 3px solid #fff;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #9f1239; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #9f1239; }
+
+    /* LEVEL UP POPUP */
+    #level-toast {
+      position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%) scale(0);
+      background: #a855f7; border: 4px solid #fff; padding: 12px 28px; border-radius: 20px;
+      font-weight: 900; font-size: 1.8rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      z-index: 20; pointer-events: none; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #level-toast.show { transform: translate(-50%, -50%) scale(1); }
+  </style>
+</head>
+<body>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="snd-coin-6" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+  <audio id="snd-coin-7" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+  <audio id="snd-jump" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+  <audio id="snd-over" src="https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3"></audio>
+  <audio id="snd-lvl" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+  <audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-badge badge-dist">📏 <span id="dist-txt">0m</span></div>
+    <div class="hud-badge badge-lvl">⚡ LVL <span id="lvl-txt">1</span></div>
+    <div class="hud-badge badge-coins">🪙 <span id="coins-txt">0</span></div>
+  </div>
+
+  <div id="level-toast">SPEED UP! 6 7!</div>
+
+  <canvas id="canvas"></canvas>
+
+  <!-- OVERLAYS -->
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 3rem; color: #f43f5e; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">6 7 RUNNER</h1>
+    <p style="font-size: 1rem; color: #cbd5e1; max-width: 320px; margin-top: 10px;">
+      Tap to jump over giant 6s and 7s! Hold in mid-air to double jump. Collect floating 6 and 7 coins!
+    </p>
+    <button class="btn-main" onclick="startGame()">START RUNNING</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 3rem; color: #f43f5e; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">6 7 GAME OVER!</h1>
+    <p style="font-size: 1.2rem; margin-top: 10px;">Distance: <span id="final-dist" style="color: #fb7185; font-weight:bold;">0m</span></p>
+    <p style="font-size: 1.2rem; margin-top: 5px;">Coins: <span id="final-coins" style="color: #fde047; font-weight:bold;">0</span></p>
+    <button class="btn-main" onclick="restartGame()">RUN AGAIN</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // GAME VARIABLES
+    let isPlaying = false;
+    let distance = 0;
+    let coins = 0;
+    let level = 1;
+    let gameSpeed = 6;
+    let baseSpeed = 6;
+    let gravity = 0.65;
+    let groundY = 0;
+
+    let player = {
+      x: 80, y: 0, width: 40, height: 40,
+      vy: 0, jumped: false, canDoubleJump: false,
+      isGrounded: false
+    };
+
+    let obstacles = [];
+    let coinItems = [];
+    let particles = [];
+
+    let nextSpawnDistance = 0;
+    let nextCoinDistance = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      groundY = canvas.height - 100;
+      if (!isPlaying) player.y = groundY - player.height;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // INPUT HANDLERS
+    function handleJumpStart() {
+      if (!isPlaying) return;
+      
+      if (player.isGrounded) {
+        player.vy = -14;
+        player.isGrounded = false;
+        player.canDoubleJump = true;
+        playSound('snd-jump');
+        createParticles(player.x + 20, player.y + 40, '#ffffff', 8);
+      } else if (player.canDoubleJump) {
+        player.vy = -12;
+        player.canDoubleJump = false;
+        playSound('snd-jump');
+        createParticles(player.x + 20, player.y + 20, '#38bdf8', 10);
+      }
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      // Don't trigger jump on UI buttons
+      if (e.target.tagName === 'BUTTON') return;
+      handleJumpStart();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') handleJumpStart();
+    });
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      initGame();
+    }
+
+    function initGame() {
+      distance = 0;
+      coins = 0;
+      level = 1;
+      gameSpeed = baseSpeed;
+      obstacles = [];
+      coinItems = [];
+      particles = [];
+
+      player.y = groundY - player.height;
+      player.vy = 0;
+      player.isGrounded = true;
+
+      nextSpawnDistance = 300;
+      nextCoinDistance = 150;
+
+      updateHUD();
+      playSound('bgm');
+      isPlaying = true;
+    }
+
+    function spawnObstacle() {
+      const type = Math.random() < 0.5 ? '6' : '7';
+      const size = 60 + Math.random() * 20;
+      obstacles.push({
+        x: canvas.width + 50,
+        y: groundY - size,
+        width: size * 0.7,
+        height: size,
+        text: type,
+        color: type === '6' ? '#ef4444' : '#3b82f6'
+      });
+    }
+
+    function spawnCoin() {
+      const type = Math.random() < 0.5 ? '6' : '7';
+      const isHigh = Math.random() < 0.5;
+      coinItems.push({
+        x: canvas.width + 50,
+        y: groundY - (isHigh ? 130 : 50),
+        size: 26,
+        text: type,
+        color: '#facc15'
+      });
+    }
+
+    function createParticles(x, y, color, count = 6) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x, y: y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          size: Math.random() * 6 + 2,
+          color: color,
+          life: 1.0
+        });
+      }
+    }
+
+    function updateHUD() {
+      document.getElementById('dist-txt').innerText = Math.floor(distance) + 'm';
+      document.getElementById('coins-txt').innerText = coins;
+      document.getElementById('lvl-txt').innerText = level;
+    }
+
+    function checkLevelUp() {
+      const currentLevel = Math.floor(distance / 67) + 1;
+      if (currentLevel > level) {
+        level = currentLevel;
+        gameSpeed = baseSpeed + (level - 1) * 1.5;
+        playSound('snd-lvl');
+
+        const toast = document.getElementById('level-toast');
+        toast.innerText = `LEVEL ${level}! 6 7!`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1200);
+      }
+    }
+
+    // GAME LOOP
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      // CLEAR & DRAW BACKGROUND
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // PARALLAX BACKGROUND HILLS
+      ctx.fillStyle = '#1e293b';
+      for (let i = 0; i < 5; i++) {
+        const hillX = ((i * 300) - (distance * 2)) % (canvas.width + 300) - 100;
+        ctx.beginPath();
+        ctx.arc(hillX, groundY + 100, 200, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // DRAW GROUND
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(0, groundY, canvas.width, 12);
+
+      if (!isPlaying) return;
+
+      // UPDATE DISTANCE & LEVEL
+      distance += gameSpeed * 0.05;
+      checkLevelUp();
+      updateHUD();
+
+      // PLAYER PHYSICS
+      player.vy += gravity;
+      player.y += player.vy;
+
+      if (player.y >= groundY - player.height) {
+        player.y = groundY - player.height;
+        player.vy = 0;
+        player.isGrounded = true;
+      }
+
+      // DRAW PLAYER (Cute Square Character)
+      ctx.fillStyle = '#f43f5e';
+      ctx.shadowColor = '#fb7185';
+      ctx.shadowBlur = 10;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.shadowBlur = 0;
+
+      // Player Eyes
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(player.x + 24, player.y + 8, 8, 8);
+      ctx.fillRect(player.x + 12, player.y + 8, 8, 8);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(player.x + 28, player.y + 10, 4, 4);
+      ctx.fillRect(player.x + 16, player.y + 10, 4, 4);
+
+      // SPAWN LOGIC
+      if (canvas.width + 50 > nextSpawnDistance) {
+        spawnObstacle();
+        nextSpawnDistance = canvas.width + 50 + 250 + Math.random() * 200;
+      }
+      nextSpawnDistance -= gameSpeed;
+
+      if (canvas.width + 50 > nextCoinDistance) {
+        spawnCoin();
+        nextCoinDistance = canvas.width + 50 + 120 + Math.random() * 150;
+      }
+      nextCoinDistance -= gameSpeed;
+
+      // UPDATE & DRAW OBSTACLES (6 and 7 Blocks)
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.x -= gameSpeed;
+
+        // Draw Block
+        ctx.fillStyle = obs.color;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Draw "6" or "7" label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `900 ${obs.height * 0.7}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(obs.text, obs.x + obs.width / 2, obs.y + obs.height / 2);
+
+        // COLLISION CHECK
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          gameOver();
+        }
+
+        if (obs.x < -100) obstacles.splice(i, 1);
+      }
+
+      // UPDATE & DRAW COINS ("6" and "7" Floating Coins)
+      for (let i = coinItems.length - 1; i >= 0; i--) {
+        const c = coinItems[i];
+        c.x -= gameSpeed;
+
+        // Draw Floating Coin Badge
+        ctx.fillStyle = c.color;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000000';
+        ctx.font = '900 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(c.text, c.x, c.y);
+
+        // COIN COLLECT CHECK
+        const distToPlayer = Math.hypot(c.x - (player.x + 20), c.y - (player.y + 20));
+        if (distToPlayer < c.size / 2 + 20) {
+          coins++;
+          if (c.text === '6') playSound('snd-coin-6');
+          else playSound('snd-coin-7');
+
+          createParticles(c.x, c.y, '#facc15', 8);
+          coinItems.splice(i, 1);
+          updateHUD();
+        }
+
+        if (c.x < -50) coinItems.splice(i, 1);
+      }
+
+      // UPDATE & DRAW PARTICLES
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.04;
+
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      playSound('snd-over');
+      document.getElementById('final-dist').innerText = Math.floor(distance) + 'm';
+      document.getElementById('final-coins').innerText = coins;
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+      document.getElementById('overlay-over').style.display = 'none';
+      initGame();
+    }
+
+    function playSound(id) {
+      const snd = document.getElementById(id);
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
