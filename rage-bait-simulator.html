@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rage Bait Simulator</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Impact', 'Arial Black', sans-serif;
+      background: #09090b; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #f43f5e; z-index: 10; pointer-events: none;
+      width: 90%; max-width: 500px;
+    }
+    #roast-box {
+      background: rgba(15, 23, 42, 0.9); border: 2px solid #f43f5e;
+      border-radius: 12px; padding: 12px 18px; color: #facc15;
+      font-size: 1.1rem; text-shadow: 2px 2px 0 #000; box-shadow: 0 0 15px #f43f5e;
+      min-height: 70px; display: flex; align-items: center; justify-content: center;
+    }
+    #rage-meter-container {
+      position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
+      width: 80%; max-width: 300px; background: #27272a; border-radius: 10px;
+      padding: 4px; border: 1px solid #71717a; z-index: 10;
+    }
+    #rage-meter {
+      height: 18px; width: 0%; background: linear-gradient(90deg, #eab308, #ef4444);
+      border-radius: 6px; transition: width 0.2s;
+    }
+    #controls {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10; width: 90%; max-width: 400px;
+      justify-content: center;
+    }
+    .btn {
+      background: #f43f5e; color: #fff; border: 2px solid #fff;
+      padding: 10px 16px; border-radius: 10px; font-weight: bold;
+      font-size: 0.85rem; cursor: pointer; flex: 1; text-align: center;
+    }
+    .btn:active { transform: scale(0.95); background: #be123c; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1 style="margin: 0 0 10px 0; font-size: 1.6rem; color: #fff;">🔥 RAGE BAIT SIMULATOR 🔥</h1>
+    <div id="roast-box">Click a button... if your reflexes can handle it.</div>
+  </div>
+
+  <div id="rage-meter-container">
+    <div style="color: #fff; font-size: 0.75rem; text-align: center; margin-bottom: 2px;">RAGE METER</div>
+    <div id="rage-meter"></div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" onclick="tryTask(1)">EASY TASK</button>
+    <button class="btn" onclick="tryTask(2)">PRESS THIS</button>
+    <button class="btn" onclick="tryTask(3)">WIN GAME</button>
+  </div>
+
+  <script>
+    let scene, camera, renderer, movingButtonMesh;
+    let rage = 0;
+
+    const roasts = [
+      "My wifi router makes better decisions than you just did.",
+      "Are you playing with your elbows?",
+      "I’ve seen loading screens move faster than your reaction time.",
+      "Even an AFK player could have dodged that.",
+      "Is your screen turned on or are you just guessing?",
+      "That attempt was so bad it gave the game a headache.",
+      "Congratulations! You set a record for the worst move today.",
+      "You make NPC pathfinding look like pure genius."
+    ];
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x09090b);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 2, 6);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.PointLight(0xf43f5e, 2, 20);
+      light.position.set(0, 5, 2);
+      scene.add(light, new THREE.AmbientLight(0x3f3f46));
+
+      // 3D Moving Target Button
+      const geo = new THREE.BoxGeometry(1.5, 0.6, 0.4);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.2 });
+      movingButtonMesh = new THREE.Mesh(geo, mat);
+      scene.add(movingButtonMesh);
+
+      setupRaycaster();
+      animate();
+    }
+
+    function triggerRoast() {
+      const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+      document.getElementById('roast-box').innerText = `"${randomRoast}"`;
+      
+      rage = Math.min(100, rage + 15);
+      document.getElementById('rage-meter').style.width = rage + '%';
+
+      if (rage >= 100) {
+        document.getElementById('roast-box').innerText = "💥 MAXIMUM RAGE REACHED! You got roasted into total defeat!";
+        setTimeout(() => {
+          rage = 0;
+          document.getElementById('rage-meter').style.width = '0%';
+        }, 3000);
+      }
+    }
+
+    function tryTask(id) {
+      // Intentionally troll the user whenever they click UI buttons
+      if (Math.random() < 0.8) {
+        triggerRoast();
+      } else {
+        document.getElementById('roast-box').innerText = "Lucky click! But don't get confident...";
+      }
+    }
+
+    function setupRaycaster() {
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('pointerdown', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(movingButtonMesh);
+
+        if (intersects.length > 0) {
+          triggerRoast();
+          // Teleport target away to rage bait
+          movingButtonMesh.position.x = (Math.random() - 0.5) * 4;
+          movingButtonMesh.position.y = (Math.random() - 0.5) * 2;
+        }
+      });
+    }
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+
+      // Dodge around evasively
+      movingButtonMesh.position.x = Math.sin(time * 0.003) * 2.2;
+      movingButtonMesh.position.y = Math.cos(time * 0.004) * 1.2;
+      movingButtonMesh.rotation.z = Math.sin(time * 0.002) * 0.3;
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
