@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Loading Bar Simulator 3D</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0;
+      overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #020617; user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #ui {
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      text-align: center; color: #fff; z-index: 10; pointer-events: none;
+    }
+    h1 { margin: 0; font-size: 1.5rem; color: #38bdf8; text-shadow: 0 0 10px #0284c7; }
+    #status { margin-top: 5px; font-size: 1rem; color: #facc15; }
+    #controls {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; z-index: 10;
+    }
+    .btn {
+      background: #0284c7; color: #fff; border: 2px solid #38bdf8;
+      padding: 12px 20px; border-radius: 12px; font-weight: bold;
+      font-size: 0.9rem; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .btn:active { transform: scale(0.95); background: #0369a1; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <h1>⏳ LOADING BAR SIMULATOR 3D</h1>
+    <div id="status">PROGRESS: 0% | LEVEL: 1</div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" onclick="boostLoading()">⚡ SPAM CLICK TO LOAD!</button>
+    <button class="btn" style="background:#e11d48; border-color:#f43f5e;" onclick="fixError()">🛠️ FIX GLITCH</button>
+  </div>
+
+  <script>
+    let scene, camera, renderer, progressBar, progressFill, statusText;
+    let progress = 0, level = 1, isGlitched = false;
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x020617);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 2, 8);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.5);
+      light.position.set(0, 10, 10);
+      scene.add(light, new THREE.AmbientLight(0x38bdf8, 0.4));
+
+      // Outer Bar Framework
+      const frameGeo = new THREE.BoxGeometry(6.2, 1.2, 0.6);
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 });
+      const frame = new THREE.Mesh(frameGeo, frameMat);
+      scene.add(frame);
+
+      // Inner Fill Bar
+      const fillGeo = new THREE.BoxGeometry(1, 1, 0.5);
+      const fillMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.1, emissive: 0x15803d });
+      progressFill = new THREE.Mesh(fillGeo, fillMat);
+      progressFill.position.set(-3, 0, 0.05);
+      progressFill.scale.set(0.01, 0.9, 0.9);
+      scene.add(progressFill);
+
+      animate();
+    }
+
+    function boostLoading() {
+      if (isGlitched) return;
+      progress += 2 + Math.random() * 3;
+      if (progress >= 100) {
+        progress = 0;
+        level++;
+        alert(`🎉 LEVEL ${level - 1} LOADED SUCCESSFULLY! Advancing to Level ${level}!`);
+      }
+      updateFill();
+    }
+
+    function fixError() {
+      if (isGlitched) {
+        isGlitched = false;
+        progressFill.material.color.setHex(0x22c55e);
+        progressFill.material.emissive.setHex(0x15803d);
+        document.getElementById('status').innerText = `PROGRESS: ${Math.floor(progress)}% | LEVEL: ${level}`;
+      }
+    }
+
+    function updateFill() {
+      const scaleX = Math.max(0.01, (progress / 100) * 6);
+      progressFill.scale.x = scaleX;
+      progressFill.position.x = -3 + (scaleX / 2);
+      document.getElementById('status').innerText = `PROGRESS: ${Math.floor(progress)}% | LEVEL: ${level}`;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Random glitch trigger
+      if (!isGlitched && Math.random() < 0.003 && progress > 20) {
+        isGlitched = true;
+        progressFill.material.color.setHex(0xef4444);
+        progressFill.material.emissive.setHex(0x991b1b);
+        document.getElementById('status').innerText = `⚠️ GLITCH ERROR AT ${Math.floor(progress)}%! CLICK FIX GLITCH!`;
+      }
+
+      if (!isGlitched && progress > 0) {
+        progress += 0.05; // Passive progress
+        if (progress >= 100) {
+          progress = 0;
+          level++;
+        }
+        updateFill();
+      }
+
+      // Smooth idle rotation for 3D effect
+      scene.rotation.y = Math.sin(Date.now() * 0.001) * 0.15;
+      scene.rotation.x = Math.cos(Date.now() * 0.001) * 0.1;
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
+</body>
+</html>
