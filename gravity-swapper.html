@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Cosmic Gravity Swapper</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #030712; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none; touch-action: none;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    #hud {
+      position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; z-index: 10; pointer-events: none;
+    }
+
+    .badge {
+      background: rgba(17, 24, 39, 0.85); border: 2px solid #818cf8;
+      padding: 6px 16px; border-radius: 20px; font-weight: 800;
+      font-size: 0.95rem; color: #c7d2fe; backdrop-filter: blur(6px);
+    }
+
+    /* VISUAL MOBILE TAP HINT OVERLAY */
+    #mobile-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(129, 140, 248, 0.2); border: 1.5px dashed #818cf8;
+      padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; color: #c7d2fe;
+      z-index: 10; pointer-events: none; text-align: center; font-weight: 600;
+    }
+
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(3, 7, 18, 0.9); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 20; text-align: center; padding: 20px;
+    }
+
+    .btn {
+      background: #818cf8; color: #000; border: none;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #4f46e5; transition: transform 0.1s;
+    }
+    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #4f46e5; }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <div class="badge">🌌 Game #88</div>
+    <div class="badge">⭐ Score: <span id="score">0</span></div>
+  </div>
+
+  <div id="mobile-hint">👆 TAP ANYWHERE TO FLIP GRAVITY</div>
+
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.2rem; color: #c7d2fe; text-shadow: 0 0 15px rgba(129,140,248,0.5);">GRAVITY SWAPPER</h1>
+    <p style="font-size: 0.95rem; color: #9ca3af; max-width: 300px; margin-top: 12px; line-height: 1.4;">
+      Tap anywhere on screen or press <b>SPACE / UP</b> to flip gravity! Dodge the cosmic spikes.
+    </p>
+    <button class="btn" onclick="startGame()">START GAME 🚀</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.5rem; color: #f87171;">CRASHED! 💥</h1>
+    <p style="font-size: 1.1rem; color: #d1d5db; margin-top: 8px;">Final Score: <span id="final-score">0</span></p>
+    <button class="btn" onclick="startGame()">TRY AGAIN 🔄</button>
+  </div>
+
+  <canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let running = false;
+    let score = 0;
+    let gravity = 0.6;
+
+    const player = {
+      x: 80, y: 0, size: 28, vy: 0, inverted: false
+    };
+
+    let obstacles = [];
+    let particles = [];
+    let frame = 0;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      if (!running) player.y = height / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function flipGravity(e) {
+      if (!running) return;
+      if (e && e.target.classList.contains('btn')) return;
+
+      player.inverted = !player.inverted;
+      player.vy = player.inverted ? -8 : 8;
+
+      // Tap Particles
+      for (let i = 0; i < 8; i++) {
+        particles.push({
+          x: player.x, y: player.y,
+          vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+          life: 20, color: '#c7d2fe'
+        });
+      }
+    }
+
+    // Touch & Mouse input support
+    window.addEventListener('pointerdown', flipGravity);
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') flipGravity();
+    });
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      document.getElementById('overlay-over').style.display = 'none';
+      
+      score = 0;
+      frame = 0;
+      obstacles = [];
+      particles = [];
+      player.y = height / 2;
+      player.vy = 0;
+      player.inverted = false;
+      running = true;
+
+      document.getElementById('score').innerText = '0';
+      requestAnimationFrame(update);
+    }
+
+    function gameOver() {
+      running = false;
+      document.getElementById('final-score').innerText = score;
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function spawnObstacle() {
+      const isTop = Math.random() > 0.5;
+      const obsHeight = Math.random() * (height * 0.35) + 60;
+      obstacles.push({
+        x: width + 40,
+        y: isTop ? 0 : height - obsHeight,
+        w: 35,
+        h: obsHeight,
+        passed: false
+      });
+    }
+
+    function update() {
+      if (!running) return;
+
+      frame++;
+      if (frame % 70 === 0) spawnObstacle();
+
+      player.vy += player.inverted ? -gravity : gravity;
+      player.y += player.vy;
+
+      if (player.y - player.size / 2 <= 0 || player.y + player.size / 2 >= height) {
+        return gameOver();
+      }
+
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, width, 8);
+      ctx.fillRect(0, height - 8, width, 8);
+
+      ctx.fillStyle = '#818cf8';
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        let o = obstacles[i];
+        o.x -= 6 + Math.floor(score / 10);
+
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+
+        if (
+          player.x + player.size / 2 > o.x &&
+          player.x - player.size / 2 < o.x + o.w &&
+          player.y + player.size / 2 > o.y &&
+          player.y - player.size / 2 < o.y + o.h
+        ) {
+          return gameOver();
+        }
+
+        if (!o.passed && o.x + o.w < player.x) {
+          o.passed = true;
+          score++;
+          document.getElementById('score').innerText = score;
+        }
+
+        if (o.x + o.w < -50) obstacles.splice(i, 1);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 4, 4);
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      ctx.fillStyle = player.inverted ? '#a855f7' : '#38bdf8';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      requestAnimationFrame(update);
+    }
+  </script>
+</body>
+</html>
