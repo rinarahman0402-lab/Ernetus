@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NINJA ROCKSTAR</title>
+<style>
+  body {
+    background: #000;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+  }
+  #game {
+    max-width: 700px;
+    padding: 30px;
+    border: 3px solid #ff00ff;
+    background: #110011;
+    box-shadow: 0 0 30px #ff00ff;
+  }
+  h1 { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+ .day { color: #ffff00; }
+ .night { color: #00ffff; }
+  #text { font-size: 18px; line-height: 1.8; margin-bottom: 25px; min-height: 150px; }
+  button {
+    background: #220022;
+    color: #fff;
+    border: 2px solid #ff00ff;
+    padding: 12px 25px;
+    margin: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #ff00ff;
+    box-shadow: 0 0 15px #ff00ff;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>NINJA ROCKSTAR</h1>
+  <div id="text"></div>
+  <div id="buttons"></div>
+</div>
+
+<script>
+let time = "DAY";
+let fame = 0;
+let ninjaSkill = 0;
+
+const scenes = [
+  // DAY - ROCKSTAR
+  {
+    text: `<span class="day">MORNING 🌞</span><br><br>You're an ADULT rock star.<br>You just finished a concert. Fans screaming.<br>Fame: ${fame}<br><br>But when the sun sets...`,
+    options: ["WAIT FOR NIGHT"],
+    next: [1]
+  },
+  // TRANSITION
+  {
+    text: `<span class="night">NIGHT 🌙</span><br><br>The city sleeps. Time to change.<br>Ninja suit on. Mask on.<br>Ninja Skill: ${ninjaSkill}<br><br>What's the mission?`,
+    options: ["HACK THE BILLBOARD", "STEAL BACK STOLEN GUITAR", "ROB THE EVIL RECORD LABEL"],
+    next: [2, 3, 4]
+  },
+  // MISSION 1
+  {
+    text: `You hack the giant billboard.<br>It now says: "BEST ROCKSTAR IS ${fame > 5? 'YOU' : 'STILL ME'}"<br><br>Ninja Skill +1`,
+    options: ["GO BACK TO BASE"],
+    next: [5]
+  },
+  // MISSION 2
+  {
+    text: `Sneak into the music store.<br>You stole your guitar back from the traitor!<br><br>Ninja Skill +1<br>Fame +2`,
+    options: ["GO BACK TO BASE"],
+    next: [5]
+  },
+  // MISSION 3
+  {
+    text: `You rob the evil record label.<br>Took all their money and gave it to street musicians.<br><br>You're a hero ninja.<br>Fame +3`,
+    options: ["GO BACK TO BASE"],
+    next: [5]
+  },
+  // BACK TO BASE
+  {
+    text: () => {
+      fame += 1;
+      ninjaSkill += 1;
+      return `Back home safe.<br><br><span class="day">Stats:</span><br>Fame: ${fame}<br>Ninja Skill: ${ninjaSkill}<br><br>Sun's coming up. Time to be a rock star again.<br><br>NO TEACHERS. NO SCHOOL. JUST YOU.`;
+    },
+    options: ["BECOME ROCKSTAR AGAIN"],
+    next: [0]
+  }
+];
+
+function showStage() {
+  const scene = scenes[stage];
+  document.getElementById('text').innerHTML = typeof scene.text === 'function'? scene.text() : scene.text;
+
+  const buttonsDiv = document.getElementById('buttons');
+  buttonsDiv.innerHTML = '';
+
+  scene.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.innerText = opt;
+    btn.onclick = () => {
+      stage = scene.next[i];
+      showStage();
+    };
+    buttonsDiv.appendChild(btn);
+  });
+}
+
+let stage = 0;
+showStage();
+</script>
+</body>
+</html>
