@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Paper Tearing Simulator</title>
+<style>
+    * { margin: 0; padding: 0; touch-action: none; }
+  body {
+    background: #3a2f2f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial;
+  }
+  #desk {
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(#8b5e3c, #5c3d2e);
+    position: relative;
+  }
+ .paper {
+    width: 280px;
+    height: 380px;
+    background: #fffef7;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid #ddd;
+    cursor: grab;
+  }
+ .paper-piece {
+    position: absolute;
+    background: #fffef7;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+  #ui {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    color: #faedcd;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  #btns {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+ .btn {
+    padding: 15px 30px;
+    background: #a98467;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #6c5844;
+  }
+</style>
+</head>
+<body>
+
+<div id="desk">
+  <div id="ui">Tear the paper | Satisfaction: <span id="score">0%</span></div>
+  <div class="paper" id="paper"></div>
+  <div id="btns">
+    <button class="btn" onclick="newPaper()">NEW PAPER</button>
+    <button class="btn" onclick="crumple()">CRUMPLE</button>
+  </div>
+</div>
+
+<audio id="tearSound" src="https://cdn.pixabay.com/audio/2025/04/22/audio_0f0c1e1b1c.mp3"></audio>
+<audio id="crumpleSound" src="https://cdn.pixabay.com/audio/2025/04/22/audio_1a2b3c4d5e.mp3"></audio>
+
+<script>
+const paper = document.getElementById('paper');
+const desk = document.getElementById('desk');
+const tearSound = document.getElementById('tearSound');
+const crumpleSound = document.getElementById('crumpleSound');
+let isTearing = false;
+let tearPoints = [];
+let satisfaction = 0;
+
+function getPos(e) {
+  if(e.touches) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  return {x: e.clientX, y: e.clientY};
+}
+
+function startTear(e) {
+  isTearing = true;
+  tearPoints = [];
+  const pos = getPos(e);
+  tearPoints.push(pos);
+  tearSound.currentTime = 0;
+  tearSound.play();
+}
+
+function moveTear(e) {
+  if(!isTearing) return;
+  const pos = getPos(e);
+  tearPoints.push(pos);
+
+  // draw tear line
+  const line = document.createElement('div');
+  line.style.position = 'absolute';
+  line.style.width = '3px';
+  line.style.height = '3px';
+  line.style.background = '#ccc';
+  line.style.borderRadius = '50%';
+  line.style.left = pos.x - paper.getBoundingClientRect().left + 'px';
+  line.style.top = pos.y - paper.getBoundingClientRect().top + 'px';
+  paper.appendChild(line);
+
+  satisfaction += 0.5;
+  if(satisfaction > 100) satisfaction = 100;
+  document.getElementById('score').innerText = Math.floor(satisfaction) + '%';
+}
+
+function stopTear() {
+  if(!isTearing) return;
+  isTearing = false;
+  tearSound.pause();
+
+  // If tear went across, split paper
+  if(tearPoints.length > 10) {
+    splitPaper();
+  }
+}
+
+function splitPaper() {
+  const rect = paper.getBoundingClientRect();
+  const piece1 = document.createElement('div');
+  const piece2 = document.createElement('div');
+  piece1.className = 'paper-piece';
+  piece2.className = 'paper-piece';
+
+  piece1.style.width = '280px';
+  piece1.style.height = '190px';
+  piece2.style.width = '280px';
+  piece2.style.height = '190px';
+
+  piece1.style.left = rect.left + 'px';
+  piece1.style.top = rect.top + 'px';
+  piece2.style.left = rect.left + 'px';
+  piece2.style.top = rect.top + 190 + 'px';
+
+  desk.appendChild(piece1);
+  desk.appendChild(piece2);
+  paper.remove();
+
+  // make pieces fall
+  setTimeout(() => {
+    piece1.style.transition = '1s';
+    piece2.style.transition = '1s';
+    piece1.style.top = rect.top + 100 + 'px';
+    piece2.style.top = rect.top + 300 + 'px';
+  }, 100);
+}
+
+function newPaper() {
+  location.reload();
+}
+
+function crumple() {
+  crumpleSound.currentTime = 0;
+  crumpleSound.play();
+  paper.style.transition = '0.5s';
+  paper.style.transform = 'translate(-50%, -50%) scale(0.7) rotate(10deg)';
+  satisfaction += 20;
+  document.getElementById('score').innerText = Math.floor(satisfaction) + '%';
+}
+
+// Mouse + Touch
+paper.addEventListener('mousedown', startTear);
+paper.addEventListener('mousemove', moveTear);
+paper.addEventListener('mouseup', stopTear);
+paper.addEventListener('touchstart', startTear);
+paper.addEventListener('touchmove', moveTear);
+paper.addEventListener('touchend', stopTear);
+</script>
+
+</body>
+</html>
