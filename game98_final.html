@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAME 98: AI DOODLE WISH - FINAL</title>
+<style>
+  body { margin: 0; background: #0a0a0a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+  h1 { color: #ff00ff; text-shadow: 0 0 15px #ff00ff, 0 0 15px #00ffff; margin: 10px 0; font-size: 1.6em; text-align: center; }
+  p { color: #aaa; text-align: center; margin: 5px 0 15px 0; }
+  #inputBox { width: 90%; max-width: 400px; padding: 14px; font-size: 16px; border: 2px solid #00ffff; border-radius: 12px; background: #1a1a1a; color: white; margin: 10px 0; }
+  #generateBtn { padding: 14px 28px; font-size: 20px; background: linear-gradient(45deg, #ff00ff, #00ffff); border: none; border-radius: 12px; color: black; font-weight: bold; cursor: pointer; margin-bottom: 20px; box-shadow: 0 0 15px #ff00ff; }
+  #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; width: 95%; max-width: 650px; }
+  .wish-card { background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 6px; text-align: center; transition: 0.2s; }
+  .wish-card:hover { border-color: #00ffff; transform: scale(1.03); }
+  .wish-card img { width: 100%; border-radius: 10px; }
+  .wish-card p { font-size: 11px; margin: 6px 0 0 0; color: #ccc; word-wrap: break-word; }
+  .error-card { background: #2a0000; border: 2px solid #ff0000; border-radius: 12px; padding: 20px; text-align: center; color: #ff5555; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>🎨 GAME 98: AI DOODLE WISH ✨</h1>
+<p>Type anything! If it's not in the list: "this image could not be generated"</p>
+<input type="text" id="inputBox" placeholder="Type: dragon, pizza, robot, unicorn..." />
+<button id="generateBtn">WISH ✨</button>
+<div id="gallery"></div>
+
+<script>
+const imagePack = [
+  {name: "dragon", img: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=120&h=120&fit=crop"},
+  {name: "ninja cat", img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=120&h=120&fit=crop"},
+  {name: "pizza", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=120&h=120&fit=crop"},
+  {name: "robot", img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=120&h=120&fit=crop"},
+  {name: "ghost", img: "https://images.unsplash.com/photo-1509244049402-7139ddaa4b24?w=120&h=120&fit=crop"},
+  {name: "king", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop"},
+  {name: "triangle", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&h=120&fit=crop"},
+  {name: "alien", img: "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=120&h=120&fit=crop"},
+  {name: "wand", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=120&h=120&fit=crop"},
+  {name: "treasure", img: "https://images.unsplash.com/photo-1603569283847-aa545aba3f9e?w=120&h=120&fit=crop"},
+  {name: "dog", img: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=120&h=120&fit=crop"},
+  {name: "unicorn", img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=120&h=120&fit=crop"},
+  {name: "volcano", img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=120&h=120&fit=crop"},
+  {name: "castle", img: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=120&h=120&fit=crop"},
+  {name: "slime", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&h=120&fit=crop"},
+  {name: "rocket", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=120&h=120&fit=crop"},
+  {name: "lightning", img: "https://images.unsplash.com/photo-1508697014387-db70aad34f4d?w=120&h=120&fit=crop"},
+  {name: "cactus", img: "https://images.unsplash.com/photo-1459411552883-7034d2ccd2fe?w=120&h=120&fit=crop"},
+  {name: "crystal", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=120&h=120&fit=crop"},
+  {name: "mushroom", img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=120&h=120&fit=crop"}
+];
+
+const inputBox = document.getElementById('inputBox');
+const generateBtn = document.getElementById('generateBtn');
+const gallery = document.getElementById('gallery');
+
+generateBtn.onclick = () => {
+  const prompt = inputBox.value.toLowerCase().trim();
+  if (!prompt) return alert("Type a wish first! 😭");
+  
+  // Check if we have this image
+  let found = imagePack.find(item => prompt.includes(item.name));
+  
+  if (found) {
+    addToGallery(found.img, prompt); // Show the image
+  } else {
+    addErrorCard(prompt); // Show error message
+  }
+  
+  inputBox.value = '';
+}
+
+function addToGallery(imgUrl, prompt) {
+  const card = document.createElement('div');
+  card.className = 'wish-card';
+  card.innerHTML = `<img src="${imgUrl}" alt="${prompt}"><p>${prompt}</p>`;
+  gallery.prepend(card);
+}
+
+function addErrorCard(prompt) {
+  const card = document.createElement('div');
+  card.className = 'error-card';
+  card.innerHTML = `❌ this image could not be generated<br><small>Try: dragon, pizza, robot, unicorn...</small>`;
+  gallery.prepend(card);
+}
+</script>
+</body>
+</html>
