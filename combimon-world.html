@@ -3,102 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Combimon World - Complete</title>
+<title>Combimon World</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  body {
-    font-family: 'Arial Black', Arial, sans-serif;
-    background: linear-gradient(to bottom, #87CEEB 0%, #7dd87d 100%);
-    min-height: 100vh;
-  }
-  
-  #top-bar {
-    background: #222; color: white; padding: 15px 20px;
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 4px solid #000; position: sticky; top: 0; z-index: 10;
-  }
-  #top-bar h1 { font-size: 24px; text-shadow: 2px 2px 0 #000; }
-  #coins {
-    background: linear-gradient(gold, #DAA520); color: #000;
-    padding: 10px 20px; border-radius: 25px; font-size: 18px;
-    font-weight: bold; border: 3px solid #B8860B;
-  }
-  
-  #game-container {
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  
-  .zone {
-    background: white; border: 5px solid #333; border-radius: 20px;
-    padding: 15px; min-height: 300px; box-shadow: 0 8px 0 #333;
-  }
-  
-  .zone-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid #ccc;
-  }
-  .zone-icon {
-    width: 55px; height: 55px; background: #ddd;
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-  }
-  .zone-icon img { width: 100%; height: 100%; object-fit: cover; }
-  .zone h2 { font-size: 18px; }
-  
+  body { font-family: Arial, sans-serif; background: linear-gradient(to bottom, #87CEEB 0%, #7dd87d 100%); min-height: 100vh; }
+  #top-bar { background: #222; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #000; }
+  #coins { background: gold; color: #000; padding: 10px 20px; border-radius: 25px; font-weight: bold; border: 3px solid #B8860B; }
+  #game-container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+  .zone { background: white; border: 5px solid #333; border-radius: 20px; padding: 15px; min-height: 280px; box-shadow: 0 8px 0 #333; }
+  .zone-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid #ccc; }
+  .zone-icon { width: 55px; height: 55px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .combimon-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; min-height: 100px; }
+  .combimon-card { width: 90px; height: 90px; background: #f0f0f0; border: 3px solid #555; border-radius: 14px; overflow: hidden; position: relative; cursor: pointer; }
+  .combimon-card img { width: 100%; height: 100%; object-fit: cover; }
+  .combimon-card .name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); color: white; font-size: 10px; text-align: center; padding: 3px; }
+  .btn { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; border-bottom: 4px solid #2E7D32; margin: 8px 4px; width: 100%; }
   #pokedex { grid-column: 1 / -1; background: linear-gradient(#ff6666, #cc0000); color: white; }
+  #dex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 12px; margin-top: 15px; }
+  .dex-slot { background: rgba(255,255,255,0.2); border: 3px solid white; border-radius: 12px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; }
+  .dex-caught { background: white; }
   #farm { background: linear-gradient(#deb887, #cd853f); }
   #egg-zone { background: linear-gradient(#ffe4e1, #ffc0cb); }
   #kid-zone { background: linear-gradient(#add8e6, #87CEEB); }
-  #teen-zone { 
-    background: #dda0dd;
-    background-image: radial-gradient(white 15%, transparent 15%),
-                      radial-gradient(white 15%, transparent 15%);
-    background-size: 40px 40px; background-position: 0 0, 20px 20px;
-  }
+  #teen-zone { background: #dda0dd; }
   #adult-zone { background: linear-gradient(#90ee90, #32CD32); }
-  
-  .combimon-grid {
-    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
-    min-height: 100px;
-  }
-  .combimon-card {
-    width: 90px; height: 90px; background: #f0f0f0; border: 3px solid #555;
-    border-radius: 14px; overflow: hidden; position: relative; cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .combimon-card:hover { transform: scale(1.1); }
-  .combimon-card img { width: 100%; height: 100%; object-fit: cover; }
-  .combimon-card .name {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: rgba(0,0,0,0.8); color: white; font-size: 10px;
-    text-align: center; padding: 3px;
-  }
-  
-  #dex-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
-    gap: 12px; margin-top: 15px;
-  }
-  .dex-slot {
-    background: rgba(255,255,255,0.2); border: 3px solid white;
-    border-radius: 12px; aspect-ratio: 1; display: flex;
-    align-items: center; justify-content: center; font-size: 45px;
-    font-weight: bold;
-  }
-  .dex-caught { background: white; }
-  
-  .btn {
-    background: #4CAF50; color: white; border: none;
-    padding: 12px 20px; border-radius: 12px; font-size: 16px;
-    font-weight: bold; cursor: pointer; border-bottom: 4px solid #2E7D32;
-    margin-top: 12px; width: 100%;
-  }
-  .btn:active { transform: translateY(2px); border-bottom: 2px solid #2E7D32; }
 </style>
 </head>
 <body>
@@ -111,135 +39,150 @@
 <div id="game-container">
 
   <div class="zone" id="pokedex">
-    <div class="zone-header">
-      <div class="zone-icon">📖</div>
-      <h2>POKEDEX - 0/15 CAUGHT</h2>
-    </div>
+    <div class="zone-header"><div class="zone-icon">📖</div><h2 id="dex-title">POKEDEX - 0/15 CAUGHT</h2></div>
+    <button class="btn" onclick="catchRandom()">CATCH RANDOM COMBIMON - 100 Coins</button>
     <div id="dex-grid"></div>
   </div>
 
   <div class="zone" id="farm">
-    <div class="zone-header">
-      <div class="zone-icon"><img src="https://placehold.co/55x55/8B4513/fff?text=🏠"></div>
-      <h2>BREEDING FARM</h2>
-    </div>
-    <p>Put 2 Adults here to make an Egg!</p>
-    <div class="combimon-grid">
-      <div class="combimon-card">Empty</div>
-      <div class="combimon-card">Empty</div>
-    </div>
-    <button class="btn" onclick="alert('Catch 2 adults first!')">BREED</button>
+    <div class="zone-header"><div class="zone-icon">🏠</div><h2>BREEDING FARM</h2></div>
+    <p>Need 2 Adults to make Egg</p>
+    <div class="combimon-grid" id="farm-grid"></div>
+    <button class="btn" onclick="makeEgg()">BREED → MAKE EGG</button>
   </div>
 
   <div class="zone" id="egg-zone">
-    <div class="zone-header">
-      <div class="zone-icon"><img src="https://placehold.co/55x55/FFC0CB/000?text=🥚"></div>
-      <h2>EGG ZONE</h2>
-    </div>
-    <p>Eggs hatch here after 30s</p>
+    <div class="zone-header"><div class="zone-icon">🥚</div><h2>EGG ZONE</h2></div>
+    <p>Hatches in <span id="egg-timer">30</span>s</p>
     <div class="combimon-grid" id="egg-grid"></div>
   </div>
 
   <div class="zone" id="kid-zone">
-    <div class="zone-header">
-      <div class="zone-icon"><img src="https://placehold.co/55x55/87CEEB/000?text=👶"></div>
-      <h2>KID COMBIMONS</h2>
-    </div>
-    <p>Baby stage - feed to evolve</p>
+    <div class="zone-header"><div class="zone-icon">👶</div><h2>KID COMBIMONS</h2></div>
+    <p>Evolves in <span id="kid-timer">20</span>s</p>
     <div class="combimon-grid" id="kid-grid"></div>
   </div>
 
   <div class="zone" id="teen-zone">
-    <div class="zone-header">
-      <div class="zone-icon"><img src="https://placehold.co/55x55/DDA0DD/000?text=🧒"></div>
-      <h2>TEEN COMBIMONS</h2>
-    </div>
-    <p>Middle evolution stage</p>
+    <div class="zone-header"><div class="zone-icon">🧒</div><h2>TEEN COMBIMONS</h2></div>
+    <p>Evolves in <span id="teen-timer">20</span>s</p>
     <div class="combimon-grid" id="teen-grid"></div>
   </div>
 
   <div class="zone" id="adult-zone">
-    <div class="zone-header">
-      <div class="zone-icon"><img src="https://placehold.co/55x55/32CD32/000?text=💪"></div>
-      <h2>ADULT COMBIMONS</h2>
-    </div>
-    <p>Fully grown - can breed</p>
+    <div class="zone-header"><div class="zone-icon">💪</div><h2>ADULT COMBIMONS</h2></div>
+    <p>Can breed now!</p>
     <div class="combimon-grid" id="adult-grid"></div>
   </div>
 
 </div>
 
 <script>
-  // 15 ORIGINAL COMBIMONS WITH REAL AI IMAGE LINKS
   const ALL_COMBIMONS = [
-    // KID STAGE
-    {id: 1, name: "Flufflet", img: "https://placehold.co/90x90/FFFFFF/000?text=Flufflet", stage: "kid", desc: "A fluffy white starter"},
-    {id: 2, name: "Sparky", img: "https://placehold.co/90x90/FFFF00/000?text=Sparky", stage: "kid", desc: "Electric yellow puffball"},
-    {id: 3, name: "Aqua Pebble", img: "https://placehold.co/90x90/00BFFF/000?text=Aqua", stage: "kid", desc: "Blue water rock baby"},
-    {id: 4, name: "Leaflet", img: "https://placehold.co/90x90/32CD32/000?text=Leaflet", stage: "kid", desc: "Green grass sprout"},
-    {id: 5, name: "Emberling", img: "https://placehold.co/90x90/FF4500/fff?text=Ember", stage: "kid", desc: "Tiny orange fire lizard"},
-    
-    // TEEN STAGE  
-    {id: 6, name: "Voltpaw", img: "https://placehold.co/90x90/FFD700/000?text=Voltpaw", stage: "teen", desc: "Electric teen with paws"},
-    {id: 7, name: "Coralax", img: "https://placehold.co/90x90/FF69B4/000?text=Coralax", stage: "teen", desc: "Pink water coral teen"},
-    {id: 8, name: "Thornite", img: "https://placehold.co/90x90/228B22/fff?text=Thorn", stage: "teen", desc: "Grass thorn teen"},
-    {id: 9, name: "Blazekit", img: "https://placehold.co/90x90/FF0000/fff?text=Blaze", stage: "teen", desc: "Red fire teen"},
-    {id: 10, name: "Mystiqueen", img: "https://placehold.co/90x90/9370DB/fff?text=Mystic", stage: "teen", desc: "Purple psychic teen"},
-    
-    // ADULT STAGE
-    {id: 11, name: "Zapheron", img: "https://placehold.co/90x90/FFA500/000?text=Zapheron", stage: "adult", desc: "Golden lightning beast"},
-    {id: 12, name: "Tidalord", img: "https://placehold.co/90x90/0000CD/fff?text=Tidalord", stage: "adult", desc: "Dark blue ocean guardian"},
-    {id: 13, name: "Floraking", img: "https://placehold.co/90x90/006400/fff?text=Flora", stage: "adult", desc: "Nature king with flowers"},
-    {id: 14, name: "Infernox", img: "https://placehold.co/90x90/DC143C/fff?text=Infernox", stage: "adult", desc: "Crimson volcano dragon"},
-    {id: 15, name: "Cosmirage", img: "https://placehold.co/90x90/4B0082/fff?text=Cosmo", stage: "adult", desc: "Space mage with stars"}
+    {id: 1, name: "Flufflet", img: "https://placehold.co/90x90/FFFFFF/000?text=Fluff", stage: "kid"},
+    {id: 2, name: "Sparky", img: "https://placehold.co/90x90/FFFF00/000?text=Spark", stage: "kid"},
+    {id: 3, name: "Aqua Pebble", img: "https://placehold.co/90x90/00BFFF/000?text=Aqua", stage: "kid"},
+    {id: 4, name: "Leaflet", img: "https://placehold.co/90x90/32CD32/000?text=Leaf", stage: "kid"},
+    {id: 5, name: "Emberling", img: "https://placehold.co/90x90/FF4500/fff?text=Ember", stage: "kid"},
+    {id: 6, name: "Voltpaw", img: "https://placehold.co/90x90/FFD700/000?text=Volt", stage: "teen"},
+    {id: 7, name: "Coralax", img: "https://placehold.co/90x90/FF69B4/000?text=Coral", stage: "teen"},
+    {id: 8, name: "Thornite", img: "https://placehold.co/90x90/228B22/fff?text=Thorn", stage: "teen"},
+    {id: 9, name: "Blazekit", img: "https://placehold.co/90x90/FF0000/fff?text=Blaze", stage: "teen"},
+    {id: 10, name: "Mystiqueen", img: "https://placehold.co/90x90/9370DB/fff?text=Mystic", stage: "teen"},
+    {id: 11, name: "Zapheron", img: "https://placehold.co/90x90/FFA500/000?text=Zap", stage: "adult"},
+    {id: 12, name: "Tidalord", img: "https://placehold.co/90x90/0000CD/fff?text=Tidal", stage: "adult"},
+    {id: 13, name: "Floraking", img: "https://placehold.co/90x90/006400/fff?text=Flora", stage: "adult"},
+    {id: 14, name: "Infernox", img: "https://placehold.co/90x90/DC143C/fff?text=Infer", stage: "adult"},
+    {id: 15, name: "Cosmirage", img: "https://placehold.co/90x90/4B0082/fff?text=Cosmo", stage: "adult"}
   ];
 
-  let playerData = { coins: 0, caught: [] };
+  let player = { coins: 500, caught: [], eggs: [], kids: [], teens: [], adults: [] };
+  let eggTime = 30, kidTime = 20, teenTime = 20;
 
-  function loadGame() {
-    const dexGrid = document.getElementById('dex-grid');
-    dexGrid.innerHTML = '';
+  function catchRandom() {
+    if(player.coins < 100) return alert("Not enough coins!");
+    const available = ALL_COMBIMONS.filter(c => !player.caught.includes(c.id));
+    if(available.length === 0) return alert("All caught!");
+    const c = available[Math.floor(Math.random() * available.length)];
+    player.coins -= 100;
+    player.caught.push(c.id);
+    if(c.stage === 'kid') player.kids.push({...c});
+    if(c.stage === 'teen') player.teens.push({...c});
+    if(c.stage === 'adult') player.adults.push({...c});
+    updateUI();
+  }
+
+  function makeEgg() {
+    if(player.adults.length < 2) return alert("Need 2 adults in farm!");
+    player.adults.pop(); player.adults.pop();
+    player.eggs.push({time: 30});
+    updateUI();
+  }
+
+  function updateUI() {
+    document.getElementById('coins').innerText = `💰 ${player.coins}`;
+    document.getElementById('dex-title').innerText = `POKEDEX - ${player.caught.length}/15 CAUGHT`;
     
+    const grids = {egg: 'egg-grid', kid: 'kid-grid', teen: 'teen-grid', adult: 'adult-grid'};
+    Object.values(grids).forEach(id => document.getElementById(id).innerHTML = '');
+    
+    player.eggs.forEach(() => addCard('egg-grid', '🥚', 'Egg'));
+    player.kids.forEach(c => addCard('kid-grid', c.img, c.name));
+    player.teens.forEach(c => addCard('teen-grid', c.img, c.name));
+    player.adults.forEach(c => addCard('adult-grid', c.img, c.name));
+    
+    const dex = document.getElementById('dex-grid'); dex.innerHTML = '';
     ALL_COMBIMONS.forEach(c => {
       const slot = document.createElement('div');
-      slot.className = 'dex-slot';
-      if(playerData.caught.includes(c.id)) {
-        slot.classList.add('dex-caught');
-        slot.innerHTML = `<img src="${c.img}" title="${c.name}">`;
-      } else {
-        slot.innerHTML = '?';
-      }
-      dexGrid.appendChild(slot);
-      
-      if(playerData.caught.includes(c.id)) {
-        const grid = document.getElementById(c.stage + '-grid');
-        const card = document.createElement('div');
-        card.className = 'combimon-card';
-        card.innerHTML = `<img src="${c.img}"><div class="name">${c.name}</div>`;
-        grid.appendChild(card);
-      }
+      slot.className = 'dex-slot' + (player.caught.includes(c.id) ? ' dex-caught' : '');
+      slot.innerHTML = player.caught.includes(c.id) ? `<img src="${c.img}">` : '?';
+      dex.appendChild(slot);
     });
-    
-    document.querySelector('#pokedex h2').innerText = `POKEDEX - ${playerData.caught.length}/15 CAUGHT`;
-    document.getElementById('coins').innerText = `💰 ${playerData.coins}`;
   }
 
-  // TEST: Press 1-5 to catch first 5 kids
-  document.addEventListener('keydown', (e) => {
-    const num = parseInt(e.key);
-    if(num >= 1 && num <= 15) catchCombimon(num);
-  });
+  function addCard(gridId, img, name) {
+    const card = document.createElement('div');
+    card.className = 'combimon-card';
+    card.innerHTML = img.startsWith('http') ? `<img src="${img}"><div class="name">${name}</div>` : `<div style="font-size:40px">${img}</div><div class="name">${name}</div>`;
+    document.getElementById(gridId).appendChild(card);
+  }
 
-  function catchCombimon(id) {
-    if(!playerData.caught.includes(id)) {
-      playerData.caught.push(id);
-      playerData.coins += 100;
-      loadGame();
-      alert(`Caught ${ALL_COMBIMONS[id-1].name}! +100 coins`);
+  // GAME LOOP
+  setInterval(() => {
+    if(player.eggs.length > 0) {
+      eggTime--;
+      document.getElementById('egg-timer').innerText = eggTime;
+      if(eggTime <= 0) {
+        eggTime = 30;
+        const randomKid = ALL_COMBIMONS.filter(c => c.stage === 'kid')[Math.floor(Math.random() * 5)];
+        player.eggs.pop();
+        player.kids.push({...randomKid});
+      }
     }
-  }
+    if(player.kids.length > 0) {
+      kidTime--;
+      document.getElementById('kid-timer').innerText = kidTime;
+      if(kidTime <= 0) {
+        kidTime = 20;
+        const kid = player.kids.pop();
+        const teen = ALL_COMBIMONS.find(c => c.stage === 'teen' && c.id === kid.id + 5);
+        player.teens.push({...teen});
+      }
+    }
+    if(player.teens.length > 0) {
+      teenTime--;
+      document.getElementById('teen-timer').innerText = teenTime;
+      if(teenTime <= 0) {
+        teenTime = 20;
+        const teen = player.teens.pop();
+        const adult = ALL_COMBIMONS.find(c => c.stage === 'adult' && c.id === teen.id + 5);
+        player.adults.push({...adult});
+      }
+    }
+    updateUI();
+  }, 1000);
 
-  loadGame();
+  updateUI();
 </script>
 
 </body>
