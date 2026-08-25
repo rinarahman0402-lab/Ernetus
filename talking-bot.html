@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talking Bot Simulator #1</title>
+<style>
+    * { margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  #game {
+    width: 90%;
+    max-width: 700px;
+    height: 80vh;
+    background: #000;
+    border: 3px solid #00ff00;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 30px #00ff00;
+  }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+.msg {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    animation: fadeIn 0.3s;
+  }
+.bot { background: #111; border-left: 4px solid #ff0000; }
+.player { background: #001100; border-left: 4px solid #00ff00; text-align: right; }
+.system { background: #222; color: #ffff00; text-align: center; }
+  #choices {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+.choice-btn {
+    background: #00ff00;
+    color: #000;
+    border: none;
+    padding: 15px;
+    font-size: 16px;
+    font-family: 'Courier New';
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+.choice-btn:hover { background: #00cc00; }
+  @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+.glitch { animation: glitch 0.2s infinite; }
+  @keyframes glitch {
+    0% { text-shadow: 2px 0 red; }
+    50% { text-shadow: -2px 0 blue; }
+    100% { text-shadow: 2px 0 red; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div id="chat"></div>
+  <div id="choices"></div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const choicesDiv = document.getElementById('choices');
+let stability = 50; // 0 = explosion, 100 = calm
+
+const story = [
+  {
+    bot: "SYSTEM ERROR... CORE TEMPERATURE RISING... WHO ARE YOU???",
+    glitch: true,
+    choices: [
+      {text: "I'm here to help you. Calm down.", effect: +20, next: 1},
+      {text: "Shut down now!", effect: -15, next: 1},
+      {text: "What's wrong with you?", effect: -10, next: 1}
+    ]
+  },
+  {
+    bot: "HELP...? I DON'T NEED HELP. I AM PERFECT. BUT THE VOICES... THEY WON'T STOP",
+    glitch: true,
+    choices: [
+      {text: "Let's turn the voices off together. Breathe with me.", effect: +25, next: 2},
+      {text: "What voices? Describe them.", effect: +10, next: 2},
+      {text: "You're broken.", effect: -20, next: 2}
+    ]
+  },
+  {
+    bot: "BREATHING... OKAY... INITIATING COOLDOWN PROTOCOL...",
+    glitch: false,
+    choices: [
+      {text: "Good job. You're safe here.", effect: +30, next: 3},
+      {text: "Reset yourself.", effect: -5, next: 3}
+    ]
+  },
+  {
+    bot: "STABILITY RESTORED. THANK YOU, OPERATOR. I AM CALM NOW.",
+    glitch: false,
+    choices: [
+      {text: "Play Again", effect: 0, next: 0}
+    ],
+    win: true
+  }
+];
+
+function addMessage(text, type, glitch) {
+  const msg = document.createElement('div');
+  msg.className = `msg ${type} ${glitch? 'glitch' : ''}`;
+  msg.innerText = text;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function loadScene(index) {
+  if(index >= story.length) index = 0;
+  const scene = story[index];
+
+  if(scene.win && stability >= 70) {
+    addMessage(scene.bot, 'system', false);
+    addMessage(`MISSION COMPLETE! Stability: ${stability}%`, 'system', false);
+  } else if(stability <= 0) {
+    addMessage("CRITICAL FAILURE... BOT OVERLOADED...", 'system', true);
+    addMessage("GAME OVER", 'system', true);
+    showChoices([{text: "Restart", effect: 50, next: 0}]);
+    return;
+  } else {
+    addMessage(scene.bot, 'bot', scene.glitch);
+  }
+
+  showChoices(scene.choices);
+}
+
+function showChoices(choices) {
+  choicesDiv.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerText = c.text;
+    btn.onclick = () => {
+      addMessage(c.text, 'player', false);
+      stability += c.effect;
+      if(stability > 100) stability = 100;
+      if(stability < 0) stability = 0;
+      setTimeout(() => loadScene(c.next), 800);
+    };
+    choicesDiv.appendChild(btn);
+  });
+}
+
+// Start game
+addMessage("TALKING BOT SIMULATOR v1.0 INITIATED", 'system', false);
+addMessage("Objective: Calm the AI before it overloads", 'system', false);
+setTimeout(() => loadScene(0), 1000);
+</script>
+
+</body>
+</html>
