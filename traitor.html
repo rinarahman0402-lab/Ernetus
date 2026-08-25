@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAITOR</title>
+<style>
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+  }
+  #game {
+    max-width: 700px;
+    padding: 30px;
+    border: 3px solid #4b0082;
+    background: #120012;
+    box-shadow: 0 0 25px #4b0082;
+  }
+  h1 {
+    color: #ff3333;
+    text-shadow: 0 0 8px #ff3333;
+  }
+  #text {
+    font-size: 17px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    min-height: 160px;
+  }
+  button {
+    background: #2a002a;
+    color: #e0e0e0;
+    border: 2px solid #4b0082;
+    padding: 12px 22px;
+    margin: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #4b0082;
+    color: white;
+    box-shadow: 0 0 12px #4b0082;
+  }
+ .signature {
+    color: #00ff00;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>TRAITOR</h1>
+  <div id="text"></div>
+  <div id="buttons"></div>
+</div>
+
+<script>
+let stage = 0;
+let signatures = 0;
+const totalKids = 5;
+
+const scenes = [
+  // STAGE 0 - INTRO
+  {
+    text: "Your friends BETRAYED you.<br><br>Now they challenged you to a battle.<br><br>Your goal: Get every STRONG kid in class to help you.<br><br>Get them to sign this application: <br><b>'If you want to help me fight my enemies group please sign here'</b>",
+    options: ["START RECRUITING"],
+    next: [1]
+  },
+  // STAGE 1 - RECRUITING
+  {
+    text: `You need to visit all the strong kids one by one.<br><br><span class="signature">Signatures: ${signatures}/${totalKids}</span><br><br>Strong Kid #${signatures + 1} is waiting...`,
+    options: ["ASK THEM TO SIGN", "SKIP THEM"],
+    next: [2, 1]
+  },
+  // STAGE 2 - GOT SIGNATURE
+  {
+    text: `They signed! <span class="signature">+1 SIGNATURE</span><br><br>"I'm with you bro. Let's get those traitors."`,
+    options: ["GO TO NEXT KID"],
+    next: [3]
+  },
+  // STAGE 3 - CHECK PROGRESS
+  {
+    text: () => {
+      signatures++;
+      if(signatures >= totalKids) {
+        return `ALL <span class="signature">${totalKids}/${totalKids} STRONG KIDS SIGNED!</span><br><br>Your army is ready.<br>Time for the BATTLE with the traitor team.`;
+      } else {
+        return `You need ${totalKids - signatures} more signatures.<br><br>Strong Kid #${signatures + 1} is waiting...`;
+      }
+    },
+    options: () => signatures >= totalKids? ["START THE BATTLE"] : ["GO TO NEXT KID"],
+    next: () => signatures >= totalKids? [4] : [1]
+  },
+  // STAGE 4 - THE BATTLE - THE TWIST
+  {
+    text: "THE BATTLE BEGINS!<br><br>You and your team FIGHT the traitors...<br><br>YOU WON THE FIGHT!<br><br>But wait...<br><br><b>TWIST:</b><br>The traitor team runs to the teacher.<br>'Teacher! They hit us VERY HARD!'<br><br>TEACHER: 'YOU'RE IN TROUBLE'<br><br><b>YOU LOSE EITHER WAY</b><br><br>If you win = You get in trouble<br>If you lose = You just lose",
+    options: ["PLAY AGAIN"],
+    next: [0]
+  }
+];
+
+function showStage() {
+  const scene = scenes[stage];
+  const textDiv = document.getElementById('text');
+  textDiv.innerHTML = typeof scene.text === 'function'? scene.text() : scene.text;
+
+  const buttonsDiv = document.getElementById('buttons');
+  buttonsDiv.innerHTML = '';
+
+  const options = typeof scene.options === 'function'? scene.options() : scene.options;
+  const nextStages = typeof scene.next === 'function'? scene.next() : scene.next;
+
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.innerText = opt;
+    btn.onclick = () => {
+      stage = nextStages[i];
+      showStage();
+    };
+    buttonsDiv.appendChild(btn);
+  });
+}
+
+showStage();
+</script>
+</body>
+</html>
