@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dino Dash</title>
+<style>
+  body {
+    background: #87CEEB;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  .game-wrap { text-align: center; }
+  h1 { color: #333; margin-bottom: 10px; }
+  canvas {
+    background: #f7f7f7;
+    border: 3px solid #333;
+    border-radius: 8px;
+  }
+  p { color: #333; font-weight: bold; }
+</style>
+</head>
+<body>
+  <div class="game-wrap">
+    <h1>Dino Dash</h1>
+    <canvas id="game" width="800" height="300"></canvas>
+    <p>Press SPACE or TAP to jump | Score: <span id="score">0</span></p>
+  </div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let dino = { x: 50, y: 220, w: 40, h: 40, dy: 0, jumping: false };
+let gravity = 1.5;
+let obstacles = [];
+let score = 0;
+let gameSpeed = 6;
+let frame = 0;
+
+function jump() {
+  if (!dino.jumping) {
+    dino.dy = -25;
+    dino.jumping = true;
+  }
+}
+
+document.addEventListener('keydown', e => { if(e.code === 'Space') jump() });
+canvas.addEventListener('click', jump);
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // ground
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(0, 260, canvas.width, 40);
+  
+  // dino physics
+  dino.dy += gravity;
+  dino.y += dino.dy;
+  if (dino.y >= 220) { dino.y = 220; dino.jumping = false; }
+  
+  // draw dino
+  ctx.fillStyle = '#2ecc71';
+  ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(dino.x + 30, dino.y + 10, 5, 5); // eye
+  
+  // obstacles
+  if (frame % 90 === 0) {
+    obstacles.push({ x: 800, y: 240, w: 20, h: 20 });
+  }
+  
+  obstacles.forEach((obs, i) => {
+    obs.x -= gameSpeed;
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+    
+    if (obs.x < -20) { obstacles.splice(i, 1); score++; }
+    
+    // collision
+    if (dino.x < obs.x + obs.w && dino.x + dino.w > obs.x && 
+        dino.y < obs.y + obs.h && dino.y + dino.h > obs.y) {
+      alert('Game Over! Score: ' + score);
+      score = 0; obstacles = []; dino.y = 220;
+    }
+  });
+  
+  document.getElementById('score').innerText = score;
+  frame++;
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+</body>
+</html>
