@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>2D Dragon Simulator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #0f172a; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none; touch-action: none;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD OVERLAY */
+    #hud {
+      position: absolute; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 10; pointer-events: none;
+    }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.85); border: 1.5px solid #ef4444;
+      border-radius: 12px; padding: 8px 12px; backdrop-filter: blur(6px);
+      display: flex; flex-direction: column; gap: 4px; min-width: 130px;
+    }
+
+    .bar-container {
+      width: 100%; height: 8px; background: #334155;
+      border-radius: 4px; overflow: hidden;
+    }
+
+    .bar-fill { height: 100%; transition: width 0.15s; }
+    #hp-fill { background: #ef4444; width: 100%; }
+    #hunger-fill { background: #f59e0b; width: 100%; }
+
+    .score-badge {
+      background: rgba(15, 23, 42, 0.85); border: 1.5px solid #f59e0b;
+      padding: 8px 16px; border-radius: 20px; font-weight: 800;
+      color: #fef08a; font-size: 0.9rem;
+    }
+
+    /* TOUCH CONTROLS */
+    .touch-btn {
+      position: absolute; width: 75px; height: 75px; border-radius: 50%;
+      background: rgba(239, 68, 68, 0.35); border: 2px solid #ef4444;
+      color: #fff; font-size: 1.8rem; display: flex; align-items: center;
+      justify-content: center; z-index: 20; touch-action: manipulation;
+      backdrop-filter: blur(4px);
+    }
+    .touch-btn:active { background: rgba(239, 68, 68, 0.7); }
+    #btn-fire { bottom: 25px; right: 25px; width: 85px; height: 85px; }
+
+    /* OVERLAYS */
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.92); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
+    }
+
+    .btn-main {
+      background: #ef4444; color: #fff; border: 3px solid #fca5a5;
+      padding: 14px 32px; border-radius: 16px; font-weight: 900;
+      font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+      box-shadow: 0 6px 0 #b91c1c; transition: transform 0.1s;
+    }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #b91c1c; }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <div class="stat-box">
+      <div style="font-size: 0.75rem; font-weight: 800; color: #fca5a5;">HEALTH ❤️</div>
+      <div class="bar-container"><div id="hp-fill" class="bar-fill"></div></div>
+      <div style="font-size: 0.75rem; font-weight: 800; color: #fcd34d;">HUNGER 🍖</div>
+      <div class="bar-container"><div id="hunger-fill" class="bar-fill"></div></div>
+    </div>
+    <div class="score-badge">🐉 Gold Hoard: <span id="gold-txt">0</span></div>
+  </div>
+
+  <div id="btn-fire" class="touch-btn">🔥</div>
+
+  <div id="overlay-start" class="overlay">
+    <h1 style="font-size: 2.2rem; color: #fca5a5; text-shadow: 0 0 15px rgba(239,68,68,0.5);">DRAGON SIMULATOR 2D</h1>
+    <p style="font-size: 0.95rem; color: #cbd5e1; max-width: 320px; margin-top: 12px; line-height: 1.4;">
+      Fly around to <b>HUNT SHEEP 🐑</b> to stay alive.<br>
+      Burn <b>KNIGHTS ⚔️</b> with fire breath to collect gold!<br><br>
+      Controls: <b>Drag/Tap Screen</b> to Fly | <b>🔥 Button / Spacebar</b> for Fire
+    </p>
+    <button class="btn-main" onclick="startGame()">TAKE FLIGHT 🐉</button>
+  </div>
+
+  <div id="overlay-over" class="overlay" style="display: none;">
+    <h1 style="font-size: 2.5rem; color: #ef4444;">YOUR DRAGON FELL 💀</h1>
+    <p style="font-size: 1.1rem; color: #cbd5e1; margin-top: 8px;">Final Gold Hoard: <span id="final-gold">0</span></p>
+    <button class="btn-main" onclick="startGame()">RESPAWN 🔄</button>
+  </div>
+
+  <canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let running = false;
+    let gold = 0;
+    let targetX = 0, targetY = 0;
+
+    const dragon = {
+      x: 0, y: 0, size: 36, speed: 5,
+      hp: 100, hunger: 100, angle: 0,
+      isBreathingFire: false
+    };
+
+    let prey = [];      // Sheep
+    let enemies = [];   // Knights
+    let flames = [];
+    let particles = [];
+    let frame = 0;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      if (!running) {
+        dragon.x = width / 2;
+        dragon.y = height / 2;
+        targetX = dragon.x;
+        targetY = dragon.y;
+      }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Flight target tracking
+    window.addEventListener('pointermove', (e) => {
+      if (e.target.id !== 'btn-fire') {
+        targetX = e.clientX;
+        targetY = e.clientY;
+      }
+    });
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.id !== 'btn-fire') {
+        targetX = e.clientX;
+        targetY = e.clientY;
+      }
+    });
+
+    // Fire breath controls
+    const fireBtn = document.getElementById('btn-fire');
+    fireBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); dragon.isBreathingFire = true; });
+    fireBtn.addEventListener('pointerup', () => dragon.isBreathingFire = false);
+    fireBtn.addEventListener('pointerleave', () => dragon.isBreathingFire = false);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') dragon.isBreathingFire = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') dragon.isBreathingFire = false;
+    });
+
+    function startGame() {
+      document.getElementById('overlay-start').style.display = 'none';
+      document.getElementById('overlay-over').style.display = 'none';
+
+      gold = 0;
+      frame = 0;
+      prey = [];
+      enemies = [];
+      flames = [];
+      particles = [];
+
+      dragon.x = width / 2;
+      dragon.y = height / 2;
+      dragon.hp = 100;
+      dragon.hunger = 100;
+      targetX = dragon.x;
+      targetY = dragon.y;
+
+      document.getElementById('gold-txt').innerText = '0';
+      running = true;
+      requestAnimationFrame(update);
+    }
+
+    function gameOver() {
+      running = false;
+      document.getElementById('final-gold').innerText = gold;
+      document.getElementById('overlay-over').style.display = 'flex';
+    }
+
+    function spawnEntities() {
+      if (prey.length < 6) {
+        prey.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2
+        });
+      }
+
+      if (enemies.length < 4) {
+        enemies.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          hp: 3,
+          shootTimer: 0
+        });
+      }
+    }
+
+    function update() {
+      if (!running) return;
+
+      frame++;
+      if (frame % 90 === 0) spawnEntities();
+
+      // Deplete Hunger
+      if (frame % 60 === 0) {
+        dragon.hunger = Math.max(0, dragon.hunger - 2);
+        if (dragon.hunger <= 0) dragon.hp -= 4; // Starvation
+      }
+
+      if (dragon.hp <= 0) return gameOver();
+
+      // Smooth Flight Movement
+      const dx = targetX - dragon.x;
+      const dy = targetY - dragon.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 10) {
+        dragon.angle = Math.atan2(dy, dx);
+        dragon.x += Math.cos(dragon.angle) * dragon.speed;
+        dragon.y += Math.sin(dragon.angle) * dragon.speed;
+      }
+
+      // Fire Breath Generation
+      if (dragon.isBreathingFire) {
+        for (let i = 0; i < 3; i++) {
+          const spread = (Math.random() - 0.5) * 0.5;
+          flames.push({
+            x: dragon.x + Math.cos(dragon.angle) * 25,
+            y: dragon.y + Math.sin(dragon.angle) * 25,
+            vx: Math.cos(dragon.angle + spread) * (8 + Math.random() * 4),
+            vy: Math.sin(dragon.angle + spread) * (8 + Math.random() * 4),
+            life: 20
+          });
+        }
+      }
+
+      // Render World Ground
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, width, height);
+
+      // Render & Update Flames
+      for (let i = flames.length - 1; i >= 0; i--) {
+        let f = flames[i];
+        f.x += f.vx;
+        f.y += f.vy;
+        f.life--;
+
+        ctx.fillStyle = f.life > 10 ? '#ef4444' : '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 6 + (20 - f.life), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flames vs Sheep
+        for (let j = prey.length - 1; j >= 0; j--) {
+          let p = prey[j];
+          if (Math.hypot(f.x - p.x, f.y - p.y) < 25) {
+            prey.splice(j, 1);
+            dragon.hunger = Math.min(100, dragon.hunger + 25);
+          }
+        }
+
+        // Flames vs Knights
+        for (let k = enemies.length - 1; k >= 0; k--) {
+          let e = enemies[k];
+          if (Math.hypot(f.x - e.x, f.y - e.y) < 25) {
+            e.hp--;
+            if (e.hp <= 0) {
+              enemies.splice(k, 1);
+              gold += 50;
+              document.getElementById('gold-txt').innerText = gold;
+            }
+          }
+        }
+
+        if (f.life <= 0) flames.splice(i, 1);
+      }
+
+      // Render Sheep (Prey 🐑)
+      prey.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Render Knights (Enemies ⚔️)
+      enemies.forEach(e => {
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(e.x - 12, e.y - 12, 24, 24);
+
+        // Knights attack dragon when close
+        const eDist = Math.hypot(dragon.x - e.x, dragon.y - e.y);
+        if (eDist < 160) {
+          e.shootTimer++;
+          if (e.shootTimer % 45 === 0) {
+            dragon.hp = Math.max(0, dragon.hp - 8);
+          }
+        }
+      });
+
+      // Render Dragon Body
+      ctx.save();
+      ctx.translate(dragon.x, dragon.y);
+      ctx.rotate(dragon.angle);
+
+      // Wings
+      const wingSweep = Math.sin(frame * 0.2) * 12;
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-5, -35 + wingSweep);
+      ctx.lineTo(15, 0);
+      ctx.lineTo(-5, 35 - wingSweep);
+      ctx.fill();
+
+      // Dragon Head / Torso
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Snout
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(8, -6, 16, 12);
+
+      ctx.restore();
+
+      // Update HUD Bars
+      document.getElementById('hp-fill').style.width = dragon.hp + '%';
+      document.getElementById('hunger-fill').style.width = dragon.hunger + '%';
+
+      requestAnimationFrame(update);
+    }
+  </script>
+</body>
+  </html>
+  
