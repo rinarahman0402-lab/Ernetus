@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETERNETUS</title>
+<style>
+    * { margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: white; font-family: Arial; }
+  #header { background: #111; padding: 25px; text-align: center; border-bottom: 3px solid #00ff00; }
+  #header h1 { color: #00ff00; font-size: 45px; letter-spacing: 3px; }
+  #header p { color: #aaa; margin-top: 5px; }
+  #games { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 30px; }
+  .fake-game {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .fake-game:hover { border-color: #00ff00; transform: scale(1.05); background: #222; }
+  .fake-game-icon { font-size: 60px; margin-bottom: 10px; }
+  #mini-game { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.97); justify-content: center; align-items: center; flex-direction: column; z-index: 999; }
+  #mini-text { font-size: 35px; text-align: center; }
+  #mini-game button { margin-top: 30px; padding: 15px 40px; font-size: 18px; background: #00ff00; color: #000; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>ETERNETUS</h1>
+  <p>The Ultimate Game Hub</p>
+</div>
+
+<div id="games">
+  <div class="fake-game" onclick="playMini('🐦', 'Pigeon CEO', 'You collected 50 breadcrumbs and hired 2 pigeons!')">
+    <div class="fake-game-icon">🐦</div>
+    <h3>Pigeon CEO</h3>
+    <p>Build your pigeon empire</p>
+  </div>
+  <div class="fake-game" onclick="playMini('🏢', 'Office Escape', 'You stole 3 snacks and escaped the meeting!')">
+    <div class="fake-game-icon">🏢</div>
+    <h3>Office Escape</h3>
+    <p>Survive the boring meeting</p>
+  </div>
+  <div class="fake-game" onclick="playMini('🤖', 'Talking Bot', 'AI Stability: 85%. Mission Complete!')">
+    <div class="fake-game-icon">🤖</div>
+    <h3>Talking Bot Sim</h3>
+    <p>Calm the glitching AI</p>
+  </div>
+  <div class="fake-game" onclick="playMini('😱', 'Horror Hallway', 'SCARY FACE!!! JUMPSCARE!!!')">
+    <div class="fake-game-icon">😱</div>
+    <h3>Horror Hallway</h3>
+    <p>Survive 10 doors</p>
+  </div>
+</div>
+
+<div id="mini-game">
+  <div id="mini-text"></div>
+  <button onclick="closeMini()">← Back to ETERNETUS</button>
+</div>
+
+<script>
+function playMini(icon, name, result) {
+  document.getElementById('mini-game').style.display = 'flex';
+  document.getElementById('mini-text').innerHTML = `${icon}<br><b>${name}</b><br><br>${result}`;
+}
+function closeMini() {
+  document.getElementById('mini-game').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
