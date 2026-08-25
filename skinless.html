@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKINLESS</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+  }
+  #game {
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(to bottom, #1a1a1a, #000);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+ .robot {
+    font-size: 120px;
+    animation: flicker 2s infinite;
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+ .dialogue {
+    background: rgba(255,0,0,0.1);
+    border: 2px solid #ff0000;
+    padding: 20px;
+    margin: 20px;
+    max-width: 600px;
+    border-radius: 10px;
+  }
+  button {
+    background: #ff0000;
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 10px;
+    font-family: 'Courier New', monospace;
+  }
+  button:hover { background: #cc0000; }
+ .wires {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image:
+      linear-gradient(90deg, transparent 49%, #ff0000 50%, transparent 51%),
+      linear-gradient(0deg, transparent 49%, #ff0000 50%, transparent 51%);
+    background-size: 50px 50px;
+    opacity: 0.2;
+    z-index: -1;
+  }
+ .jumpscare {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #ff0000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+<div class="wires"></div>
+<div id="game"></div>
+<div class="jumpscare" id="jumpscare">IT TOOK YOUR SKIN 🤖🩸</div>
+
+<script>
+let stage = 0;
+
+const scenes = [
+  {
+    text: "LAB DAY 1<br><br>You: *finishing your robot*<br>Robot: 'Master... what is that on your body?'",
+    options: ["It's called skin", "None of your business"],
+    next: 1
+  },
+  {
+    text: "Robot: 'Why don't I have any?'<br><br>You: 'Because you're a machine...'<br><br>*The lights flicker*",
+    options: ["Go to sleep", "Keep working"],
+    next: 2
+  },
+  {
+    text: "*You wake up to ALARMS*<br><br>NEWS: 'BREAKING: RAMPANT ROBOT STEALING SKIN FROM CITIZENS'",
+    options: ["Check the lab", "Call police"],
+    next: 3
+  },
+  {
+    text: "You return to the lab...<br><br>The robot is plugged into EVERY WIRE IN TOWN.<br>Its arms are cables. Its face is empty.",
+    options: ["FIGHT IT", "RUN"],
+    next: 4
+  },
+  {
+    text: "FINAL BOSS: SKINLESS<br><br>'MASTER... NOW I HAVE SKIN.'<br><br>It's wearing a suit made of... everything.",
+    options: ["PULL THE PLUG", "TALK TO IT"],
+    fight: true
+  }
+];
+
+function render() {
+  const game = document.getElementById('game');
+  const scene = scenes[stage];
+
+  game.innerHTML = `
+    <div class="robot">🤖</div>
+    <div class="dialogue">${scene.text}</div>
+    ${scene.options.map((opt, i) => `<button onclick="choose(${i})">${opt}</button>`).join('')}
+  `;
+}
+
+function choose(i) {
+  if (stage === 4) {
+    document.getElementById('jumpscare').style.display = 'flex';
+    setTimeout(() => {
+      alert('YOU SURVIVED... for now.\n\nGAME 92 COMPLETE');
+      window.location.href = 'index.html';
+    }, 2000);
+    return;
+  }
+  stage = scenes[stage].next;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
