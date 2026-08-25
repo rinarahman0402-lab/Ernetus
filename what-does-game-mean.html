@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WHAT DOES GAME MEAN?</title>
+<style>
+  body {
+    background: #fff;
+    color: #000;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+  }
+  #narrator {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #000;
+    color: #0f0;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    border-top: 3px solid #0f0;
+  }
+  #title {
+    font-size: 60px;
+    text-align: center;
+    margin-top: 100px;
+    cursor: pointer;
+  }
+  .crack {
+    position: absolute;
+    background: #000;
+    pointer-events: none;
+  }
+  .secret-game {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #111;
+    color: #fff;
+    padding: 30px;
+    border: 3px solid #ff00ff;
+    z-index: 999;
+  }
+  #game-counter {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1 id="title">WHAT DOES GAME MEAN?</h1>
+<div id="game-counter">Secret Games Found: 0/10</div>
+
+<div id="narrator">
+  [NARRATOR]: Hello user. There are no games here. Please leave. This is not a game.
+</div>
+
+<!-- SECRET GAME 1: CLICK THE QUESTION MARK -->
+<div class="secret-game" id="game1">
+  <h2>SECRET GAME 1: CLICKER</h2>
+  <p>Clicks: <span id="clicks">0</span></p>
+  <button onclick="clickGame()">CLICK ME</button>
+  <button onclick="closeGame(1)">CLOSE</button>
+</div>
+
+<!-- SECRET GAME 2: TYPE THE WORD -->
+<div class="secret-game" id="game2">
+  <h2>SECRET GAME 2: TYPE "BREAK"</h2>
+  <input id="typeInput" placeholder="type here">
+  <button onclick="checkWord()">SUBMIT</button>
+  <button onclick="closeGame(2)">CLOSE</button>
+</div>
+
+<script>
+let gamesFound = 0;
+let clicks = 0;
+let titleClicks = 0;
+
+// NARRATOR VOICE
+const narratorLines = [
+  "Hello user. There are no games here. Please leave.",
+  "Stop clicking. This is just text.",
+  "Why are you still here? There is nothing to play.",
+  "You are wasting your time. There are no secret games.",
+  "Okay fine. Maybe there is one. But you won't find it."
+];
+let lineIndex = 0;
+
+setInterval(() => {
+  document.getElementById('narrator').innerHTML = `[NARRATOR]: ${narratorLines[lineIndex]}`;
+  lineIndex = (lineIndex + 1) % narratorLines.length;
+}, 4000);
+
+// SECRET 1: CLICK TITLE 10 TIMES TO CRACK
+document.getElementById('title').onclick = () => {
+  titleClicks++;
+  if(titleClicks >= 10) {
+    createCrack();
+    openGame(1);
+  }
+}
+
+function createCrack() {
+  for(let i=0; i<5; i++) {
+    const crack = document.createElement('div');
+    crack.className = 'crack';
+    crack.style.width = '3px';
+    crack.style.height = '100%';
+    crack.style.left = Math.random()*100 + '%';
+    crack.style.top = '0';
+    document.body.appendChild(crack);
+  }
+}
+
+// SECRET 2: RIGHT CLICK THE BACKGROUND
+document.body.oncontextmenu = (e) => {
+  e.preventDefault();
+  openGame(2);
+}
+
+// SECRET GAME LOGIC
+function openGame(num) {
+  if(document.getElementById('game'+num).style.display !== 'block') {
+    gamesFound++;
+    document.getElementById('game-counter').innerText = `Secret Games Found: ${gamesFound}/10`;
+  }
+  document.getElementById('game'+num).style.display = 'block';
+}
+
+function closeGame(num) {
+  document.getElementById('game'+num).style.display = 'none';
+}
+
+function clickGame() {
+  clicks++;
+  document.getElementById('clicks').innerText = clicks;
+  if(clicks >= 20) alert('SECRET GAME 1 COMPLETE!');
+}
+
+function checkWord() {
+  if(document.getElementById('typeInput').value.toLowerCase() === 'break') {
+    alert('SECRET GAME 2 COMPLETE!');
+    closeGame(2);
+  }
+}
+
+// SECRET 3-10: KEY COMBOS
+let konami = [];
+const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+document.addEventListener('keydown', (e) => {
+  konami.push(e.key);
+  konami = konami.slice(-10);
+  if(JSON.stringify(konami) === JSON.stringify(code)) {
+    alert('SECRET GAME 3 UNLOCKED: KONAMI CODE!');
+    gamesFound++;
+    document.getElementById('game-counter').innerText = `Secret Games Found: ${gamesFound}/10`;
+  }
+});
+
+// MORE SECRETS TO ADD:
+// 4. Double click the narrator box
+// 5. Press 'H' 5 times
+// 6. Resize window to exactly 800x600
+// 7. Wait 60 seconds doing nothing
+// 8. Type "game" in console
+// 9. Drag the title
+// 10. Press space 100 times
+
+</script>
+</body>
+</html>
