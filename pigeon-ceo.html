@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pigeon CEO</title>
+<style>
+    * { margin: 0; padding: 0; touch-action: manipulation; }
+  body {
+    background: linear-gradient(#87ceeb, #98fb98);
+    font-family: Arial;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #game {
+    width: 100%;
+    max-width: 900px;
+    height: 100vh;
+    background: #deb887;
+    position: relative;
+    border: 6px solid #8b4513;
+  }
+  #ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  #city {
+    position: absolute;
+    bottom: 150px;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: #555;
+  }
+  .breadcrumb {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #daa520;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #8b6914;
+    animation: pop 0.2s;
+  }
+  @keyframes pop { from {transform: scale(0);} to {transform: scale(1);} }
+  .pigeon {
+    position: absolute;
+    font-size: 40px;
+    animation: flap 0.5s infinite alternate;
+  }
+  @keyframes flap { from {transform: translateY(0);} to {transform: translateY(-5px);} }
+  #shop {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 150px;
+    background: #333;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .upgrade {
+    background: #00aa00;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    min-width: 140px;
+  }
+  .upgrade:disabled { background: #555; }
+  #click-area {
+    position: absolute;
+    top: 60px;
+    bottom: 150px;
+    left: 0;
+    right: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div id="ui">
+    <div>💰 $<span id="money">0</span></div>
+    <div>🍞 <span id="breadcrumbs">0</span></div>
+    <div>🐦 Pigeons: <span id="pigeonCount">1</span></div>
+  </div>
+  
+  <div id="click-area"></div>
+  <div id="city"></div>
+  
+  <div class="pigeon" style="left: 50px; bottom: 160px;">🐦</div>
+  
+  <div id="shop">
+    <button class="upgrade" onclick="buyPigeon()">
+      Hire Pigeon<br>
+      $<span id="pigeonCost">10</span>
+    </button>
+    <button class="upgrade" onclick="buyUpgrade()">
+      Bigger Beak<br>
+      $<span id="upgradeCost">50</span>
+    </button>
+  </div>
+</div>
+
+<script>
+let money = 0;
+let breadcrumbs = 0;
+let pigeons = 1;
+let pigeonCost = 10;
+let upgradeCost = 50;
+let clickPower = 1;
+let autoIncome = 0;
+
+const clickArea = document.getElementById('click-area');
+
+// Spawn breadcrumbs to click
+function spawnBreadcrumb() {
+  const crumb = document.createElement('div');
+  crumb.className = 'breadcrumb';
+  crumb.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
+  crumb.style.top = Math.random() * 200 + 100 + 'px';
+  
+  crumb.onclick = () => {
+    breadcrumbs += clickPower;
+    money += clickPower;
+    updateUI();
+    crumb.remove();
+  };
+  
+  document.getElementById('game').appendChild(crumb);
+  setTimeout(() => crumb.remove(), 3000);
+}
+
+function buyPigeon() {
+  if(money >= pigeonCost) {
+    money -= pigeonCost;
+    pigeons++;
+    autoIncome += 1;
+    pigeonCost = Math.floor(pigeonCost * 1.5);
+    
+    // Add visual pigeon
+    const p = document.createElement('div');
+    p.className = 'pigeon';
+    p.innerText = '🐦';
+    p.style.left = Math.random() * 700 + 'px';
+    p.style.bottom = '160px';
+    document.getElementById('game').appendChild(p);
+    
+    updateUI();
+  }
+}
+
+function buyUpgrade() {
+  if(money >= upgradeCost) {
+    money -= upgradeCost;
+    clickPower++;
+    upgradeCost = Math.floor(upgradeCost * 2);
+    updateUI();
+  }
+}
+
+function updateUI() {
+  document.getElementById('money').innerText = money;
+  document.getElementById('breadcrumbs').innerText = breadcrumbs;
+  document.getElementById('pigeonCount').innerText = pigeons;
+  document.getElementById('pigeonCost').innerText = pigeonCost;
+  document.getElementById('upgradeCost').innerText = upgradeCost;
+}
+
+// Auto income every second
+setInterval(() => {
+  money += autoIncome;
+  breadcrumbs += autoIncome;
+  updateUI();
+}, 1000);
+
+// Spawn breadcrumbs constantly
+setInterval(spawnBreadcrumb, 800);
+
+// Start
+updateUI();
+spawnBreadcrumb();
+</script>
+
+</body>
+</html>
