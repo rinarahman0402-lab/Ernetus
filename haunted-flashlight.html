@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAUNTED HOUSE FLASHLIGHT</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: Arial;
+    color: white;
+    overflow: hidden;
+  }
+  #game {
+    width: 600px;
+    height: 600px;
+    background: #111;
+    border: 5px solid #333;
+    position: relative;
+    overflow: hidden;
+  }
+  .entity {
+    position: absolute;
+    font-size: 40px;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+  }
+  #player { color: #ffff00; z-index: 10; }
+  #ghost { color: #fff; font-size: 50px; z-index: 5; }
+  #key { color: #ffd700; }
+  #exit { color: #00ff00; font-size: 50px; }
+  #darkness {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle 80px at 0px 0px, transparent 0%, rgba(0,0,0,0.95) 100%);
+    pointer-events: none;
+    z-index: 20;
+  }
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    z-index: 30;
+  }
+  #gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: #000;
+    padding: 30px;
+    font-size: 30px;
+    display: none;
+    text-align: center;
+    z-index: 40;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">Battery: <span id="battery">100</span>% | Find the 🔑</div>
+  <div id="player" class="entity">🔦</div>
+  <div id="ghost" class="entity">👻</div>
+  <div id="key" class="entity">🔑</div>
+  <div id="exit" class="entity">🚪</div>
+  <div id="darkness"></div>
+  <div id="gameOver"></div>
+</div>
+
+<script>
+let player = {x: 300, y: 300, speed: 4, battery: 100};
+let ghost = {x: 50, y: 50, speed: 1.5};
+let key = {x: 500, y: 500, collected: false};
+let exit = {x: 550, y: 50};
+let keys = {};
+let gameActive = true;
+let flashlightOn = true;
+
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if(e.key === ' ') flashlightOn = !flashlightOn;
+});
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function update() {
+  if(!gameActive) return;
+  
+  // Move player
+  if(keys['ArrowUp']) player.y -= player.speed;
+  if(keys['ArrowDown']) player.y += player.speed;
+  if(keys['ArrowLeft']) player.x -= player.speed;
+  if(keys['ArrowRight']) player.x += player.speed;
+  
+  player.x = Math.max(0, Math.min(550, player.x));
+  player.y = Math.max(0, Math.min(550, player.y));
+  
+  // Battery drain
+  if(flashlightOn) {
+    player.battery -= 0.1;
+    document.getElementById('darkness').style.background = 
+      `radial-gradient(circle 120px at ${player.x+25}px ${player.y+25}px, transparent 0%, rgba(0,0,0,0.95) 100%)`;
+  } else {
+    document.getElementById('darkness').style.background = 'rgba(0,0,0,0.98)';
+  }
+  
+  if(player.battery <= 0) flashlightOn = false;
+  document.getElementById('battery').innerText = Math.floor(player.battery);
+  
+  // Move ghost
+  let dx = player.x - ghost.x;
+  let dy = player.y - ghost.y;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+  ghost.x += (dx/dist) * ghost.speed;
+  ghost.y += (dy/dist) * ghost.speed;
+  
+  // Update positions
+  document.getElementById('player').style.left = player.x + 'px';
+  document.getElementById('player').style.top = player.y + 'px';
+  document.getElementById('ghost').style.left = ghost.x + 'px';
+  document.getElementById('ghost').style.top = ghost.y + 'px';
+  document.getElementById('key').style.left = key.x + 'px';
+  document.getElementById('key').style.top = key.y + 'px';
+  document.getElementById('exit').style.left = exit.x + 'px';
+  document.getElementById('exit').style.top = exit.y + 'px';
+  
+  // Check collisions
+  if(dist < 40) gameOver("👻 CAUGHT YOU!");
+  
+  if(!key.collected && Math.abs(player.x - key.x) < 40 && Math.abs(player.y - key.y) < 40) {
+    key.collected = true;
+    document.getElementById('key').style.display = 'none';
+    document.getElementById('hud').innerHTML = "Battery: " + Math.floor(player.battery) + "% | Find the 🚪";
+  }
+  
+  if(key.collected && Math.abs(player.x - exit.x) < 40 && Math.abs(player.y - exit.y) < 40) {
+    win();
+  }
+  
+  requestAnimationFrame(update);
+}
+
+function gameOver(msg) {
+  gameActive = false;
+  document.getElementById('gameOver').innerHTML = msg + "<br>⊙⁠﹏⁠⊙<br><button onclick='location.reload()'>RETRY</button>";
+  document.getElementById('gameOver').style.display = 'block';
+}
+
+function win() {
+  gameActive = false;
+  document.getElementById('gameOver').innerHTML = "YOU ESCAPED!<br>🔦😮‍💨<br><button onclick='location.reload()'>PLAY AGAIN</button>";
+  document.getElementById('gameOver').style.display = 'block';
+}
+
+update();
+</script>
+</body>
+</html>
