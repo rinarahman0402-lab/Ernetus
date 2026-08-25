@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAFFIC HELL</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; color: white; font-family: Arial; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
+  #menu { text-align: center; }
+  #menu h1 { font-size: 48px; color: #ff0000; margin-bottom: 10px; }
+  #menu p { font-size: 18px; margin-bottom: 20px; }
+  #playBtn { padding: 15px 40px; font-size: 24px; background: #ff0000; border: none; color: white; cursor: pointer; border-radius: 10px; }
+  canvas { background: #444; border: 4px solid #ff0000; box-shadow: 0 0 20px #ff0000; display: none; }
+  #ui { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 24px; font-weight: bold; display: none; }
+  #gameOver { position: absolute; display: none; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 10px; text-align: center; }
+  #gameOver h2 { color: #ff0000; font-size: 40px; }
+  #restart { margin-top: 15px; padding: 10px 20px; font-size: 20px; background: #ff0000; border: none; color: white; cursor: pointer; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div id="menu">
+  <h1>TRAFFIC HELL</h1>
+  <p>Game 90 - Dodge all vehicles! 🛴🚗🚓🏎️</p>
+  <button id="playBtn" onclick="startGame()">PLAY GAME</button>
+</div>
+
+<div id="ui">Score: <span id="score">0</span> | SPEED: <span id="speed">1</span>x</div>
+<canvas id="game" width="400" height="700"></canvas>
+<div id="gameOver">
+  <h2>TRAFFIC HELL 💀</h2>
+  <p>Final Score: <span id="finalScore">0</span></p>
+  <button id="restart" onclick="location.reload()">PLAY AGAIN</button>
+</div>
+
+<script>
+const canvas = document.getElementById('game'); const ctx = canvas.getContext('2d');
+const vehicles = ['🛴','🦽','🦼','🚲','🛵','🏍️','🚙','🚗','🛻','🚐','🚕','🚓','🚑','🚒','🏎️','🚜','🚛','🚚','🛺','🚌'];
+const lanes = 5; const laneWidth = canvas.width / lanes;
+let player, enemies, score, speed, gameOver, spawnTimer;
+
+function startGame(){
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('ui').style.display = 'block';
+  canvas.style.display = 'block';
+  player = { lane: 2, y: canvas.height - 100 };
+  enemies = []; score = 0; speed = 2; gameOver = false; spawnTimer = 0;
+  document.getElementById('score').innerText = 0;
+  document.getElementById('speed').innerText = 1;
+  update();
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'ArrowLeft' && player.lane > 0) player.lane--; if(e.key === 'ArrowRight' && player.lane < lanes-1) player.lane++; });
+let touchX = null; canvas.addEventListener('touchstart', e => touchX = e.touches[0].clientX); canvas.addEventListener('touchend', e => { if(!touchX) return; let diff = e.changedTouches[0].clientX - touchX; if(diff > 30 && player.lane < lanes-1) player.lane++; if(diff < -30 && player.lane > 0) player.lane--; touchX = null; });
+
+function spawnEnemy() { enemies.push({ lane: Math.floor(Math.random() * lanes), y: -60, emoji: vehicles[Math.floor(Math.random() * vehicles.length)], speed: speed + Math.random() * 2 }); }
+function drawRoad() { ctx.fillStyle = '#444'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = 'yellow'; ctx.lineWidth = 4; for(let i = 1; i < lanes; i++) { ctx.beginPath(); ctx.setLineDash([20, 20]); ctx.moveTo(i * laneWidth, 0); ctx.lineTo(i * laneWidth, canvas.height); ctx.stroke(); } ctx.setLineDash([]); }
+function update() { if(gameOver) return; drawRoad(); let playerX = player.lane * laneWidth + laneWidth/2; ctx.font = '40px Arial'; ctx.textAlign = 'center'; ctx.fillText('🚗', playerX, player.y); spawnTimer++; if(spawnTimer > 20 - speed) { spawnEnemy(); spawnTimer = 0; } enemies.forEach((e, i) => { e.y += e.speed; let ex = e.lane * laneWidth + laneWidth/2; ctx.font = '35px Arial'; ctx.fillText(e.emoji, ex, e.y); if(Math.abs(ex - playerX) < 30 && Math.abs(e.y - player.y) < 30) { gameOver = true; document.getElementById('gameOver').style.display = 'block'; document.getElementById('finalScore').innerText = score; } if(e.y > canvas.height) { enemies.splice(i, 1); score++; document.getElementById('score').innerText = score; if(score % 10 === 0) { speed += 0.5; document.getElementById('speed').innerText = speed.toFixed(1); } } }); requestAnimationFrame(update); }
+</script>
+</body>
+</html>
