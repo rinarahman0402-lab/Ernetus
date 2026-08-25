@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NINE NINE NINE CHAOS</title>
+<style>
+  body { margin: 0; background: #000; color: white; font-family: 'Arial Black'; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+  h1 { font-size: 2.5em; color: #ffff00; text-shadow: 0 0 20px #ff0000; margin-bottom: 10px; }
+  #timer { font-size: 3em; color: #00ffff; margin-bottom: 20px; }
+  #score { font-size: 2em; color: #00ff00; margin-bottom: 30px; }
+  #nineBtn { font-size: 120px; width: 200px; height: 200px; border-radius: 50%; border: 8px solid #ffff00; background: radial-gradient(circle, #ff0000, #8b0000); color: #ffff00; cursor: pointer; transition: 0.1s; user-select: none; }
+  #nineBtn:active { transform: scale(0.9); box-shadow: 0 0 50px #ffff00; }
+  #highscore { position: absolute; top: 20px; right: 20px; font-size: 1.2em; color: #aaa; }
+</style>
+</head>
+<body>
+<div id="highscore">HIGH SCORE: 0</div>
+<h1>👑 NINE NINE NINE CHAOS 👑</h1>
+<div id="timer">TIME: 9</div>
+<div id="score">SCORE: 0</div>
+<button id="nineBtn">9</button>
+
+<script>
+let score = 0;
+let time = 9;
+let playing = false;
+let highScore = localStorage.getItem('g99_highscore') || 0;
+document.getElementById('highscore').innerText = `HIGH SCORE: ${highScore}`;
+
+const nineBtn = document.getElementById('nineBtn');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score');
+
+function startGame() {
+  if(playing) return;
+  playing = true;
+  score = 0;
+  time = 9;
+  scoreEl.innerText = `SCORE: ${score}`;
+  timerEl.innerText = `TIME: ${time}`;
+  
+  const countdown = setInterval(() => {
+    time--;
+    timerEl.innerText = `TIME: ${time}`;
+    if(time <= 0) {
+      clearInterval(countdown);
+      playing = false;
+      alert(`TIME'S UP KING! 👑\nYour Score: ${score}`);
+      if(score > highScore) {
+        highScore = score;
+        localStorage.setItem('g99_highscore', highScore);
+        document.getElementById('highscore').innerText = `HIGH SCORE: ${highScore}`;
+      }
+    }
+  }, 1000);
+}
+
+nineBtn.onclick = () => {
+  if(!playing) startGame();
+  if(playing) {
+    score++;
+    scoreEl.innerText = `SCORE: ${score}`;
+    // CHAOS EFFECT
+    nineBtn.style.background = `radial-gradient(circle, #${Math.floor(Math.random()*16777215).toString(16)}, #000)`;
+  }
+}
+</script>
+</body>
+</html>
