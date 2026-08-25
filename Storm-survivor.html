@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Storm Survivor</title>
+<style>
+  body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+  canvas { background: linear-gradient(to top, #4a5568, #1a202c); border: 3px solid #fff; }
+  #hud { position: absolute; top: 20px; color: white; font-family: Arial; font-size: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="hud">Score: 0 | Weather: ☀️</div>
+<canvas id="game" width="800" height="500"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const hud = document.getElementById('hud');
+
+let player = { x: 400, y: 450, w: 30, h: 30, speed: 5 };
+let hazards = [];
+let score = 0;
+let weather = ['☀️','🌤️','⛅','🌥️','🌦️','🌧️','⛈️','🌩️','🌙','⭐'];
+let weatherIndex = 0;
+let weatherTimer = 0;
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowLeft') player.x -= player.speed;
+  if(e.key === 'ArrowRight') player.x += player.speed;
+});
+
+function spawnHazard() {
+  let type = weather[weatherIndex];
+  hazards.push({
+    x: Math.random() * 770,
+    y: -20,
+    w: 20,
+    h: 20,
+    speed: 3 + weatherIndex,
+    type: type
+  });
+}
+
+function drawHazard(h) {
+  ctx.font = "20px Arial";
+  ctx.fillText(h.type, h.x, h.y);
+}
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // weather changes every 10s = 600 frames
+  weatherTimer++;
+  if(weatherTimer > 600) {
+    weatherTimer = 0;
+    weatherIndex = (weatherIndex + 1) % weather.length;
+  }
+  
+  hud.innerText = `Score: ${score} | Weather: ${weather[weatherIndex]}`;
+  
+  // draw player
+  ctx.fillStyle = '#00ff00';
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+  
+  // spawn hazards faster as weather gets worse
+  if(Math.random() < 0.05 + weatherIndex * 0.01) spawnHazard();
+  
+  hazards.forEach((h, i) => {
+    h.y += h.speed;
+    drawHazard(h);
+    
+    if(h.y > 500) { hazards.splice(i, 1); score++; }
+    
+    // collision
+    if(player.x < h.x + h.w && player.x + player.w > h.x &&
+       player.y < h.y + h.h && player.y + player.h > h.y) {
+      alert('Game Over! Score: ' + score);
+      score = 0; hazards = []; weatherIndex = 0;
+    }
+  });
+  
+  player.x = Math.max(0, Math.min(770, player.x));
+  requestAnimationFrame(update);
+}
+update();
+</script>
+</body>
+</html>
