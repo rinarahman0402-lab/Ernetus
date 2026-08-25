@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SKINLESS</title>
+<title>GAME 92 - SKINLESS</title>
 <style>
   body {
     margin: 0;
@@ -37,6 +37,8 @@
     margin: 20px;
     max-width: 600px;
     border-radius: 10px;
+    font-size: 20px;
+    line-height: 1.6;
   }
   button {
     background: #ff0000;
@@ -48,8 +50,9 @@
     border-radius: 5px;
     margin: 10px;
     font-family: 'Courier New', monospace;
+    transition: 0.2s;
   }
-  button:hover { background: #cc0000; }
+  button:hover { background: #cc0000; transform: scale(1.05); }
  .wires {
     position: absolute;
     width: 100%;
@@ -58,8 +61,13 @@
       linear-gradient(90deg, transparent 49%, #ff0000 50%, transparent 51%),
       linear-gradient(0deg, transparent 49%, #ff0000 50%, transparent 51%);
     background-size: 50px 50px;
-    opacity: 0.2;
+    opacity: 0.15;
     z-index: -1;
+    animation: moveWires 10s linear infinite;
+  }
+  @keyframes moveWires {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
   }
  .jumpscare {
     position: fixed;
@@ -71,6 +79,12 @@
     justify-content: center;
     font-size: 60px;
     z-index: 999;
+    animation: shake 0.3s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-20px); }
+    75% { transform: translateX(20px); }
   }
 </style>
 </head>
@@ -79,6 +93,9 @@
 <div id="game"></div>
 <div class="jumpscare" id="jumpscare">IT TOOK YOUR SKIN 🤖🩸</div>
 
+<!-- ROBOT VOICE -->
+<audio id="robotVoice1" src="https://cdn.museai.com/audio/robot1.mp3"></audio>
+
 <script>
 let stage = 0;
 
@@ -86,6 +103,7 @@ const scenes = [
   {
     text: "LAB DAY 1<br><br>You: *finishing your robot*<br>Robot: 'Master... what is that on your body?'",
     options: ["It's called skin", "None of your business"],
+    sound: "robotVoice1",
     next: 1
   },
   {
@@ -119,6 +137,11 @@ function render() {
     <div class="dialogue">${scene.text}</div>
     ${scene.options.map((opt, i) => `<button onclick="choose(${i})">${opt}</button>`).join('')}
   `;
+
+  // Play robot voice automatically
+  if(scene.sound) {
+    document.getElementById(scene.sound).play();
+  }
 }
 
 function choose(i) {
