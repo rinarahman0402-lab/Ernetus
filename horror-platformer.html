@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Horror Platformer - The Basement</title>
+<style>
+    * { margin: 0; padding: 0; touch-action: none; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Arial', sans-serif; overflow: hidden; }
+  #game { background: #0a0a0a; border: 4px solid #300; box-shadow: 0 0 40px #ff000033; position: relative; max-width: 100vw; max-height: 100vh; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #ui { position: absolute; top: 10px; left: 10px; color: #ff0000; font-size: 20px; text-shadow: 0 0 10px #ff0000; }
+  #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff0000; font-size: 40px; text-align: center; display: none; text-shadow: 0 0 20px #ff0000; }
+.btn { position: absolute; bottom: 30px; width: 70px; height: 70px; background: rgba(255,0,0,0.3); border: 3px solid #ff0000; border-radius: 50%; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; user-select: none; }
+  #btn-left { left: 20px; }
+  #btn-right { left: 110px; }
+  #btn-jump { right: 20px; width: 90px; height: 90px; background: rgba(255,255,0,0.3); border-color: #ff0; }
+  @media (min-width: 768px) {.btn { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <canvas id="canvas" width="800" height="500"></canvas>
+  <div id="ui">Keys: <span id="keys">0/3</span> | Health: <span id="hp">100</span></div>
+  <div id="msg"></div>
+  <div class="btn" id="btn-left">←</div>
+  <div class="btn" id="btn-right">→</div>
+  <div class="btn" id="btn-jump">↑</div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let keys = { left: false, right: false, up: false };
+let keysCollected = 0; let health = 100; let gameOver = false;
+const player = { x: 50, y: 400, w: 30, h: 40, vx: 0, vy: 0, speed: 4, jump: 12, onGround: false };
+const platforms = [ {x: 0, y: 460, w: 800, h: 40}, {x: 100, y: 380, w: 120, h: 20}, {x: 300, y: 320, w: 120, h: 20}, {x: 500, y: 260, w: 120, h: 20}, {x: 650, y: 200, w: 100, h: 20} ];
+const keys_items = [ {x: 140, y: 340, collected: false}, {x: 340, y: 280, collected: false}, {x: 540, y: 220, collected: false} ];
+const door = {x: 700, y: 160, w: 50, h: 40};
+const enemies = [ {x: 250, y: 440, w: 30, h: 20, vx: 2}, {x: 450, y: 240, w: 30, h: 20, vx: -2} ];
+
+document.addEventListener('keydown', e => { if(e.key === 'ArrowLeft') keys.left = true; if(e.key === 'ArrowRight') keys.right = true; if(e.key === ' ') keys.up = true; });
+document.addEventListener('keyup', e => { if(e.key === 'ArrowLeft') keys.left = false; if(e.key === 'ArrowRight') keys.right = false; if(e.key === ' ') keys.up = false; });
+
+function addTouch(id, key) { const btn = document.getElementById(id); btn.addEventListener('touchstart', () => keys[key] = true); btn.addEventListener('touchend', () => keys[key] = false); }
+addTouch('btn-left', 'left'); addTouch('btn-right', 'right'); addTouch('btn-jump', 'up');
+
+function update() {
+  if(gameOver) return;
+  if(keys.left) player.vx = -player.speed; else if(keys.right) player.vx = player.speed; else player.vx = 0;
+  if(keys.up && player.onGround) { player.vy = -player.jump; player.onGround = false; }
+  player.vy += 0.5; player.x += player.vx; player.y += player.vy; player.onGround = false;
+  platforms.forEach(p => { if(player.x < p.x + p.w && player.x + player.w > p.x && player.y < p.y + p.h && player.y + player.h > p.y) { if(player.vy > 0) { player.y = p.y - player.h; player.vy = 0; player.onGround = true; } } });
+  keys_items.forEach(k => { if(!k.collected && player.x < k.x + 20 && player.x + player.w > k.x && player.y < k.y + 20 && player.y + player.h > k.y) { k.collected = true; keysCollected++; document.getElementById('keys').innerText = `${keysCollected}/3`; } });
+  enemies.forEach(e => { e.x += e.vx; if(e.x < 0 || e.x > 800) e.vx *= -1; if(player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.y + player.h > e.y) { health -= 1; document.getElementById('hp').innerText = health; player.x = 50; player.y = 400; if(health <= 0) endGame("YOU DIED"); } });
+  if(keysCollected >= 3 && player.x > door.x && player.x < door.x + door.w && player.y > door.y && player.y < door.y + door.h) { endGame("YOU ESCAPED!"); }
+  draw(); requestAnimationFrame(update);
+}
+
+function draw() {
+  ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, 800, 500);
+  ctx.fillStyle = '#222'; platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+  ctx.fillStyle = '#FFD700'; keys_items.forEach(k => { if(!k.collected) ctx.fillRect(k.x, k.y, 20, 20); });
+  ctx.fillStyle = keysCollected >= 3? '#0f0' : '#800'; ctx.fillRect(door.x, door.y, door.w, door.h);
+  ctx.fillStyle = '#ff0000'; enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
+  ctx.fillStyle = '#ddd'; ctx.fillRect(player.x, player.y, player.w, player.h);
+}
+
+function endGame(text) { gameOver = true; document.getElementById('msg').innerText = text; document.getElementById('msg').style.display = 'block'; }
+update();
+</script>
+
+</body>
+</html>
