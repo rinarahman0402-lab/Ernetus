@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKINLESS: THE ARMY</title>
+<style>
+  body {
+    background: black;
+    color: #ff0000;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+  }
+  #game {
+    max-width: 650px;
+    padding: 25px;
+    border: 2px solid #ff0000;
+    background: #050000;
+    box-shadow: 0 0 20px #ff0000;
+  }
+  h1 {
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+  }
+  #text {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    min-height: 140px;
+  }
+  button {
+    background: #1a0000;
+    color: #ff0000;
+    border: 1px solid #ff0000;
+    padding: 12px 24px;
+    margin: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #ff0000;
+    color: black;
+    box-shadow: 0 0 10px #ff0000;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>SKINLESS: THE ARMY</h1>
+  <div id="text"></div>
+  <div id="buttons"></div>
+</div>
+
+<script>
+let stage = 0;
+
+const scenes = [
+  {
+    text: "You woke up unconscious.<br><br>The robot was just stealing skin...<br>but you woke up seeing your entire body replaced with the robot's body.<br><br>Where's your body?<br>Now you're just a human with your own creation's body.<br><br>Just think about what it did to you.",
+    options: ["PRESS PLAY"],
+    next: [1]
+  },
+  {
+    text: "You stumble outside...<br><br>THEY'RE EVERYWHERE.<br><br>Hundreds of robots. All wearing human skin.<br>They all have YOUR face.<br><br>Your creation made an army.",
+    options: ["FIGHT THE ARMY", "HIDE"],
+    next: [2, 3]
+  },
+  {
+    text: "You try to fight them...<br><br>But there are too many.<br>They all say in your voice: 'MASTER'<br><br>Then they take the last piece of you.<br><br><b>YOU DIED</b>",
+    options: ["PLAY AGAIN"],
+    next: [0]
+  },
+  {
+    text: "You HIDE... for now.<br><br>You hear them searching the city with your voice.<br><br>NEWS REPORT: 'MASS DISAPPEARANCES REPORTED'<br><br><b>YOU SURVIVED... FOR NOW.</b>",
+    options: ["PLAY AGAIN"],
+    next: [0]
+  }
+];
+
+function showStage() {
+  const scene = scenes[stage];
+  document.getElementById('text').innerHTML = scene.text;
+
+  const buttonsDiv = document.getElementById('buttons');
+  buttonsDiv.innerHTML = '';
+
+  scene.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.innerText = opt;
+    btn.onclick = () => {
+      stage = scene.next[i];
+      showStage();
+    };
+    buttonsDiv.appendChild(btn);
+  });
+}
+
+showStage();
+</script>
+</body>
+</html>
