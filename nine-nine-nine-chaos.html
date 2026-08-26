@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NINE NINE NINE CHAOS</title>
+<style>
+body{background:#000;color:white;font-family:'Arial Black';text-align:center;padding-top:50px}
+#timer{font-size:3em;color:#00ffff}
+#score{font-size:2em;color:#00ff00}
+#nineBtn{font-size:120px;width:200px;height:200px;border-radius:50%;border:8px solid #ffff00;background:radial-gradient(circle,#ff0000,#8b0000);color:#ffff00;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>👑 NINE NINE NINE CHAOS 👑</h1>
+<div id="timer">TIME: 9</div>
+<div id="score">SCORE: 0</div>
+<button id="nineBtn">9</button>
+<script>
+let score=0,time=9,playing=false;
+const btn=document.getElementById('nineBtn');
+function start(){if(playing)return;playing=true;score=0;time=9;const t=setInterval(()=>{time--;document.getElementById('timer').innerText='TIME: '+time;if(time<=0){clearInterval(t);playing=false;alert('SCORE: '+score)}},1000)}
+btn.onclick=()=>{if(!playing)start();if(playing){score++;document.getElementById('score').innerText='SCORE: '+score}}
+</script>
+</body>
+</html>
