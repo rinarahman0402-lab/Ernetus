@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ROBOT RUINS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+body{background:#0a0a0a;color:#00ff00;font-family:'Arial Black';text-align:center;overflow:hidden;margin:0}
+#world{position:relative;width:100%;height:70vh;background:repeating-linear-gradient(90deg,#111 0 40px,#222 40px 80px)}
+#robot{position:absolute;bottom:30px;left:50%;font-size:50px;transform:translateX(-50%)}
+.building{position:absolute;bottom:20px;font-size:60px}
+.radiation{position:absolute;color:#00ff00;font-size:30px;animation:blink 1s infinite}
+@keyframes blink{0%,50%,100%{opacity:1}25%,75%{opacity:0}}
+#stats{font-size:1.3em;margin:10px}
+#radiation{color:#ff0000}
+.controls{position:fixed;bottom:10px;width:100%;display:flex;justify-content:space-around}
+.btn{background:#00ff00;color:#000;border:none;border-radius:15px;padding:15px 25px;font-size:1.2em;font-family:'Arial Black'}
+</style>
+</head>
+<body>
+<h1>☢️ ROBOT RUINS ☢️</h1>
+<div id="stats">SCRAP: <span id="scrap">0</span> | RADIATION: <span id="radiation">0</span>%</div>
+<div id="world">
+  <div id="robot">🤖</div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="leftBtn">◀️ MOVE</button>
+  <button class="btn" id="scanBtn">🔍 SCAN</button>
+  <button class="btn" id="rightBtn">MOVE ▶️</button>
+</div>
+
+<script>
+let scrap=0, radiation=0, robotX=50, worldX=0;
+const world = document.getElementById('world');
+
+// Spawn ruined buildings 🏚️
+for(let i=0;i<15;i++){
+  const b = document.createElement('div');
+  b.className='building';
+  b.innerText='🏚️';
+  b.style.left=(i*200)+'px';
+  world.appendChild(b);
+}
+
+// Spawn radiation ☢️
+function spawnRad(){
+  const r = document.createElement('div');
+  r.className='radiation';
+  r.innerText='☢️';
+  r.style.left=Math.random()*2000+'px';
+  r.style.bottom='40px';
+  world.appendChild(r);
+}
+setInterval(spawnRad, 2000);
+
+// Controls
+function moveLeft(){ robotX-=5; worldX+=5; updateWorld(); }
+function moveRight(){ robotX+=5; worldX-=5; updateWorld(); }
+
+document.getElementById('leftBtn').ontouchstart = moveLeft;
+document.getElementById('rightBtn').ontouchstart = moveRight;
+document.getElementById('scanBtn').ontouchstart = scan;
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='a') moveLeft();
+  if(e.key==='d') moveRight();
+  if(e.code==='Space') scan();
+});
+
+function updateWorld(){
+  document.querySelectorAll('.building, .radiation').forEach(el=>{
+    el.style.transform = `translateX(${worldX}px)`;
+  });
+  checkCollision();
+}
+
+function scan(){
+  // Find scrap near robot
+  document.querySelectorAll('.building').forEach(b=>{
+    const bx = parseInt(b.style.left)+worldX;
+    if(Math.abs(bx - 400)<100 && b.innerText==='🏚️'){
+      scrap++;
+      b.innerText='⬛'; // looted
+      document.getElementById('scrap').innerText=scrap;
+    }
+  });
+}
+
+function checkCollision(){
+  document.querySelectorAll('.radiation').forEach(r=>{
+    const rx = parseInt(r.style.left)+worldX;
+    if(Math.abs(rx - 400)<50){
+      radiation+=5;
+      if(radiation>100) radiation=100;
+      document.getElementById('radiation').innerText=radiation;
+      r.remove();
+      if(radiation>=100) alert('🤖 ROBOT OVERHEATED! GAME OVER! SCRAP: '+scrap);
+    }
+  });
+}
+
+// Radiation slowly decreases
+setInterval(()=>{
+  if(radiation>0) radiation-=1;
+  document.getElementById('radiation').innerText=radiation;
+},1000);
+</script>
+</body>
+</html>
