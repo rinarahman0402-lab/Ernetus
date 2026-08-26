@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>HAUNTED HOUSE FLASHLIGHT</title>
+<title>RATS VS CATS</title>
 <style>
   body {
     margin: 0;
-    background: #000;
+    background: #222;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -22,8 +22,8 @@
     max-width: 600px;
     height: 100vh;
     max-height: 600px;
-    background: #111;
-    border: 5px solid #333;
+    background: #d4a373;
+    border: 5px solid #000;
     position: relative;
     overflow: hidden;
   }
@@ -31,31 +31,23 @@
     position: absolute;
     font-size: 8vw;
     max-font-size: 40px;
+    text-align: center;
     width: 50px;
     height: 50px;
     line-height: 50px;
-    text-align: center;
   }
-  #player { color: #ffff00; z-index: 10; }
-  #ghost { color: #fff; font-size: 10vw; max-font-size: 50px; z-index: 5; }
-  #key { color: #ffd700; }
-  #exit { color: #00ff00; font-size: 10vw; max-font-size: 50px; }
-  #darkness {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle 80px at 0px 0px, transparent 0%, rgba(0,0,0,0.95) 100%);
-    pointer-events: none;
-    z-index: 20;
-  }
+  #player { color: #8b5a2b; }
+ .cat { color: #ff0000; }
+  #blackCat { color: #000; text-shadow: 0 0 5px #fff; }
+  #cheese { color: #ffd700; }
   #hud {
     position: absolute;
     top: 10px;
     left: 10px;
-    background: rgba(0,0,0,0.7);
+    font-size: 16px;
+    background: rgba(0,0,0,0.5);
     padding: 10px;
     z-index: 30;
-    font-size: 16px;
   }
   #gameOver {
     position: absolute;
@@ -87,7 +79,7 @@
  .btn {
     width: 60px;
     height: 60px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
     border: 2px solid #fff;
     border-radius: 15px;
     font-size: 30px;
@@ -102,24 +94,24 @@
   #left { grid-area: left; }
   #right { grid-area: right; }
   #down { grid-area: down; }
-  #flashBtn {
+  #turboBtn {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: rgba(255,255,0,0.3);
-    border: 3px solid yellow;
+    background: rgba(255,215,0,0.4);
+    border: 3px solid gold;
     font-size: 14px;
   }
 </style>
 </head>
 <body>
 <div id="game">
-  <div id="hud">Battery: <span id="battery">100</span>% | Find the 🔑</div>
-  <div id="player" class="entity">🔦</div>
-  <div id="ghost" class="entity">👻</div>
-  <div id="key" class="entity">🔑</div>
-  <div id="exit" class="entity">🚪</div>
-  <div id="darkness"></div>
+  <div id="hud">Time: <span id="time">60</span>s | Turbo: <span id="turbo">READY</span></div>
+  <div id="player" class="entity">🐀</div>
+  <div id="cat1" class="entity cat">🐈</div>
+  <div id="cat2" class="entity cat">🐁</div>
+  <div id="blackCat" class="entity">🐈‍⬛</div>
+  <div id="cheese" class="entity">🧀</div>
   <div id="gameOver"></div>
 
   <div id="controls">
@@ -130,18 +122,21 @@
       <div class="btn" id="right">→</div>
       <div class="btn" id="down">↓</div>
     </div>
-    <div class="btn" id="flashBtn">FLASH<br>🔦</div>
+    <div class="btn" id="turboBtn">TURBO<br>🧀</div>
   </div>
 </div>
 
 <script>
-let player = {x: 300, y: 300, speed: 4, battery: 100};
-let ghost = {x: 50, y: 50, speed: 1.5};
-let key = {x: 500, y: 500, collected: false};
-let exit = {x: 550, y: 50};
+let player = {x: 300, y: 300, speed: 5, baseSpeed: 5, turbo: false, turboTime: 0};
+let cats = [
+  {x: 100, y: 100, speed: 2, el: document.getElementById('cat1')},
+  {x: 500, y: 500, speed: 2.5, el: document.getElementById('cat2')},
+  {x: 300, y: 50, speed: 3, el: document.getElementById('blackCat')}
+];
+let cheese = {x: 450, y: 450};
 let keys = {up:false, down:false, left:false, right:false};
+let time = 60;
 let gameActive = true;
-let flashlightOn = true;
 
 // Keyboard
 document.addEventListener('keydown', e => {
@@ -149,7 +144,6 @@ document.addEventListener('keydown', e => {
   if(e.key === 'ArrowDown') keys.down = true;
   if(e.key === 'ArrowLeft') keys.left = true;
   if(e.key === 'ArrowRight') keys.right = true;
-  if(e.key === ' ') flashlightOn =!flashlightOn;
 });
 document.addEventListener('keyup', e => {
   if(e.key === 'ArrowUp') keys.up = false;
@@ -170,8 +164,17 @@ addTouch(document.getElementById('down'), 'down');
 addTouch(document.getElementById('left'), 'left');
 addTouch(document.getElementById('right'), 'right');
 
-document.getElementById('flashBtn').addEventListener('touchstart', e => { e.preventDefault(); flashlightOn =!flashlightOn; });
-document.getElementById('flashBtn').addEventListener('click', () => flashlightOn =!flashlightOn);
+document.getElementById('turboBtn').addEventListener('touchstart', e => { e.preventDefault(); useTurbo(); });
+document.getElementById('turboBtn').addEventListener('click', useTurbo);
+
+function useTurbo() {
+  if(!player.turbo && player.turboTime <= 0) {
+    player.turbo = true;
+    player.speed = player.baseSpeed * 2;
+    player.turboTime = 180; // 3 seconds
+    document.getElementById('turbo').innerText = "GO!";
+  }
+}
 
 function update() {
   if(!gameActive) return;
@@ -185,60 +188,57 @@ function update() {
   player.x = Math.max(0, Math.min(550, player.x));
   player.y = Math.max(0, Math.min(550, player.y));
 
-  // Battery drain
-  if(flashlightOn) {
-    player.battery -= 0.1;
-    document.getElementById('darkness').style.background =
-      `radial-gradient(circle 120px at ${player.x+25}px ${player.y+25}px, transparent 0%, rgba(0,0,0,0.95) 100%)`;
-  } else {
-    document.getElementById('darkness').style.background = 'rgba(0,0,0,0.98)';
+  // Turbo timer
+  if(player.turbo) {
+    player.turboTime--;
+    if(player.turboTime <= 0) {
+      player.turbo = false;
+      player.speed = player.baseSpeed;
+      document.getElementById('turbo').innerText = "READY";
+    }
   }
 
-  if(player.battery <= 0) flashlightOn = false;
-  document.getElementById('battery').innerText = Math.floor(player.battery);
+  // Move cats
+  cats.forEach(cat => {
+    let dx = player.x - cat.x;
+    let dy = player.y - cat.y;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    cat.x += (dx/dist) * cat.speed;
+    cat.y += (dy/dist) * cat.speed;
+    cat.el.style.left = cat.x + 'px';
+    cat.el.style.top = cat.y + 'px';
+    if(dist < 40) gameOver();
+  });
 
-  // Move ghost
-  let dx = player.x - ghost.x;
-  let dy = player.y - ghost.y;
-  let dist = Math.sqrt(dx*dx + dy*dy);
-  ghost.x += (dx/dist) * ghost.speed;
-  ghost.y += (dy/dist) * ghost.speed;
+  // Cheese pickup
+  if(Math.abs(player.x - cheese.x) < 40 && Math.abs(player.y - cheese.y) < 40) {
+    cheese.x = Math.random() * 500;
+    cheese.y = Math.random() * 500;
+    useTurbo();
+  }
 
   // Update positions
   document.getElementById('player').style.left = player.x + 'px';
   document.getElementById('player').style.top = player.y + 'px';
-  document.getElementById('ghost').style.left = ghost.x + 'px';
-  document.getElementById('ghost').style.top = ghost.y + 'px';
-  document.getElementById('key').style.left = key.x + 'px';
-  document.getElementById('key').style.top = key.y + 'px';
-  document.getElementById('exit').style.left = exit.x + 'px';
-  document.getElementById('exit').style.top = exit.y + 'px';
+  document.getElementById('cheese').style.left = cheese.x + 'px';
+  document.getElementById('cheese').style.top = cheese.y + 'px';
 
-  // Check collisions
-  if(dist < 40) gameOver("👻 CAUGHT YOU!");
+  // Timer
+  time -= 1/60;
+  document.getElementById('time').innerText = Math.ceil(time);
 
-  if(!key.collected && Math.abs(player.x - key.x) < 40 && Math.abs(player.y - key.y) < 40) {
-    key.collected = true;
-    document.getElementById('key').style.display = 'none';
-    document.getElementById('hud').innerHTML = "Battery: " + Math.floor(player.battery) + "% | Find the 🚪";
-  }
-
-  if(key.collected && Math.abs(player.x - exit.x) < 40 && Math.abs(player.y - exit.y) < 40) {
-    win();
+  if(time <= 0) {
+    gameActive = false;
+    document.getElementById('gameOver').innerHTML = "YOU SURVIVED!<br><button onclick='location.reload()'>PLAY AGAIN</button>";
+    document.getElementById('gameOver').style.display = 'block';
   }
 
   requestAnimationFrame(update);
 }
 
-function gameOver(msg) {
+function gameOver() {
   gameActive = false;
-  document.getElementById('gameOver').innerHTML = msg + "<br>⊙⁠﹏⁠⊙<br><button onclick='location.reload()'>RETRY</button>";
-  document.getElementById('gameOver').style.display = 'block';
-}
-
-function win() {
-  gameActive = false;
-  document.getElementById('gameOver').innerHTML = "YOU ESCAPED!<br>🔦😮‍💨<br><button onclick='location.reload()'>PLAY AGAIN</button>";
+  document.getElementById('gameOver').innerHTML = "⊙⁠﹏⁠⊙<br>CAUGHT!<br><button onclick='location.reload()'>RETRY</button>";
   document.getElementById('gameOver').style.display = 'block';
 }
 
