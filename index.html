@@ -704,72 +704,18 @@ g98_btn.onclick = () => {
 }
 </script>
 <!-- GAME 98 BRIDGE END -->
- <!-- NINE NINE NINE CHAOS BRIDGE START -->
-<div id="g99-container" style="background:#000; padding:30px; border-radius:20px; max-width:600px; margin:40px auto; font-family:'Arial Black'; color:white; text-align:center; border:3px solid #ffff00; box-shadow:0 0 30px #ff0000;">
-  
-  <h1 style="font-size:2.2em; color:#ffff00; text-shadow:0 0 20px #ff0000; margin-bottom:10px;">
-    👑 NINE NINE NINE CHAOS 👑
-  </h1>
-  <div id="g99-timer" style="font-size:2.5em; color:#00ffff; margin-bottom:10px;">TIME: 9</div>
-  <div id="g99-score" style="font-size:1.8em; color:#00ff00; margin-bottom:20px;">SCORE: 0</div>
-  <div id="g99-highscore" style="position:absolute; right:20px; top:20px; font-size:1em; color:#aaa;">HIGH SCORE: 0</div>
-  
-  <button id="g99-btn" style="font-size:100px; width:180px; height:180px; border-radius:50%; border:6px solid #ffff00; background:radial-gradient(circle, #ff0000, #8b0000); color:#ffff00; cursor:pointer; transition:0.1s; user-select:none;">
-    9
-  </button>
+ <!-- GAME 99 -->
+<div class="game">
+<div class="game-icon">9️⃣</div>
+<h2>NINE NINE NINE CHAOS</h2>
+<a class="play" href="nine-nine-chaos.html">PLAY GAME</a>
 </div>
-
-<script>
-// === NINE NINE NINE CHAOS LOGIC ===
-(function(){
-  let g99_score = 0;
-  let g99_time = 9;
-  let g99_playing = false;
-  let g99_highScore = localStorage.getItem('g99_highscore') || 0;
-  document.getElementById('g99-highscore').innerText = `HIGH SCORE: ${g99_highScore}`;
-
-  const g99_btn = document.getElementById('g99-btn');
-  const g99_timerEl = document.getElementById('g99-timer');
-  const g99_scoreEl = document.getElementById('g99-score');
-
-  function g99_startGame() {
-    if(g99_playing) return;
-    g99_playing = true;
-    g99_score = 0;
-    g99_time = 9;
-    g99_scoreEl.innerText = `SCORE: ${g99_score}`;
-    g99_timerEl.innerText = `TIME: ${g99_time}`;
-    
-    const g99_countdown = setInterval(() => {
-      g99_time--;
-      g99_timerEl.innerText = `TIME: ${g99_time}`;
-      if(g99_time <= 0) {
-        clearInterval(g99_countdown);
-        g99_playing = false;
-        alert(`TIME'S UP KING! 👑\nYour Score: ${g99_score}`);
-        if(g99_score > g99_highScore) {
-          g99_highScore = g99_score;
-          localStorage.setItem('g99_highscore', g99_highScore);
-          document.getElementById('g99-highscore').innerText = `HIGH SCORE: ${g99_highScore}`;
-        }
-      }
-    }, 1000);
-  }
-
-  g99_btn.onclick = () => {
-    if(!g99_playing) g99_startGame();
-    if(g99_playing) {
-      g99_score++;
-      g99_scoreEl.innerText = `SCORE: ${g99_score}`;
-      // CHAOS EFFECT
-      g99_btn.style.background = `radial-gradient(circle, #${Math.floor(Math.random()*16777215).toString(16)}, #000)`;
-      g99_btn.style.transform = 'scale(0.9)';
-      setTimeout(()=>{g99_btn.style.transform = 'scale(1)';}, 100);
-    }
-  }
-})();
-</script>
-<!-- NINE NINE NINE CHAOS BRIDGE END -->
+ <!-- GAME 100 -->
+<div class="game">
+  <div class="game-icon">🤖🩸👤</div>
+  <h2>SKINLESS: THE ARMY</h2>
+  <a class="play" href="skinless-the-army.html">PLAY GAME</a>
+</div>
         </div>
  
    
