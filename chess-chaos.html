@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CHESS CHAOS</title>
+<style>
+body{background:#111;color:white;font-family:'Arial Black';text-align:center;padding:20px}
+#board{display:grid;grid-template-columns:repeat(8,60px);grid-template-rows:repeat(8,60px);gap:0;margin:20px auto;width:480px;border:5px solid #fff}
+.tile{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer}
+.white{background:#f0d9b5}
+.black{background:#b58863}
+.selected{outline:4px solid #00ff00}
+#info{font-size:1.3em;margin:10px;color:#00ffff}
+</style>
+</head>
+<body>
+<h1>👑 CHESS CHAOS 👑</h1>
+<div id="info">White's Turn. Click piece then destination</div>
+<div id="board"></div>
+
+<script>
+const boardEl = document.getElementById('board');
+let turn = 'w';
+let selected = null;
+
+// Full chess setup
+let board = [
+  ['♜','♞','♝','♛','♚','♝','♞','♜'],
+  ['♟️','♟️','♟️','♟️','♟️','♟️','♟️','♟️'],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','',''],
+  ['♙','♙','♙','♙','♙','♙','♙','♙'],
+  ['♖','♘','♗','♕','♔','♗','♘','♖']
+];
+
+function draw(){
+  boardEl.innerHTML='';
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const tile=document.createElement('div');
+      tile.className='tile '+((r+c)%2===0?'white':'black');
+      tile.innerText=board[r][c];
+      tile.onclick=()=>move(r,c);
+      if(selected && selected.r===r && selected.c===c) tile.classList.add('selected');
+      boardEl.appendChild(tile);
+    }
+  }
+  document.getElementById('info').innerText = turn==='w'? "White's Turn" : "Black's Turn";
+}
+
+function getColor(piece){
+  if(!piece) return null;
+  return '♔♕♖♗♘♙'.includes(piece)? 'w' : 'b';
+}
+
+function move(r,c){
+  const piece = board[r][c];
+  if(selected){
+    // Simple move: any piece can go anywhere for CHAOS mode
+    // Real rules disabled for now so it's fast and chaotic
+    if(getColor(piece)!== turn){
+      board[r][c]=board[selected.r][selected.c];
+      board[selected.r][selected.c]='';
+      turn = turn==='w'? 'b' : 'w';
+    }
+    selected=null;
+  }else{
+    if(piece && getColor(piece)===turn) selected={r,c};
+  }
+  draw();
+}
+draw();
+</script>
+</body>
+</html>
