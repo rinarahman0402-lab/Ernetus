@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DEAD TIRED BRIDGE</title>
+<style>
+body{background:#000;color:white;font-family:'Arial Black';text-align:center;overflow:hidden}
+#game{position:relative;width:100%;height:80vh;background:linear-gradient(#001, #222)}
+#player{position:absolute;bottom:50px;left:50%;font-size:50px;transform:translateX(-50%)}
+.bridge{position:absolute;bottom:40px;height:10px;background:#555}
+.obstacle{position:absolute;bottom:50px;font-size:30px}
+#stats{font-size:1.5em;margin:10px;color:#00ffff}
+#energy{color:#ff0000}
+</style>
+</head>
+<body>
+<h1>😵 DEAD TIRED BRIDGE 😵</h1>
+<div id="stats">SCORE: <span id="score">0</span> | ENERGY: <span id="energy">100</span>%</div>
+<div id="game">
+  <div id="player">(+_+)</div>
+</div>
+<div>Hold SPACE to run. Let go to rest. Don't fall off _____ ———</div>
+
+<script>
+let score=0, energy=100, running=false, gameOver=false;
+const player = document.getElementById('player');
+const game = document.getElementById('game');
+let bridgeX = 0;
+let obstacles = [];
+
+// Create bridge segments _____
+for(let i=0;i<20;i++){
+  const seg = document.createElement('div');
+  seg.className='bridge';
+  seg.style.width='100px';
+  seg.style.left=(i*120)+'px';
+  game.appendChild(seg);
+}
+
+// Create obstacles ———
+function spawnObstacle(){
+  const obs = document.createElement('div');
+  obs.className='obstacle';
+  obs.innerText='———';
+  obs.style.left='100%';
+  game.appendChild(obs);
+  obstacles.push(obs);
+}
+setInterval(spawnObstacle, 1500);
+
+document.addEventListener('keydown', e=>{ if(e.code==='Space') running=true; });
+document.addEventListener('keyup', e=>{ if(e.code==='Space') running=false; });
+
+function loop(){
+  if(gameOver) return;
+  
+  if(running && energy>0){
+    energy-=1;
+    bridgeX-=8;
+    score++;
+  }else{
+    energy+=0.5;
+    if(energy>100) energy=100;
+  }
+  
+  // Move bridge
+  document.querySelectorAll('.bridge').forEach(b=>{
+    b.style.left = parseInt(b.style.left)+ (running?-8:0) + 'px';
+    if(parseInt(b.style.left)<-120) b.style.left=parseInt(b.style.left)+2400+'px';
+  });
+  
+  // Move obstacles
+  obstacles.forEach((o,i)=>{
+    o.style.left = parseInt(o.style.left||1000)-10 + 'px';
+    if(parseInt(o.style.left)<50 && parseInt(o.style.left)>0){
+      gameOver=true; alert('YOU COLLAPSED! SCORE: '+score);
+    }
+  });
+  
+  document.getElementById('score').innerText=score;
+  document.getElementById('energy').innerText=Math.floor(energy);
+  document.getElementById('player').innerText = energy<20 ? '(x_x)' : '(+_+)';
+  
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
