@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SEAFOOD RUSH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+body{background:linear-gradient(#003366,#000);color:white;font-family:'Arial Black';text-align:center;overflow:hidden;margin:0}
+#ocean{position:relative;width:100%;height:70vh}
+#boat{position:absolute;bottom:20px;left:50%;font-size:50px;transform:translateX(-50%)}
+.sea-creature{position:absolute;font-size:40px}
+#stats{font-size:1.5em;margin:10px}
+#caught{color:#00ff00}
+#timer{color:#00ffff}
+.controls{position:fixed;bottom:10px;width:100%;display:flex;justify-content:space-between;padding:0 20px}
+.btn{background:#00ffff;color:#000;border:none;border-radius:20px;padding:20px 30px;font-size:1.5em;font-family:'Arial Black'}
+#fishBtn{background:#ff00ff}
+</style>
+</head>
+<body>
+<h1>🎣 SEAFOOD RUSH 🎣</h1>
+<div id="stats">CAUGHT: <span id="caught">0</span> | TIME: <span id="timer">60</span>s</div>
+<div id="ocean">
+  <div id="boat">⛴️</div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="leftBtn">◀️ LEFT</button>
+  <button class="btn" id="fishBtn">🎣 FISH</button>
+  <button class="btn" id="rightBtn">RIGHT ▶️</button>
+</div>
+
+<script>
+let score=0, time=60, boatX=50;
+const ocean = document.getElementById('ocean');
+const creatures = ['🐙','🦀','🦑','🦞','🐟','🐠','🦭','🦐','🦦','🍤'];
+let seaLife = [];
+
+// Spawn sea creatures
+function spawn(){
+  const c = document.createElement('div');
+  c.className='sea-creature';
+  c.innerText = creatures[Math.floor(Math.random()*creatures.length)];
+  c.style.left = Math.random()*90+'%';
+  c.style.top = Math.random()*70+10+'%';
+  ocean.appendChild(c);
+  seaLife.push({el:c, x:parseFloat(c.style.left), y:parseFloat(c.style.top), dx:(Math.random()-0.5)*2});
+}
+setInterval(spawn, 400);
+
+// MOBILE + KEYBOARD CONTROLS
+function moveLeft(){ boatX-=3; if(boatX<5) boatX=5; document.getElementById('boat').style.left=boatX+'%'; }
+function moveRight(){ boatX+=3; if(boatX>95) boatX=95; document.getElementById('boat').style.left=boatX+'%'; }
+
+document.getElementById('leftBtn').ontouchstart = moveLeft;
+document.getElementById('rightBtn').ontouchstart = moveRight;
+document.getElementById('fishBtn').ontouchstart = castLine;
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='a' || e.key==='A') moveLeft();
+  if(e.key==='d' || e.key==='D') moveRight();
+  if(e.code==='Space') castLine();
+});
+
+function castLine(){
+  const line = document.createElement('div');
+  line.style.position='absolute';
+  line.style.bottom='70px';
+  line.style.left=boatX+'%';
+  line.style.width='3px';
+  line.style.height='0px';
+  line.style.background='white';
+  ocean.appendChild(line);
+  
+  let h=0;
+  const fish = setInterval(()=>{
+    h+=5;
+    line.style.height=h+'px';
+    seaLife.forEach((s,i)=>{
+      if(Math.abs(s.x - boatX)<5 && Math.abs(s.y*8 - h)<30){
+        score++;
+        document.getElementById('caught').innerText=score;
+        s.el.remove();
+        seaLife.splice(i,1);
+        clearInterval(fish);
+        line.remove();
+      }
+    });
+    if(h>600){ clearInterval(fish); line.remove(); }
+  },20);
+}
+
+// Timer
+const t = setInterval(()=>{
+  time--;
+  document.getElementById('timer').innerText=time;
+  if(time<=0){
+    clearInterval(t);
+    alert('TIME UP! YOU CAUGHT: '+score+' SEAFOOD!');
+  }
+},1000);
+
+// Move creatures
+function loop(){
+  seaLife.forEach(s=>{
+    s.x += s.dx;
+    if(s.x<0||s.x>95) s.dx*=-1;
+    s.el.style.left=s.x+'%';
+  });
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
