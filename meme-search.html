@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MEME SEARCH HD</title>
+<style>
+body{background:#0a0a0a;color:white;font-family:Arial;text-align:center;padding:20px}
+h1{color:#00ff88}
+a{color:#00ff88;text-decoration:none}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:800px;margin:20px auto}
+.btn{background:#1a1a1a;border:2px solid #333;color:white;padding:15px;border-radius:10px;cursor:pointer;font-weight:bold}
+.btn:hover{background:#00ff88;color:#000}
+#box{background:#111;border:2px dashed #00ff88;border-radius:15px;padding:20px;margin:20px auto;max-width:500px;min-height:300px}
+#box img{width:100%;border-radius:10px}
+</style>
+</head>
+<body>
+
+<a href="index.html">← BACK</a>
+<h1>🌐 MEME SEARCH HD 🌐</h1>
+<p>Click any button</p>
+
+<div class="grid">
+<button class="btn" onclick="show('pe')">pe</button>
+<button class="btn" onclick="show('doge')">doge</button>
+<button class="btn" onclick="show('cheems')">cheems</button>
+<button class="btn" onclick="show('trollface')">trollface</button>
+<button class="btn" onclick="show('battery')">battery 1%</button>
+<button class="btn" onclick="show('coconut')">flying coconut</button>
+<button class="btn" onclick="show('cookie')">cookie meme</button>
+<button class="btn" onclick="show('spooderman')">spooderman</button>
+<button class="btn" onclick="show('wojak')">wojak</button>
+<button class="btn" onclick="show('amongus')">among us</button>
+<button class="btn" onclick="show('chad')">gigachad</button>
+<button class="btn" onclick="show('stonks')">stonks</button>
+<button class="btn" onclick="show('fine')">this is fine</button>
+<button class="btn" onclick="show('pika')">surprised pikachu</button>
+<button class="btn" onclick="show('brain')">expanding brain</button>
+<button class="btn" onclick="show('bf')">distracted bf</button>
+<button class="btn" onclick="show('sponge')">mocking spongebob</button>
+<button class="btn" onclick="show('tea')">ice tea</button>
+<button class="btn" onclick="show('cheese')">cheese</button>
+<button class="btn" onclick="show('dance')">dancing coconut</button>
+</div>
+
+<div id="box">
+<h2>Click a button above 👆</h2>
+</div>
+
+<script>
+// SHORT CODE. NO INFINITE TEXT. NO LAG
+const memes = {
+pe: '<h2>PEPE</h2><img src="https://i.imgflip.com/1bij.jpg">',
+doge: '<h2>DOGE</h2><img src="https://i.imgflip.com/4t0m5.jpg">',
+cheems: '<h2>CHEEMS</h2><img src="https://i.imgflip.com/2odckz.jpg">',
+trollface: '<h2>TROLLFACE</h2><img src="https://i.imgflip.com/1ur9b0.jpg">',
+battery: '<h2>BATTERY 1%</h2><img src="https://placehold.co/400x400/ff0000/fff?text=BATTERY+1%25">',
+coconut: '<h2>FLYING COCONUT</h2><img src="https://placehold.co/400x400/8B4513/fff?text=COCONUT">',
+cookie: '<h2>COOKIE MEME</h2><img src="https://placehold.co/400x400/D2B48C/000?text=COOKIE">',
+spooderman: '<h2>SPOODERMAN</h2><img src="https://placehold.co/400x400/ff0000/fff?text=SPOODERMAN">',
+wojak: '<h2>WOJAK</h2><img src="https://i.imgflip.com/1c1ue.jpg">',
+amongus: '<h2>AMONG US</h2><img src="https://i.imgflip.com/3lmzyx.jpg">',
+chad: '<h2>GIGACHAD</h2><img src="https://i.imgflip.com/2phft1.jpg">',
+stonks: '<h2>STONKS</h2><img src="https://i.imgflip.com/1e7ql8.jpg">',
+fine: '<h2>THIS IS FINE</h2><img src="https://i.imgflip.com/wxica.jpg">',
+pika: '<h2>SURPRISED PIKACHU</h2><img src="https://i.imgflip.com/1otk96.jpg">',
+brain: '<h2>EXPANDING BRAIN</h2><img src="https://i.imgflip.com/1jwhww.jpg">',
+bf: '<h2>DISTRACTED BF</h2><img src="https://i.imgflip.com/1ur9b0.jpg">',
+sponge: '<h2>MOCKING SPONGEBOB</h2><img src="https://i.imgflip.com/1otk96.jpg">',
+tea: '<h2>ICE TEA</h2><img src="https://placehold.co/400x400/228B22/fff?text=ICE+TEA">',
+cheese: '<h2>CHEESE</h2><img src="https://placehold.co/400x400/FFD700/000?text=CHEESE">',
+dance: '<h2>DANCING COCONUT</h2><img src="https://placehold.co/400x400/A0522D/fff?text=DANCING+COCONUT">'
+};
+function show(n){document.getElementById('box').innerHTML=memes[n]||'<h2>Not found</h2>'}
+</script>
+</body>
+</html>
