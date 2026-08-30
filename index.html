@@ -34,6 +34,16 @@ footer{margin-top:45px;opacity:.7}
 <div class="container">
 <h1>🎮 Eternetus</h1>
 <div class="subtitle">Welcome to my game world!</div>
+ <!-- SEARCH BAR COMPONENT -->
+<div style="position: sticky; top: 10px; z-index: 50; width: 100%; max-width: 500px; margin: 0 auto 20px auto;">
+  <input 
+    type="text" 
+    id="game-search" 
+    placeholder="🔍 Search games..." 
+    oninput="document.querySelectorAll('.game').forEach(c => c.style.display = c.querySelector('h2').innerText.toLowerCase().includes(this.value.toLowerCase().trim()) ? '' : 'none')"
+    style="width: 100%; padding: 12px 20px; border-radius: 25px; border: 2px solid #818cf8; background: #111827; color: #fff; font-size: 1rem; outline: none;"
+  />
+</div>
 
 <div class="games">
 
